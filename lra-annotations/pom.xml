@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2015 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ Licensed under the Apache License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+  -->
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>microprofile</groupId>
+    <artifactId>lra-annotations</artifactId>
+    <version>1.0.0.Final-SNAPSHOT</version>
+    <name>LRA Annotations</name>
+    <description>LRA Compensator Annotations</description>
+    <packaging>jar</packaging>
+
+    <properties>
+        <version.jboss-interceptors>1.0.1.Final</version.jboss-interceptors>
+        <version.jaxrs-api>2.0</version.jaxrs-api>
+        <version.cdi-api>1.0-SP1</version.cdi-api>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jboss.spec.javax.interceptor</groupId>
+            <artifactId>jboss-interceptors-api_1.1_spec</artifactId>
+            <version>${version.jboss-interceptors}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>${version.cdi-api}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>javax.ws.rs-api</artifactId>
+            <version>${version.jaxrs-api}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

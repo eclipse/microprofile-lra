@@ -19,23 +19,11 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-
-package org.eclipse.microprofile.lra.annotation;
-
-import javax.interceptor.InterceptorBinding;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package org.eclipse.microprofile.lra.participant;
 
 /**
- * If a JAX-RS resource method is invoked in the context of an LRA and there are participant annotations on the class
- * it will join the LRA (as a participant). In addition, if it also contains a method annotated with @Leave then any
- * subsequent call to this @Leave method in the context of the same LRA will cause participant to leave the LRA.
- * But do note that if any of the other resource methods are invoked again in the same LRA context it will rejoin the LRA.
+ * An object that knows how to recreate a participant from its' persistent form
  */
-@InterceptorBinding
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Leave {
+public interface LRAParticipantDeserializer {
+    LRAParticipant deserialize(byte[] recoveryState);
 }

@@ -29,13 +29,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * If a JAX-RS resource method is invoked in the context of an LRA and there are participant annotations on the class
- * it will join the LRA (as a participant). In addition, if it also contains a method annotated with @Leave then any
- * subsequent call to this @Leave method in the context of the same LRA will cause participant to leave the LRA.
- * But do note that if any of the other resource methods are invoked again in the same LRA context it will rejoin the LRA.
+ * If a participant is unable to compensate it must remember the fact (by reporting it when asked for its'
+ * {@link Status}) until it is explicitly told to forget. To support this
+ * requirement the developer should annotate one of the participant methods with @Forget.
  */
 @InterceptorBinding
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
-public @interface Leave {
+public @interface Forget {
 }

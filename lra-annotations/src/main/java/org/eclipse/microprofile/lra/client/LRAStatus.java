@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -23,13 +23,24 @@ package org.eclipse.microprofile.lra.client;
 
 import java.net.URL;
 
+//@Data
+//@AllArgsConstructor
+//@ApiModel( value = "LRA", description = "A Long Running Action" )
 public class LRAStatus {
+    private Exception jsonParseError;
+    //    @ApiModelProperty( value = "The unique id of the LRA", required = true )
     private String lraId;
+//    @ApiModelProperty( value = "The client id associated with this LRA", required = false )
     private String clientId ;
+//    @ApiModelProperty( value = "Indicates whether or not this LRA has completed", required = false )
     private boolean isComplete;
+//    @ApiModelProperty( value = "Indicates whether or not this LRA has compensated", required = false )
     private boolean isCompensated;
+//    @ApiModelProperty( value = "Indicates whether or not this LRA is recovering", required = false )
     private boolean isRecovering;
+//    @ApiModelProperty( value = "Indicates whether or not this LRA has been asked to complete or compensate yet", required = false )
     private boolean isActive;
+//    @ApiModelProperty( value = "Indicates whether or not this LRA is top level", required = false )
     private boolean isTopLevel;
 
     public LRAStatus(String lraId) {
@@ -47,6 +58,18 @@ public class LRAStatus {
         this.isRecovering = isRecovering;
         this.isActive = isActive;
         this.isTopLevel = isTopLevel;
+        this.jsonParseError = null;
+    }
+
+    public LRAStatus(Exception e) {
+        jsonParseError = e;
+        this.lraId = "JSON Parse Error: " + e.getMessage();
+        this.clientId = e.getMessage();
+        this.isComplete = false;
+        this.isCompensated = false;
+        this.isRecovering = false;
+        this.isActive = false;
+        this.isTopLevel = false;
     }
 
     public String getLraId() {

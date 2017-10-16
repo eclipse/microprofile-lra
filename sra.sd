@@ -1,4 +1,4 @@
-client:Actor
+client:Client
 tm:TM[a]
 sra:SRA[a]
 participant1:Participant[a]
@@ -6,8 +6,7 @@ participant2:Participant[a]
 service1:Service[a]
 service2:Service[a]
 
-client:tm.create
-tm:client.created(SRA + join URL)
+client:tm.SRA + join URL = create
 
 client:service1.op(join URL)
 service1:sra.join(join URLs)

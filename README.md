@@ -176,11 +176,11 @@ The lifecycle of an LRA
 The LRA participant will be invoked in the following way by the LRA
 coordinator when the activity terminates:
 
-* Success: the activity has completed successfully. If the activity is
+* **Success**: the activity has completed successfully. If the activity is
   nested then participants may propagate themselves to the enclosing LRA.
   Otherwise the participants are informed that the activity has terminated
   and they can perform any necessary cleanups.
-* Fail: the activity has completed unsuccessfully. All participants that
+* **Fail**: the activity has completed unsuccessfully. All participants that
   are registered with the LRA will be invoked to perform compensation in
   the reverse order. The coordinator forgets about all participants that
   indicated they operated correctly. Otherwise, compensation may be
@@ -190,12 +190,16 @@ coordinator when the activity terminates:
   effort) that compensation is possible. Each participant or subordinate
   coordinator (in the case of nested LRAs) is responsible for ensuring
   that sufficient data is made durable in order to undo the LRA in the
-  event of failures. Interposition and check pointing of state allow the
-  system to drive a consistent view of the outcome and recovery actions taken,
+  event of failures (still LRA coordinator could help in the manner).
+  Interposition and check pointing of state allow the system to drive
+  a consistent view of the outcome and recovery actions taken,
   but allowing always the possibility that recovery isn’t possible and must
-  be logged or flagged for the administrator. In a large scale environment
-  or in the presence of long term failures recovery may not be automatic and
-  manual intervention may be necessary to restore an application’s consistency.
+  be logged or flagged for the administrator.
+
+  In a large scale environment or in the presence of long term failures recovery
+  may not be automatic and manual intervention may be necessary to restore
+  an application’s consistency.
+
   Note that calling participants in reverse order does not guarantee that
   the compensation actions will be performed in strict sequential
   order since participants are allowed to indicate that the compensation
@@ -210,11 +214,13 @@ Participants follow a state model:
       it did during the LRA;
    - `Compensated`: a participant has successfully compensated for the LRA.
    - `FailedToCompensate`: the participant was not able to compensate for
-      the LRA. It must maintain information about the work it was to
+      the LRA. It MUST maintain information about the work it was to
       compensate until the coordinator sends it a forget message.
    - `Completing`: the participant is tidying up after being told to complete.
    - `Completed`: the participant has confirmed that it has finished tidying up.
    - `FailedToComplete`: the participant was unable to tidy-up.
+      It MUST maintain information about the work it was to
+      complete until the coordinator sends it a forget message.
 
 The LRA follows a similar state model:
 <a name="LRA-state-model"></a>
@@ -243,7 +249,7 @@ In the rest of this proposal we specify three different APIs for controlling
 the lifecycle of and participation in LRAs and a fourth API for writing participants:
 
    1. [CDI Annotations for LRAs](#cdi-annotations-for-lras)
-   2. [Client API](lra-annotations/src/main/java/org/eclipse/microprofile/lra/client/LRAClientAPI.java)
+   2. [Client API](lra-annotations/src/main/java/org/eclipse/microprofile/lra/client/LRAClient.java)
    3. [REST based description of various resources](#Interoperability-with-other-languages)
    4. [Java based LRA participant registration API](#java-based-lra-participant-registration-api)
 
@@ -399,9 +405,6 @@ public @interface LRA {
     Response.Status [] cancelOn() default {};
 ```
 
-When an LRA is present it SHOULD be made available to the business logic
-via request and response headers (with the name "Long-Running-Action")
-
 Example:
 
 ```java
@@ -423,12 +426,28 @@ Example:
   public Booking confirmTrip(Booking booking) throws BookingException { ... }
 ```
 
+When an LRA is present it SHOULD be made available to the business logic
+via request and response headers (with the name `"Long-Running-Action"`)
+
+Example:
+
+```java
+  @PUT
+  @Path("/confirm")
+  @Produces(MediaType.APPLICATION_JSON)
+  @LRA(LRA.Type.SUPPORTS, terminal = true)
+  public Booking confirmTrip(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) { ... }
+```
+
+
 ##### Compensating Activities
 
 Participants join LRAs using the `@Compensate` and `@Complete`
 annotations. These annotations must be combined with JAX-RS annotations so
-that they can be invoked as JAX-RS endpoints. Only the `@Compensate` method
-is mandatory.
+that they can be invoked as JAX-RS endpoints. Both annotations are expected
+to be used with JAX-RS `@PUT` annotation.
+Only the `@Compensate` method is mandatory.
 
 If a JAX-RS resource method is invoked in the context of an LRA and the resource
 class contains a method annotated with `@Compensate` then the class will be enlisted
@@ -440,7 +459,8 @@ be invoked with a header parameter that contains the id of the LRA, for example:
   @Path("/compensate")
   @Produces(MediaType.APPLICATION_JSON)
   @Compensate
-  public Response compensateWork(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+  public Response compensateWork(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) {
     // compensate for whatever activity the business logic has associated with lraId
   }
 ```
@@ -448,20 +468,21 @@ be invoked with a header parameter that contains the id of the LRA, for example:
 Similarly, if the developer has provided a `@Complete` method it will be invoked
 if the LRA is closed.
 
-If the bean knows that it will never be able to compensate the activity
+If the participant bean knows that it will never be able to compensate the activity
 it SHOULD return a `200 OK` status code and content body with the literal string
-`FailedToCompensate`. If it returns any other content the coordinator will use
-the `@Status` method to obtain the status but if the `@Status` method is not present
-the condition will be logged and this participant will be dropped by the coordinator
-(ie the participant should avoid this circumstance).
-Similar remarks apply if the bean method knows that it will never be able to complete.
+`FailedToCompensate`. If it returns any other content the coordinator will call
+JAX-RS endpoint declared by the `@Status` method to obtain the status.
+If the `@Status` method is not present the condition will be logged and
+this participant will be dropped by the coordinator (ie the participant should
+avoid this circumstance). Similar remarks apply if the bean method knows that
+it will never be able to complete.
 
 If the bean cannot perform a compensation or completion activity immediately the
 termination method MUST indicate the condition. In this case the LRA coordinator
 will need to monitor the progress of the participant and the developer must
 provide a `@GET` method annotated with `@Status` which must return a string representation
 [string representation of the status](#participant-state-model) of the status.
-The bean indicates that it cannot finish immediately by by either
+The bean indicates that it cannot finish immediately by either
 
    - returning a `202 Accepted` HTTP status  code or
    - the method is marked as a JAX-RS asynchronous method (using the
@@ -477,7 +498,7 @@ the asynchronous termination method finishes. But note that the
 [interoperability portion of this specification](interoperability-with-other-languages)
 allows the status URL to be reported in the response Location header and this will
 be used in place of the `@Status` and `@Forget` methods if present. However, there
-is no checking that the URLs are valid so mixing the two APIs is not recommended.
+is no checking that the URLs are valid so mixing the two approaches is not recommended.
 
 If an annotation is present on multiple methods an arbitrary one is chosen.
 
@@ -486,17 +507,22 @@ If an annotation is present on multiple methods an arbitrary one is chosen.
 An activity can be scoped within an existing LRA using the `@NestedLRA`
 annotation. Invoking a method marked with this annotation will start a
 new LRA whose outcome depends upon whether the enclosing LRA is closed
-or cancelled. If the nested LRA is closed but the outer LRA is cancelled
+or cancelled.
+
+ - If the nested LRA is closed but the outer LRA is cancelled
 then the participants registered with the nested LRA will be told to
-compensate. Note that there is no annotation to directly cancel a closed
-nested LRA and the [Java LRAClientAPI](#injecting-an-lra-client-api) must be
+compensate.
+ - If the nested LRA is cancelled the outer LRA can be still closed.
+
+Note that there is no annotation to directly cancel a closed
+nested LRA and the [Java LRAClient api](#injecting-an-lra-client-api) must be
 used for this purpose if required.
 
 ##### Timing out LRAs and Compensators
 
 The ability to compensate may be a transient capability of a service so
 participants (and LRAs) can be timed out after which the compensator is
-called (or the LRA is cancelled).
+called (the LRA is cancelled).
 
 To set such a time limit use the `@TimeLimit` annotation, for example:
 
@@ -506,16 +532,17 @@ To set such a time limit use the `@TimeLimit` annotation, for example:
   @Produces(MediaType.APPLICATION_JSON)
   @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
   @LRA(value = LRA.Type.REQUIRED)
-  public Response theClockIsTicking(@HeaderParam(LRA_HTTP_HEADER) String lraId) {...}
+  public Response theClockIsTicking(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) {...}
 ```
 
 ##### Leaving an LRA
 
-If a bean method annotated with `@Leave` is executed in the context of a
-LRA then if the bean class has registered a participant with the active
-LRA it will be removed from the LRA just before the bean method is called
-(and will not be asked to complete or compensate when the LRA is
-subsequently ended).
+If a user calls a method annotated with `@Leave` while this bean method
+is executed in the context of a LRA then if the bean class has registered
+a participant with the active LRA it will be removed from the LRA just before
+the bean method is called (and will not be asked to complete or compensate
+when the LRA is subsequently ended).
 
 ##### Reporting the status of a participant
 
@@ -523,12 +550,13 @@ As alluded to above, participants can provide a method for reporting the
 status of the participant by annotating one of the methods with the `@Status`
 annotation. The method is required when at least one the participant methods
 that is annotated with `@Compensate` or `@Complete` is not able to complete the
-task synchronously. If the participant has not yet been asked to `@Compensate`
-or Complete it should report the error using a JAX-RS exception mapper that
+task immediately. If the participant has not finished -
+ie. it has not yet been asked to `@Compensate`
+or `@Complete` it should report the error using a JAX-RS exception mapper that
 maps to a `412 Precondition Failed` HTTP status code (such as
 IllegalLRAStateException or InvalidStateException). Otherwise the response
-entity must correspond to one of the following enum values (as reported by
-the enum name() method):
+entity must correspond to one of the Strings defined by following enum values
+(as reported by the enum `name()` method):
 
 ```java
 /**
@@ -555,16 +583,18 @@ Notice that the enum constants correspond to
 If a participant is unable to compete or compensate immediately then it must
 remember the fact until explicitly told that it can clean up using
 the `@Forget` annotation.
+The method annotated with the `@Forget` annotation is a standard REST endpoint
+expected to be used with JAX-RS `@DELETE` annotation.
 
 #### Injecting an LRA Client API
 
 For completeness the proposal supports clients that wish to directly control
-LRAs and participants. To support this class of user an instance of [client
-API](lra-annotations/src/main/java/org/eclipse/microprofile/lra/client/LRAClientAPI.java)
+LRAs and participants. To support this class of user an instance of [LRA client
+API](lra-annotations/src/main/java/org/eclipse/microprofile/lra/client/LRAClient.java)
 can be injected:
 
 ``` java
-public interface LRAClientAPI {
+public interface LRAClient {
 
     /**
      * Start a new LRA
@@ -591,7 +621,7 @@ public interface LRAClientAPI {
      * @param lraId The unique identifier of the LRA (required)
      * @return the response MAY contain the final status of the LRA as reported by
      * {@link CompensatorStatus#name()}. If the final status is not returned the client can still discover
-     * the final state using the {@link LRAClientAPI#getStatus(URL)} method
+     * the final state using the {@link LRAClient#getStatus(URL)} method
      * @throws GenericLRAException Communication error (the reason is available via the
      * {@link GenericLRAException#getStatusCode()} method
      */
@@ -607,7 +637,7 @@ public interface LRAClientAPI {
      *
      * @return the response MAY contain the final status of the LRA as reported by
      * {@link CompensatorStatus#name()}. If the final status is not returned the client can still discover
-     * the final state using the {@link LRAClientAPI#getStatus(URL)} method
+     * the final state using the {@link LRAClient#getStatus(URL)} method
      * @throws GenericLRAException Communication error (the reason is available via the
      * {@link GenericLRAException#getStatusCode()} method
      */
@@ -618,7 +648,7 @@ public interface LRAClientAPI {
      *
      * @throws GenericLRAException on error
      */
-    List<LRAStatus> getActiveLRAs() throws GenericLRAException;
+    List<LRAInfo> getActiveLRAs() throws GenericLRAException;
 
     /**
      * Returns all LRAs
@@ -628,7 +658,7 @@ public interface LRAClientAPI {
      * @return List<LRA>
      * @throws GenericLRAException on error
      */
-    List<LRAStatus> getAllLRAs() throws GenericLRAException;
+    List<LRAInfo> getAllLRAs() throws GenericLRAException;
 
     /**
      * List recovering Long Running Actions
@@ -639,7 +669,7 @@ public interface LRAClientAPI {
      *
      * @throws GenericLRAException on error
      */
-    List<LRAStatus> getRecoveringLRAs() throws GenericLRAException;
+    List<LRAInfo> getRecoveringLRAs() throws GenericLRAException;
 
     /**
      * Lookup the status of an LRA
@@ -654,7 +684,7 @@ public interface LRAClientAPI {
 
     /**
      * Indicates whether an LRA is active. The same information can be obtained via a call to
-     * {@link LRAClientAPI#getStatus(URL)}.
+     * {@link LRAClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -665,7 +695,7 @@ public interface LRAClientAPI {
 
     /**
      * Indicates whether an LRA was compensated. The same information can be obtained via a call to
-     * {@link LRAClientAPI#getStatus(URL)}.
+     * {@link LRAClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -676,7 +706,7 @@ public interface LRAClientAPI {
 
     /**
      * Indicates whether an LRA is complete. The same information can be obtained via a call to
-     * {@link LRAClientAPI#getStatus(URL)}.
+     * {@link LRAClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -709,7 +739,7 @@ public interface LRAClientAPI {
     String joinLRA(URL lraId, Long timelimit, String body, String compensatorData) throws GenericLRAException;
 
     /**
-     * Similar to {@link LRAClientAPI#joinLRA(URL, Long, String, String)} except that the various
+     * Similar to {@link LRAClient#joinLRA(URL, Long, String, String)} except that the various
      * participant URLs are passed in explicitly.
      */
     String joinLRA(URL lraId, Long timelimit,
@@ -718,7 +748,7 @@ public interface LRAClientAPI {
 
     /**
      * Join an LRA passing in a class that will act as the participant.
-     * Similar to {@link LRAClientAPI#joinLRA(URL, Long, String, String)} but the various participant URLs
+     * Similar to {@link LRAClient#joinLRA(URL, Long, String, String)} but the various participant URLs
      * are expressed as CDI annotations on the passed in resource class.
      *
      * @param lraId The unique identifier of the LRA (required)
@@ -794,7 +824,7 @@ public interface LRAClientAPI {
 
 For those applications that cannot directly expose JAX-RS endpoints for
 compensation activities this specification optionally supports an API
-for directly registering participants. A participant is a java class
+for directly registering participants. A participant is a serializable java class
 that is interested in LRA lifecycle notifications, and does so by registering
 an instance of `LRAParticipant` with an instance of an `LRAManagement`:
 
@@ -899,7 +929,7 @@ use one of the other APIs such as the
 [CDI Annotations for LRAs](#cdi-annotations-for-lras).
 
 *In the reference implementation recovery is achieved by depending on an
-maven artefact that automatically starts up a proxy participant which
+maven artifact that automatically starts up a proxy participant which
 listens for replay requests. For this to work the proxy must start up
 on the same endpoint or it must be told where the coordinator resides
 so that it can inform the coordinator of its new location: the way in which
@@ -947,14 +977,14 @@ be to allow the coordinator to return any URL format - ie instead of the
 URLs in points 2-6 the coordinator would return a
 [link header](https://tools.ietf.org/html/rfc5988) instead.
 
-LRA creation supports two query parameters:
+LRA creation supports three query parameters:
 
    - `ClientID={ClientID}`
    - `TimeLimit={timeout period in milliseconds}`
    - `ParentLRA={parent LRA URL}`
 
 The client id (which can be any string such as an encoded URL) is
-associated with the new LRA and can be retrieved when the LRA is
+associated with the new LRA and can be retrieved when the LRA
 status is reported.
 
 The `TimeLimit` parameter (in milliseconds) will cause the new LRA to
@@ -970,10 +1000,10 @@ too with the nested LRA (even if it has been previously closed).
 
 The following requests can be made on the LRA URL.
 
-Note that if the coordinator does not know about the LRA it returns
+*Note that if the coordinator does not know about the LRA it returns
 a `404 Not Found` response. If the coordinator knows that the LRA
-once existed but has since deleted it is should return a
-`410 Gone` response.
+once existed but has since deleted it should return a
+`410 Gone` response.*
 
 <a name="proposed-change"></a>
 
@@ -991,34 +1021,50 @@ once existed but has since deleted it is should return a
    contains detailed status in reported in JSON format:
 
 ``` json
-
-    "LRAStatus": {
-      "type": "object", "properties": {
-        "lraId": {
-          "type": "string"
-        }, "clientId": {
-          "type": "string"
-        }, "httpStatus": {
-          "type": "integer", "format": "int32"
-        }, "responseData": {
-          "type": "array", "items": {
-            "type": "string"
-          }
-        }, "recovering": {
-          "type": "boolean", "default": false
-        }, "topLevel": {
-          "type": "boolean", "default": false
-        }, "compensated": {
-          "type": "boolean", "default": false
-        }, "encodedResponseData": {
-          "type": "string"
-        }, "complete": {
-          "type": "boolean", "default": false
-        }, "active": {
-          "type": "boolean", "default": false
-        }
-      }
-    }
+{
+	"type": "object",
+	"properties": {
+		"lraId": {
+			"type": "string"
+		},
+		"clientId": {
+			"type": "string"
+		},
+		"httpStatus": {
+			"type": "integer",
+			"format": "int32"
+		},
+		"responseData": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"recovering": {
+			"type": "boolean",
+			"default": false
+		},
+		"topLevel": {
+			"type": "boolean",
+			"default": false
+		},
+		"compensated": {
+			"type": "boolean",
+			"default": false
+		},
+		"encodedResponseData": {
+			"type": "string"
+		},
+		"complete": {
+			"type": "boolean",
+			"default": false
+		},
+		"active": {
+			"type": "boolean",
+			"default": false
+		}
+	}
+}
 ```
 
 2. Performing a `PUT` on `{base uri}/lra-coordinator/{LRAId}/close`
@@ -1028,7 +1074,8 @@ once existed but has since deleted it is should return a
    (because of normal business logic or because of system failures) the
    actual status is returned. See section [LRA state model section](#lra-state-model)
    for a description of valid states. Such participants will be periodically retried
-   by a recovery system. Note that failed participants will not be retried.
+   for completion by a recovery system.
+   Note that failed participants will not be retried.
 
 5. Performing a `PUT` on `{base uri}/lra-coordinator/{LRAId}/cancel`
    will trigger the unsuccessful completion of the LRA and all participants
@@ -1037,12 +1084,13 @@ once existed but has since deleted it is should return a
    (because of normal business logic or because of system failures) the
    actual status is returned. See section [LRA state model section](#lra-state-model)
    for a description of valid states. Such participants will be periodically retried
-   by a recovery system. Note that failed participants will not be retried.
+   for compensation by a recovery system.
+   Note that failed participants will not be retried.
 
 6. Performing a `PUT` on `{base uri}/lra-coordinator/{LRAId}/renew`
    along with a query parameter, `TimeLimit={timeout}`, will update
-   the timeout, in milliseconds, for the LRA starting from the time the
-   `PUT` request was acted upon.
+   the timeout, in milliseconds, for the LRA timeout starting from the time the
+   renew `PUT` request was acted upon.
 
 Once the LRA terminates the implementation may retain information about it
 for an indeterminate amount of time.
@@ -1077,12 +1125,14 @@ We call these endpoints the `compensation`, `completion`,
    - `DELETE forget URL` tells the participant that it can clean up and
      forget about the LRA.
 
-The URLs must be unique within the context of a given LRA.
+The URLs SHOULD be unique within the context of a given LRA.
+Non unique URLs means the participant would not be able to determine which
+participant is being notified that the LRA is completing/compensating.
 
 Typically the `status` and `forget` URLs will be the same URL.
 If the `forget` URL is not provided the `status` URL will be used in its place.
-The `status` and `forget` URLs are only required if the participant cannot
-finish immediately or if the coordinator is unable to determine the
+The coordinator calls the `status` and `forget` URLs only if the participant
+cannot finish immediately or if the coordinator is unable to determine the
 status (because of network failures, for example). They can be provided
 at [registration time](#participant-registration) or at
 [termination time](#participant-completion).
@@ -1137,13 +1187,22 @@ action. In particular, the data survives JVM failures.
 
 If the registration is successful a `recovery coordinator URL` is
 returned in the `Location` response header and the body.
+
+When the participant is subsequently told to complete or compensate the
+`recovery coordinator URL` MAY be made available to the participant
+via a request header.
+
+*To facilitate interoperability between different implementations of this
+specification we recommend that the context (`recovery coordinator URL`)
+is passed using an HTTP header with the name `Long-Running-Action-Recovery`*
+
 The `recovery coordinator URL` supports the following behaviour:
 
    - performing a `GET` on it will return the original `participant URL`;  
    - performing a `PUT` on it will overwrite the old `participant URL`
      with the new one supplied. If the participant is in need of recovery
      then this operation will trigger a recovery attempt (ie the
-     participant will be asked ot either compensate or complete depending
+     participant will be asked to either compensate or complete depending
      on whether the LRA was cancelled or closed);
    - performing a `DELETE`, `HEAD` or `POST` will return a `401 Unauthorized`;
 
@@ -1175,7 +1234,8 @@ supported query strings are:
 
 ###### Participant Completion
 
-The participant should respond to termination requests as follows:
+The participant should respond to termination requests (`PUT completion URL`)
+as follows:
 
    1. `204 No Content` and no body
       to indicate that the participant finished successfully.
@@ -1258,7 +1318,7 @@ There are at least two important use cases that call for traditional ACID
 transactions:
 
 1. the standard use case for Sagas is to implement the individual steps
-   in the Saga in the context of a traditional two phase transaction;
+   in the Saga by a traditional two phase transaction;
 2. in situations where repeatedly retrying compensatory actions is not
    a good solution, such as where coordination of an outcome across a
    number of endpoints (resources) has to be atomic.
@@ -1267,7 +1327,7 @@ Case 1 can be supported using the standard JTA 1.2 CDI annotations. For case
 2 we propose a REST based protocol (with both CDI and Java APIs) for managing
 the transaction context which is hereafter referred to as the SRA context
 (note that this blocking protocol should only be used by services that can
-tolerate the stronger coupling that a two phase protocol demands).
+tolerate the stronger coupling that the two phase protocol demands).
 
 ## Architecture
 

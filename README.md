@@ -78,7 +78,7 @@ do not communicate via HTTP we also define a pure java based registration API.
 
 It is expected that different implementations of this specification will need
 to interoperate and implementers should pay special attention
-[to the section on interoperability](interoperability-with-other-languages)
+[to the section on interoperability](#interoperability-with-other-languages)
 to achieve this goal.
 
 ## Motivation
@@ -495,7 +495,7 @@ that it can clean up. The developer indicates which method to use for this purpo
 by annotating one of the methods with the `@DELETE` and `@Forget` annotations. If the
 developer has not provided both of these methods then a warning is logged when
 the asynchronous termination method finishes. But note that the
-[interoperability portion of this specification](interoperability-with-other-languages)
+[interoperability portion of this specification](#interoperability-with-other-languages)
 allows the status URL to be reported in the response Location header and this will
 be used in place of the `@Status` and `@Forget` methods if present. However, there
 is no checking that the URLs are valid so mixing the two approaches is not recommended.

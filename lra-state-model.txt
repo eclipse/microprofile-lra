@@ -1,0 +1,51 @@
+/' Source for PlantUML state diagram
+   see plantuml.com
+  '/
+
+@startuml
+
+caption LRA Participant State Model
+
+[*] --> Completing
+[*] --> Compensating
+
+state "LRA Cancelled State" as Compensating {
+  state "Compensating" as Compensating
+  state "Compensated" as Compensated : Successfully compensated
+  state "FailedToCompensate" as FailedToCompensate : Compensation is not possible
+
+  Compensating --> Compensating : In progress
+  Compensating --> Compensated : Success
+  Compensating --> FailedToCompensate : Failure
+  Compensated --> [*]
+  FailedToCompensate --> [*]
+}
+
+state "LRA Closed State" as Completing {
+  state "Completing" as Completing
+  state "Completed" as Completed : Successfully completed
+  state "FailedToComplete" as FailedToComplete : Could not complete
+
+  Completing --> Completing : In progress
+  Completing --> Completed : Success
+  Completing --> FailedToComplete : Failure
+  Completed --> [*]
+  FailedToComplete --> [*]
+}
+
+note top of Completing
+  The LRA was
+  closed and
+  every participant
+  should attempt to
+  complete
+end note
+note top of Compensating
+  The LRA was
+  cancelled and
+  every participant
+  should attempt to
+  compensate
+end note
+
+@enduml

@@ -1,0 +1,51 @@
+//   Copyright (c) 2018 Contributors to the Eclipse Foundation
+// 
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+// 
+//        http://www.apache.org/licenses/LICENSE-2.0
+// 
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+
+= Running the Microprofile LRA TCK
+
+The TCK provides a JAX-RS participant resource together with a resource for invoking the test sutie.
+
+== Dependencies
+
+To enable the tests in your implementation of this specification you need to add the
+following dependency to your build:
+
+[source, xml]
+----
+<dependency>
+    <groupId>org.eclipse.microprofile.lra</groupId>
+    <artifactId>microprofile-lra-tck</artifactId>
+    <version>${version.microprofile-lra-tck-to-test}
+    </version>
+</dependency>
+----
+
+and then start a MicroProfile enabled container that scans this dependency for the JAX-RS resources
+that comrise the TCK. The TCK relies upon an instance of `org.eclipse.microprofile.lra.client.LRAClient`
+to be injected, via CDI, into the test suite. Your own dependencies should provide an implementation
+of LRAClient that can be used by CDI to satisfy the injection point.
+
+With this set up, you may trigger the TCK by sending a PUT request to the path tck/all:
+
+    curl -XPUT http://localhost:8080/tck/all?verbose=false | jq
+
+where jq is a json pretty printer such as https://stedolan.github.io/jq and the `tck/all` path runs
+all tests in the TCK. Setting verbose=true will include the full stack trace of any test failures.
+
+If you want to run a single test replace `all` with the name of the test you wish to run chosen from:
+`timeLimit`, `startLRA`, `cancelLRA`, `closeLRA`, `getActiveLRAs`, `getAllLRAs`, `isActiveLRA,
+`nestedActivity`, `completeMultiLevelNestedActivity`, `compensateMultiLevelNestedActivity`,
+`mixedMultiLevelNestedActivity`, `joinLRAViaHeader`, `join`, `leaveLRA`, `leaveLRAViaAPI`,
+`dependentLRA`, `cancelOn`, `cancelOnFamily` or `acceptTest`.
+

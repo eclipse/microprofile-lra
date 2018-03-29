@@ -1,0 +1,608 @@
+//   Copyright (c) 2018 Contributors to the Eclipse Foundation
+// 
+//    Licensed under the Apache License, Version 2.0 (the "License");
+//    you may not use this file except in compliance with the License.
+//    You may obtain a copy of the License at
+// 
+//        http://www.apache.org/licenses/LICENSE-2.0
+// 
+//    Unless required by applicable law or agreed to in writing, software
+//    distributed under the License is distributed on an "AS IS" BASIS,
+//    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//    See the License for the specific language governing permissions and
+//    limitations under the License.
+
+// Contributors:
+// Michael Musgrove
+// Nicola Ferraro
+// Ondra Chaloupka
+// Tom Jenkinson
+
+:authors: Michael Musgrove, Nicola Ferraro, Ondra Chaloupka, Tom Jenkinson
+:email: mmusgrov@redhat.com, ni.ferraro@gmail.com, ochaloup@redhat.com, tom.jenkinson@redhat.com
+:revnumber: 0.1
+:revdate: 2018-03-27
+:revremark: Specification
+:version-label!:
+:sectanchors:
+:doctype: book
+:license: Apache License v2.0
+:source-highlighter: coderay
+:toc: left
+:toclevels: 4
+:sectnums:
+ifdef::backend-pdf[]
+:pagenums:
+endif::[]
+:icons: font
+:sourcedir: ../../../../api/src/main/java
+
+
+[[long-running-actions]]
+= Eclipse MicroProfile LRA
+
+include::license-alv2.asciidoc[]
+
+[[introduction]]
+== Introduction
+
+The proposal introduces APIs for services to coordinate activities.
+
+The main thrust of the proposal introduces an API for loosely coupled
+services to coordinate long running activities in such a way as to
+guarantee a globally consistent outcome without the need to take locks
+on data.
+
+[[motivation]]
+== Motivation
+
+In a loosely coupled service based environment there is sometimes a need
+for different services to provide consistency guarantees. Typical
+examples include:
+
+* order processing involving three services (take order, bill customer,
+ship product). If the shipping service finds that it is out of stock
+then the customer will have been billed with no prospect of receiving
+his item;
+* an airline overbooks a flight which means that the booking count and
+the flight capacity are inconsistent.
+
+There are various ways that systems overcome such inconsistency but it
+would be advantageous to provide a generic solution which handles
+failure conditions, maintains state for those flows that span long
+periods of time and ensures that remedial activities are called
+correctly.
+
+Traditional techniques for guaranteeing consistency in distributed
+environments has focused on XA transactions where locks may be held for
+long periods thereby introducing strong coupling between services and
+decreasing concurrency to unacceptable levels. Additionally, if such a
+transaction aborts then valuable work which may be valid will be rolled
+back. In view of these issues an alternative approach is desirable.
+
+Goals
+
+* support long running actions
+* no strong coupling between services
+* allow actions to finish early
+* allow compensating actions if a business activity is cancelled
+
+[[proposed-solution]]
+== The solution
+
+We propose a compensation based approach in which participants make
+changes visible but register a compensatory action which is performed if
+something goes wrong. We call the model LRA (short for Long Running
+Action) and is based on work done within the
+https://www.oasis-open.org/committees/tc_home.php?wg_abbrev=ws-caf[OASIS
+Web Services Composite Application Framework Technical Committee],
+namely
+https://www.oasis-open.org/committees/document.php?document_id=12794[Long
+Running Action transaction model], but updated to be more suited for use
+in microservice based architectures.
+
+In the LRA model, an activity reflects business interactions: all work
+performed within the scope of an activity is required to be
+compensatable. Therefore, an activity’s work is either performed
+successfully or undone. How services perform their work and ensure it
+can be undone if compensation is required are implementation choices and
+is not exposed to the LRA model which simply defines the triggers for
+compensation actions and the conditions under which those triggers are
+executed. In other words, an LRA coordinator is concerned only with
+ensuring participants obey the protocol necessary to make an activity
+compensatable (and the semantics of the business interactions are not
+part of the model). Issues such as isolation of services between
+potentially conflicting activities and durability of service work are
+assumed to be implementation decisions. The coordination protocol used
+to ensure an activity is completed successfully or compensated is not
+two-phase and is intended to better model interactions between
+microservices. Although this may result in non-atomic behaviour for the
+overall business activity, other activities may be started by the
+service to attempt to compensate in some other manner.
+
+In the model, an LRA is tied to the scope of an activity so that when
+the activity terminates the LRA coordination protocol will be
+automatically performed either to accept or to compensate the work. For
+example, when a user reserves a seat on a flight, the airline
+reservation centre may take an optimistic approach and actually book the
+seat and debit the user's account, relying on the fact that most of
+their customers who reserve seats later book them; the compensation
+action for this activity would be to un-book the seat and credit the
+user’s account.
+
+As in any business interaction, service activities may or may not be
+compensatable. Even the ability to compensate may be a transient
+capability of a service. A Compensator (or simply LRA participant) is
+the LRA participant that operates on behalf of a service to undo the
+work it performs within the scope of an LRA or to compensate for the
+fact that the original work could not be completed.
+
+[[the-model]]
+=== The Model
+
+The model concerns participants (aka Compensators) and a coordinator.
+A client starts a new LRA via a call to an LRA coordination service.
+This call creates a new LRA coordinator. When a business service does
+work that may have to be later compensated for within the scope of the
+LRA, it enlists a participant with the LRA coordinator. Subsequently
+the client closes or cancels the LRA via the coordinator which in turn
+tells all enlisted participants to either complete or compensate:
+
+:imagesdir: images
+image::lra.png[LRA Protocol Sequence]
+
+The lifecycle of an LRA
+
+The LRA participant will be invoked in the following way by the LRA
+coordinator when the activity terminates:
+
+* *Success*: the client has closed the LRA and activity has completed
+successfully. If the activity is nested then participants may propagate
+themselves to the enclosing LRA. Otherwise the participants are informed
+that the activity has terminated and they can perform any necessary cleanup.
+* *Fail*: the client has cancelled the LRA and activity has completed
+unsuccessfully. All participants
+that are registered with the LRA will be invoked to perform compensation
+in the reverse order. The coordinator forgets about all participants
+that indicated they operated correctly. Otherwise, compensation may be
+attempted again (possibly after a period of time) or alternatively a
+compensation violation has occurred and must be logged. Each service is
+required to log sufficient information in order to ensure (with best
+effort) that compensation is possible. Each participant or subordinate
+coordinator (in the case of nested LRAs) is responsible for ensuring
+that sufficient data is made durable in order to undo the LRA in the
+event of failures.
+
+Interposition and check pointing of state allow the system to drive a
+consistent view of the outcome and recovery actions taken, but allowing
+always the possibility that recovery isn’t possible and must be logged
+or flagged for the administrator.
+
+In a large scale environment or in the presence of long term failures,
+recovery may not be automatic and manual intervention may be necessary
+to restore an application’s consistency.
+
+Note that calling participants in reverse order does not guarantee that
+the compensation actions will be performed in strict sequential order
+since participants are allowed to indicate that the compensation is in
+progress and will complete at some future time. Furthermore a
+participant can indicate that it failed to compensate, or could be
+unavailable in which case it will be periodically retried (out of
+order).
+
+Participants follow a state model with the following states:
+
+* `Compensating`: a participant is currently compensating for the work
+that it performed during the LRA;
+* `Compensated`: a participant has successfully compensated for the work
+that it performed during the LRA.
+* `FailedToCompensate`: the participant was not able to compensate the
+work it did during the LRA (it MUST not forget this outcome until the
+coordinator sends it a forget message).
+* `Completing`: the participant is tidying up after being told to
+complete.
+* `Completed`: the participant has confirmed that it has finished
+tidying up.
+* `FailedToComplete`: the participant was unable to tidy-up (it MUST not
+forget this outcome until the coordinator sends it a forget message).
+
+:imagesdir: images
+[[participant-state-model]]
+image::lra-state-model.png[link="participant-state-model"]
+
+The LRA follows a similar state model:
+
+* `Compensating`: the LRA is currently being cancelled
+* `Compensated`: the LRA has successfully cancelled
+* `FailedToCompensate`: at least one participant was not able to
+compensate
+* `Completing`: the LRA is currently being closed
+* `Completed`: the LRA has closed
+* `FailedToComplete`: at least one participants was not able to complete
+
+Different usage patterns for LRAs are possible, for example LRAs may be
+used sequentially and/or concurrently, where the termination of one LRA
+signals the start of some other unit of work within an application.
+However, LRAs are units of compensatable work and an application may
+have as many such units of work operating simultaneously as it needs to
+accomplish its tasks. Furthermore, the outcome of work within LRAs may
+determine how other LRAs are terminated. An application can be
+structured so that LRAs are used to assemble units of compensatable work
+and then held in the active state while the application performs other
+work in the scope of different (concurrent or sequential) LRAs. Only
+when the right subset of work (LRAs) is arrived at by the application
+will that subset be confirmed; all other LRAs will be told to cancel
+(complete in a failure state).
+
+In the rest of this proposal we specify two different APIs for
+controlling the lifecycle of and participation in LRAs and a third API
+for writing participants:
+
+1.  <<java-annotations-for-lras,Java Annotations for LRAs>> for controlling
+the lifecycle and membership of LRAs
+2.  <<lra-client-api,Client API>> for use with containers that do not use Java annotations
+3.  <<java-based-lra-participant-registration-api,Java based LRA participant registration API>>
+to support services that do not use JAX-RS
+
+[[java-annotations-for-lras]]
+=== Java Annotations for LRAs
+
+Support for the proposal in MicroProfile is primarily based upon the use
+of Java annotations for controlling the lifecycle of LRAs and participants.
+
+[[java-annotations]]
+==== Java Annotations
+
+A JAX-RS implementation of the specification should be achievable via a
+set of Java annotations which are available in the API package.
+The service developer annotates resources to specify how
+LRAs should be controlled and when to _enlist a class_ as a participant.
+
+[[controlling-the-lifecycle-of-an-lra]]
+The lifecycle of an LRA is controlled via the <<source-LRA,LRA annotation>>.
+
+The following code snippet demonstrates how to start an LRA in one method and close
+it in a different method:
+
+[source,java]
+----
+  @POST
+  @Path("/book")
+  @Produces(MediaType.APPLICATION_JSON)
+  @LRA(value = LRA.Type.REQUIRED,
+       cancelOn = {Response.Status.INTERNAL_SERVER_ERROR} // cancel on a 500 code
+       cancelOnFamily = {Response.Status.Family.CLIENT_ERROR}, // cancel on any 4xx code
+       delayClose = true) // the LRA will continue to run when the method finishes
+  public Response bookTrip(...) { ... }
+
+  @PUT
+  @Path("/confirm")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @LRA(LRA.Type.SUPPORTS,
+       terminal = true) // the confirmation should trigger the closing of the LRA started in the bookTrip bean method
+  public Booking confirmTrip(Booking booking) throws BookingException { ... }
+----
+
+When an LRA is present it MUST be made available to the business logic
+via <<source-LRA,request and response headers>> for example
+
+[source,java]
+----
+  @PUT
+  @Path("/confirm")
+  @Produces(MediaType.APPLICATION_JSON)
+  @LRA(LRA.Type.SUPPORTS, terminal = true)
+  public Booking confirmTrip(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) { ... }
+----
+
+[[compensating-activities]]
+==== Compensating Activities
+
+The application developer indicates which JAX-RS method to use for a compensating
+activity by annotating it with both the `@Compensate` the JAX-RS
+`@PUT` annotations. Whenever the associated resource is invoked in the context of
+an LRA the endpoint corresponding to the `@Compensate` method MUST be enlisted with
+the LRA. If the LRA is subsequently cancelled the compensation method MUST be invoked
+by the LRA coordinator. For example:
+
+[source,java]
+----
+  @PUT
+  @Path("/compensate")
+  @Produces(MediaType.APPLICATION_JSON)
+  @Compensate
+  public Response compensateWork(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) {
+    // compensate for whatever activity the business logic has associated with lraId
+  }
+----
+
+The resource class MAY also contain a method marked with the `@Complete` and the
+JAX-RS `@PUT` annotations. If such a method is present then the LRA
+coordinator MUST invoke the method when the associated LRA is closed.
+Typically the resource would use this call to perform any clean up actions. The
+method is optional since such clean up actions may not be necessary, for example
+consider an online store that takes provisional bookings which are automatically
+timed out if not confirmed within a predefined period.
+
+If the participant resource knows that it will never be able to compensate
+then the activity SHOULD return a `200 OK` status code and content body
+with the literal string `FailedToCompensate`. If it returns any other
+content the coordinator will call the JAX-RS endpoint declared by the
+`@Status` method to obtain the status. If the `@Status` method is not
+present the condition SHOULD be logged and this participant will be
+dropped by the coordinator (ie the participant should avoid this
+circumstance). Similar remarks apply if the resource method knows that it
+will never be able to complete.
+
+If the resource cannot perform a compensation or completion activity
+immediately the termination method MUST indicate the condition. In this
+case the LRA coordinator will need to monitor the progress of the
+participant and the developer should either provide a `@GET` method
+annotated with `@Status` which must return a
+<<participant-state-model,string representation of the status>>
+or expect the participant to be called again (ie the method
+must be idempotent). The resource indicates that it cannot finish
+immediately by either
+
+* returning a `202 Accepted` HTTP status code or
+* the method is marked as a JAX-RS asynchronous method (using the
+`javax.ws.rs.container.Suspended` annotation).
+
+When the coordinator knows it has the final status it will inform the
+participant that it can clean up. The developer indicates which method
+to use for this purpose by annotating one of the methods with the JAX-RS
+`@DELETE` and the `@Forget` annotations. If the developer wishes to report
+the status using some other resource then it MAY provide a status
+URL in the response Location header of the complete/compensate endpoint
+invocation. If the developer has not provided a status URL then a warning
+is logged when the asynchronous termination method finishes.
+
+If the `@Compensate` or `@Complete` annotation is present on multiple methods
+then an arbitrary one is chosen. If the annotation is not accompanied by
+a JAX-RS `@PUT` annotation the error should be reported using a JAX-RS
+exception mapper that maps to a `412 Precondition Failed` HTTP status code.
+
+[[nesting-lras]]
+==== Nesting LRAs
+
+An activity can be scoped within an existing LRA using the `@NestedLRA`
+annotation. Invoking a method marked with this annotation will start a
+new LRA whose outcome depends upon whether the enclosing LRA is closed
+or cancelled.
+
+* If the nested LRA is closed but the outer LRA is cancelled then the
+participants registered with the nested LRA will be told to compensate.
+* If the nested LRA is cancelled the outer LRA can be still closed.
+
+Note that there is no annotation to directly cancel a closed nested LRA
+and the <<lra-client-api,Java LRAClient api>> must be
+used for this purpose if required.
+
+[[timing-out-lras-and-compensators]]
+==== Timing out LRAs and Participants
+
+The ability to compensate may be a transient capability of a service so
+participants (and LRAs) can be timed out. When the time limit is reached
+participants will be notified via their compensation.
+
+To set such a time limit use the `@TimeLimit` annotation, for example:
+
+[source,java]
+----
+  @GET
+  @Path("/doitASAP")
+  @Produces(MediaType.APPLICATION_JSON)
+  @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
+  @LRA(value = LRA.Type.REQUIRED)
+  public Response theClockIsTicking(
+      @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) {...}
+----
+
+[[leaving-an-lra]]
+==== Leaving an LRA
+
+If a resource method annotated with `@Leave` is invoked in the context of
+a LRA and if the bean class has registered a participant with the active LRA
+it will be removed from the LRA just before the bean method is entered
+(and will not be asked to complete or compensate when the LRA is subsequently
+ended).
+
+[[reporting-the-status-of-a-participant]]
+==== Reporting the status of a participant
+
+As alluded to above, participants can provide a method for reporting the
+status of the participant by annotating one of the methods with the
+`@Status` annotation. The method is required when at least one the
+participant methods that is annotated with `@Compensate` or `@Complete`
+is not able to complete the task immediately. If the participant has not
+finished - ie. it has not yet been asked to `@Compensate` or `@Complete`
+it should report the error using a JAX-RS exception mapper that maps to
+a `412 Precondition Failed` HTTP status code (such as
+<<source-IllegalLRAStateException,IllegalLRAStateException>> or InvalidStateException).
+Otherwise the response entity must correspond to one of the
+<<source-ConpensatorStatus,ConpensatorStatus enum values (as reported by the enum `name()` method)>>
+
+Notice that the enum constants correspond to
+<<participant-state-model,participant state model>>
+
+[[forgetting-an-lra]]
+==== Forgetting an LRA
+
+If a participant is unable to complete or compensate immediately then it
+must remember the fact until explicitly told that it can clean up using
+the `@Forget` annotation. The method annotated with the `@Forget`
+annotation is a standard REST endpoint expected to be used with JAX-RS
+`@DELETE` annotation.
+
+[[failure-resilience]]
+==== Recovery Requirements
+
+This LRA specification provides guarantees of Atomicity, Consistency and Durability
+of work which places responsibilities on both spec implementors and application
+writers. Failure points include loss of contact with components managing the
+lifecycle of LRAs and of participants. Application writers need to know
+how to associated work with an LRA context so that the correct work
+can be compensated for even after JVM or node crashes.
+Likewise infrastructure components may become unavailable and state must
+survive system failures. The specification is not prescriptive about how
+an implementation achieves resiliency provided that it obeys the requirements
+of the spec as laid out in this document.
+
+[[lra-client-api]]
+=== LRA Client API
+
+For completeness the proposal supports clients that wish to directly
+control LRAs and participants. To support this class of user an instance of
+<<source-LRAClient,LRA Client API>>
+can be instantiated directly or injected if the client is using CDI. This
+interface gives developers complete programmatic control of LRAs.
+
+[[java-based-lra-participant-registration-api]]
+=== Java based LRA participant registration API
+
+If an application does not directly expose JAX-RS endpoints for
+compensation activities then participants can join an LRA directly using an instance of
+<<source-LRAManagement,LRAManagement>>
+This interface requires that a participant be a serializable java class conforming to the
+<<source-LRAParticipant,LRAParticipant interface>>
+To support the crash recovery requirements of this specification the application MAY provide
+a class that is capable of recreating a participant from its serialized form by registering an
+<<source-LRAParticipantDeserializer,LRAParticipantDeserializer interface>>
+This interface will be used during revovery to ask participants to complete or compensate.
+
+How the application obtains an LRAManagement instance is unspecified
+(but CDI injection could be an obvious choice).
+
+It is important to reiterate that participants must be serializable for this approach
+to work and that the need for the registration of deserializers is to support recovery
+scenarios where one or more components fail: the framework must guarantee that participants
+will still be triggered (the LRA protocol still provides the "all or
+nothing" guarantees that traditional transactions give). The
+deserializer provides a mechanism for the recovery component to recreate
+participants from their persistent form. Note that, in contrast to the
+JAX-RS based support, an installation must ensure that the java class
+definitions of `LRAParticipant`s be made available to the recovery system
+and that deserializers are registered as soon as the JVM hosting the original
+participants is started. An typical implementation might, for example, register
+a proxy participant on behalf of application registrations which knows how
+to communicate and listen for remote compensation requests.
+
+Serializable participants need to know how to contact the original
+business application in order to trigger compensation activities whereas
+the JAX-RS based solution need only persist resource paths which are likely
+to correspond to existing microservice endpoints. In other words, from
+an administrative and manageability point of view, it is desirable to
+use one of the other APIs such as the <<java-annotations-for-lras,Java
+Annotations for LRAs>>
+
+_An implementation might, for example, implement recovery by depending on an
+maven artifact that automatically starts up a proxy participant which
+listens for replay requests. For this to work the proxy must start up on
+the same endpoint or it must be told where the coordinator resides so
+that it can inform the coordinator of its new location: the way in which
+participants can report their location is not defined in this version of
+the specification but an example implementation might achieve the behaviour
+via an HTTP PUT operation on the `recovery URL`. If a service is restarted
+the classes for any previously registered participants must be on available
+on the classpath._
+
+[[appendix-1]]
+== Appendix 1: Selected Javadoc API Descriptions
+
+=== LRA Annotation
+[[source-LRA]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/LRA.java[LRA]
+----
+<<<
+
+=== IllegalLRAStateException
+[[source-IllegalLRAStateException]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/client/IllegalLRAStateException.java[IllegalLRAStateException]
+----
+<<<
+
+=== ConpensatorStatus
+[[source-ConpensatorStatus]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[ConpensatorStatus]
+----
+<<<
+
+=== LRAClient
+[[source-LRAClient]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/client/LRAClient.java[LRAClient]
+----
+<<<
+
+=== LRAManagement
+[[source-LRAManagement]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAManagement.java[LRAManagement]
+----
+<<<
+
+=== LRAParticipant
+[[source-LRAParticipant]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAParticipant.java[LRAParticipant]
+----
+<<<
+
+=== LRAParticipantDeserializer
+[[source-LRAParticipantDeserializer]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAParticipantDeserializer.java[LRAParticipantDeserializer]
+----
+<<<
+
+[[appendix-2]]
+== Appendix 2
+
+[[typical-recovery-scenarios]]
+=== Typical Recovery Scenarios
+
+Setup:
+
+* Start 2 services and an LRA coordinator
+* Start an LRA and enlist both services
+
+[[scenario-1]]
+==== Scenario 1
+
+* Kill the coordinator before closing the LRA
+* Restart the coordinator which should cause the LRA to be reloaded
+(from a log in persistent storage)
+* Since the LRA is still active recovery should leave it alone
+* Close the LRA
+* Each service should be told to complete (and the log should be
+removed)
+
+[[scenario-2]]
+==== Scenario 2
+
+* Kill one of the services before closing the LRA
+* The LRA close should fail because one of the services is down
+* Periodic recovery should keep retrying to close the LRA (even if you
+restart the coordinator it should still replay the close)
+* Restart the service
+* Periodic recovery should now successfully close the LRA
+
+[[scenario-3]]
+==== Scenario 3
+
+* Crash the second service after the first one has completed (this should
+generate a heuristic)
+* Restart the second service
+* Periodic recovery should replay the complete on the failed participant
+
+[[scenarios-4-5-and-6]]
+==== Scenarios 4, 5 and 6
+
+* And similarly, the same 3 scenarios but cancelling an LRA instead of
+closing it.

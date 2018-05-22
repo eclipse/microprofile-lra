@@ -1,0 +1,5 @@
+-exportcontents: \
+    org.eclipse.microprofile.*
+Bundle-SymbolicName: org.eclipse.microprofile.lra
+Bundle-Name: MicroProfile LRA Bundle
+Bundle-License: Apache License, Version 2.0

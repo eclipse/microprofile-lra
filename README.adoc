@@ -25,6 +25,8 @@ MicroProfile LRA proposal in progress
 
 == Introduction
 
+image:https://badges.gitter.im/eclipse/microprofile-lra.svg[link="https://gitter.im/eclipse/microprofile-lra?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
+
 The specification introduces APIs for services to coordinate activities.
 
 The main thrust of the proposal introduces an API for loosely coupled

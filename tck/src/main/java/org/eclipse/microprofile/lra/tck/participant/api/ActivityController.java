@@ -76,6 +76,10 @@ import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_RECOVERY_HE
 public class ActivityController {
     public static final String ACTIVITIES_PATH = "activities";
     public static final String ACCEPT_WORK = "acceptWork";
+
+    static final String WORK_RESOURCE_PATH = "/work";
+    static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
+
     private static final Logger LOGGER = Logger.getLogger(ActivityController.class.getName());
 
     static final String WORK_RESOURCE_PATH = "/work";
@@ -345,6 +349,17 @@ public class ActivityController {
 
     @PUT
     @Path(MANDATORY_LRA_RESOURCE_PATH)
+<<<<<<< HEAD
+=======
+    @LRA(LRA.Type.MANDATORY)
+    public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
+                                             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
+        return activityWithLRA(rcvId, lraId);
+    }
+
+    @PUT
+    @Path("/nestedActivity")
+>>>>>>> issue7 Context propagation across non-LRA aware services
     @LRA(LRA.Type.MANDATORY)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                              @HeaderParam(LRA_HTTP_HEADER) String lraId) {

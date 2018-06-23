@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -149,9 +150,16 @@ public class TckTests {
     @Before
     public void before() {
         try {
+            String rcPath = System.getProperty(LRA_RECOVERY_PATH_KEY, "lra-recovery-coordinator");
+
             msTarget = msClient.target(URI.create(new URL(micrserviceBaseUrl, "/").toExternalForm()));
+<<<<<<< HEAD
             recoveryTarget = rcClient.target(URI.create(rcBaseUrl.toExternalForm()));
         } catch (MalformedURLException e) {
+=======
+            recoveryTarget = rcClient.target(rcBaseUrl.toURI());
+        } catch (MalformedURLException | URISyntaxException  e) {
+>>>>>>> issue7 Context propagation across non-LRA aware services
             throw new RuntimeException(e);
         }
     }

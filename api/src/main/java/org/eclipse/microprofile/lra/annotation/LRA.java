@@ -40,7 +40,17 @@ import java.lang.annotation.Target;
  * performs will carry the same header so that the receiving resource knows that it
  * is inside an LRA context (typically achieved using JAX-RS client filters).
  *
- * Resource methods can access the context id, if required, by injecting it via
+ * Note that if an LRA is propagated to a resource that is not annotated with any
+ * particular LRA behaviour then the LRA will be suspended. But if this resource
+ * then performs an outgoing JAX-RS request then the suspended LRA must be
+ * propagated on this outgoing request. For example, suppose resource A starts an LRA
+ * and then performs a JAX-RS request to resource B which does not contain any LRA
+ * annotations. If resource B then performs a JAX-RS request to service C which does
+ * contain LRA annotations then the LRA context started at A must be propagated to C
+ * (for example if C uses LRAClient or annotations to join the LRA, then C must be
+ * enlisted in the LRA that was started at A).
+ *
+ * Resource methods can access the LRA context id, if required, by injecting it via
  * the JAX-RS @HeaderParam annotation. This may be useful, for example, for
  * associating business work with an LRA.
  */

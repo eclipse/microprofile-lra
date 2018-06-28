@@ -423,7 +423,7 @@ it should report the error using a JAX-RS exception mapper that maps to
 a `412 Precondition Failed` HTTP status code (such as
 <<source-IllegalLRAStateException,IllegalLRAStateException>> or InvalidStateException).
 Otherwise the response entity must correspond to one of the
-<<source-ConpensatorStatus,ConpensatorStatus enum values (as reported by the enum `name()` method)>>
+<<source-CompensatorStatus,CompensatorStatus enum values (as reported by the enum `name()` method)>>
 
 Notice that the enum constants correspond to
 <<participant-state-model,participant state model>>
@@ -526,10 +526,10 @@ include::{sourcedir}/org/eclipse/microprofile/lra/client/IllegalLRAStateExceptio
 ----
 <<<
 
-=== ConpensatorStatus
-[[source-ConpensatorStatus]]
+=== CompensatorStatus
+[[source-CompensatorStatus]]
 ----
-include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[ConpensatorStatus]
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[CompensatorStatus]
 ----
 <<<
 

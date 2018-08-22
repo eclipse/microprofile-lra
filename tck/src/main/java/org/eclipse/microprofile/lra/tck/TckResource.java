@@ -58,7 +58,7 @@ public class TckResource {
     public TckResult runTck(@PathParam("name") String testName, @DefaultValue("true") @QueryParam(VERBOSE) boolean isVerbose) {
         test.before();
 
-        TckResult results = test.runTck(lraClient, testName, isVerbose);
+        TckResult results = test.runTck(testName, isVerbose);
 
         test.after();
 

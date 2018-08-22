@@ -78,10 +78,8 @@ public class TckTests {
         initTck(lraClient);
     }
 
-    public TckResult runTck(LRAClient lraClient, String testname, boolean verbose) {
+    public TckResult runTck(String testname, boolean verbose) {
         TckResult run = new TckResult();
-
-        initTck(lraClient);
 
         run.add("timeLimit", TckTests::timeLimit, verbose);
         run.add("startLRA", TckTests::startLRA, verbose);

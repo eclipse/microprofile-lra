@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-class TckResult {
+public class TckResult {
     private List<TckMethodResult> tests;
     private List<TckMethodResult> results;
     private List<String> failures;

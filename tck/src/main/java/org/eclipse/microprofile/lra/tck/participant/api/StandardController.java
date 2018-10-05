@@ -64,7 +64,7 @@ public class StandardController {
             return Response.status(Response.Status.PRECONDITION_FAILED).entity(Entity.text("LRA context was not propagated")).build();
         }
 
-        return Response.ok(id).build();
+        return Response.ok().build();
     }
 
     private String checkStatusAndClose(Response response, int expected, boolean readEntity, WebTarget webTarget) {

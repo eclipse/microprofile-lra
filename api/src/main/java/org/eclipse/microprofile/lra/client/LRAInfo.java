@@ -37,22 +37,13 @@ public interface LRAInfo {
     String getClientId();
 
     /**
-     * @return  true if lra was successfully completed, false otherwise
-     */
-    boolean isComplete();
-
-    /**
-     * @return  true if lra was compensated, false otherwise
-     */
-    boolean isCompensated();
-
-    /**
      * @return  true if recovery is in progress on the lra, false otherwise
      */
     boolean isRecovering();
 
     /**
-     * @return  true if lra is in active state right now, false otherwise
+     * Test if the LRA has not been asked to close or cancel.
+     * @return  true if lra is in active state right now, false otherwise.
      */
     boolean isActive();
 
@@ -60,4 +51,12 @@ public interface LRAInfo {
      * @return  true if lra is top level (not nested), false otherwise
      */
     boolean isTopLevel();
+
+    /**
+     * The current status of this LRA. Valid values match
+     * {@link org.eclipse.microprofile.lra.annotation.CompensatorStatus}
+     * @return the status of the LRA. A null value or the empty string
+     * means that the LRA is still active ({@link LRAInfo#isActive()})
+     */
+    String getStatus();
 }

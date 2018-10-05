@@ -23,27 +23,37 @@ import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Activity implements Serializable {
-    private String id;
+    private static final long serialVersionUID = -4141599248046299770L;
+    private static final Logger LOGGER = Logger.getLogger(Activity.class.getName());
+
+    public String id;
     private String rcvUrl;
     private String statusUrl;
     private CompensatorStatus status;
+    private boolean registered;
+    private String registrationStatus;
     private String userData;
     private String endData;
+    private String how;
+    private String arg;
+    private boolean waiting;
 
     private final AtomicInteger acceptedCount = new AtomicInteger(0);
 
     public Activity(String txId) {
-        this.setId(txId);
+        this.id = txId;
     }
 
-    public String getId() {
-        return id;
+    public void setEndData(String endData) {
+        this.endData = endData;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String getEndData() {
+        return endData;
     }
 
     public String getRcvUrl() {
@@ -73,40 +83,65 @@ public class Activity implements Serializable {
     @Override
     public String toString() {
         return "Activity{" +
-                "id='" + getId() + '\'' +
+                "id='" + id + '\'' +
                 ", rcvUrl='" + getRcvUrl() + '\'' +
                 ", statusUrl='" + getStatusUrl() + '\'' +
                 ", status=" + getStatus() +
-                ", userData='" + getUserData() + '\'' +
                 ", endData='" + getEndData() + '\'' +
                 '}';
     }
 
-    public int getAndDecrementAcceptCount() {
-        return getAcceptedCount().getAndDecrement();
-    }
-
-    public String getUserData() {
-        return userData;
-    }
-
-    public void setUserData(String userData) {
-        this.userData = userData;
-    }
-
-    public String getEndData() {
-        return endData;
-    }
-
-    public void setEndData(String endData) {
-        this.endData = endData;
-    }
-
-    public AtomicInteger getAcceptedCount() {
-        return acceptedCount;
+    public int getAcceptedCount() {
+        return acceptedCount.get();
     }
 
     public void setAcceptedCount(int acceptedCount) {
         this.acceptedCount.set(acceptedCount);
+    }
+
+
+    public int getAndDecrementAcceptCount() {
+        return acceptedCount.getAndDecrement();
+    }
+
+    public String getHow() {
+        return how;
+    }
+
+    public void setHow(String how) {
+        this.how = how;
+    }
+
+    public String getArg() {
+        return arg;
+    }
+
+    public void setArg(String arg) {
+        this.arg = arg;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public synchronized void waitFor(long ms) {
+        waiting = true;
+
+        try {
+            wait(ms <= 0 ? Long.MAX_VALUE : ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Throwable e) {
+            LOGGER.log(Level.INFO, "activity wait threw " + e.getMessage());
+        }
+
+        waiting = false;
+    }
+
+    public synchronized void cleanup() {
+        if (waiting) {
+            notify();
+            waiting = false;
+        }
     }
 }

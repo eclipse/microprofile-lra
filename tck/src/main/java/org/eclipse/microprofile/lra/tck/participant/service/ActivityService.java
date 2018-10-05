@@ -51,4 +51,10 @@ public class ActivityService {
     public void remove(String id) {
         activities.remove(id);
     }
+
+    public void remove(Activity activity) {
+        activity.cleanup();
+
+        remove(activity.getId());
+    }
 }

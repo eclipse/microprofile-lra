@@ -399,13 +399,5 @@ public interface LRAClient {
      * @return the current LRA (can be null)
      */
     URL getCurrent();
-
-    /**
-     * Update the clients notion of the current coordinator.
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @param lraId the id of the LRA (can be null)
-     */
-    void setCurrentLRA(URL lraId);
+    
 }

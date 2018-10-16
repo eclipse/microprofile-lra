@@ -80,20 +80,6 @@ public interface LRAClient {
     String LRA_RECOVERY_PATH_KEY = "lra.coordinator.recovery.path";
 
     /**
-     * Set the endpoint on which the coordinator is available
-     *
-     * @param uri the url of the LRA coordinator
-     */
-    void setCoordinatorURI(URI uri);
-
-    /**
-     * Set the endpoint on which the recovery coordinator is available
-     *
-     * @param uri the url of the LRA recovery coordinator
-     */
-    void setRecoveryCoordinatorURI(URI uri);
-
-    /**
      * Explicitly dispose of all resources. After this call the instance may no
      * longer be useable
      */

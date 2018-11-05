@@ -32,10 +32,6 @@ import java.lang.annotation.Target;
  *
  * If the associated LRA is subsequently closed the method on which this
  * annotation is present will be invoked.
- *
- * The annotation can be combined with {@link TimeLimit} annotation to limit
- * the time that the participant will be guaranteed to be able to complete.
- * If the timelimit is reached then annotated method will be invoked.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

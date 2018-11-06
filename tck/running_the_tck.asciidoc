@@ -33,7 +33,7 @@ following dependency to your build:
 
 and then start a MicroProfile enabled container that scans this dependency for the JAX-RS resources
 that comrise the TCK. The TCK relies upon an instance of `org.eclipse.microprofile.lra.client.LRAClient`
-to be injected, via CDI, into the test suite. Your own dependencies should provide an implementation
+to be injected, via CDI, into the test suite. Your own dependencies should provide an already configured implementation
 of LRAClient that can be used by CDI to satisfy the injection point.
 
 With this set up, you may trigger the TCK by sending a PUT request to the path tck/all:

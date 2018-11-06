@@ -301,7 +301,7 @@ via <<source-LRA,request and response headers>> for example
 ==== Compensating Activities
 
 The application developer indicates which JAX-RS method to use for a compensating
-activity by annotating it with both the `@Compensate` the JAX-RS
+activity by annotating it with both the `@Compensate` and the JAX-RS
 `@PUT` annotations. Whenever the associated resource is invoked in the context of
 an LRA the endpoint corresponding to the `@Compensate` method MUST be enlisted with
 the LRA. If the LRA is subsequently cancelled the compensation method MUST be invoked
@@ -423,10 +423,10 @@ it should report the error using a JAX-RS exception mapper that maps to
 a `412 Precondition Failed` HTTP status code (such as
 <<source-IllegalLRAStateException,IllegalLRAStateException>> or InvalidStateException).
 Otherwise the response entity must correspond to one of the
-<<source-ConpensatorStatus,ConpensatorStatus enum values (as reported by the enum `name()` method)>>
+<<source-CompensatorStatus,CompensatorStatus enum values (as reported by the enum `name()` method)>>.
 
 Notice that the enum constants correspond to
-<<participant-state-model,participant state model>>
+<<participant-state-model,participant state model>>.
 
 [[forgetting-an-lra]]
 ==== Forgetting an LRA
@@ -444,7 +444,7 @@ This LRA specification provides guarantees of Atomicity, Consistency and Durabil
 of work which places responsibilities on both spec implementors and application
 writers. Failure points include loss of contact with components managing the
 lifecycle of LRAs and of participants. Application writers need to know
-how to associated work with an LRA context so that the correct work
+how to associate work with an LRA context so that the correct work
 can be compensated for even after JVM or node crashes.
 Likewise infrastructure components may become unavailable and state must
 survive system failures. The specification is not prescriptive about how
@@ -465,13 +465,13 @@ interface gives developers complete programmatic control of LRAs.
 
 If an application does not directly expose JAX-RS endpoints for
 compensation activities then participants can join an LRA directly using an instance of
-<<source-LRAManagement,LRAManagement>>
+<<source-LRAManagement,LRAManagement>>.
 This interface requires that a participant be a serializable java class conforming to the
-<<source-LRAParticipant,LRAParticipant interface>>
+<<source-LRAParticipant,LRAParticipant interface>>.
 To support the crash recovery requirements of this specification the application MAY provide
 a class that is capable of recreating a participant from its serialized form by registering an
-<<source-LRAParticipantDeserializer,LRAParticipantDeserializer interface>>
-This interface will be used during revovery to ask participants to complete or compensate.
+<<source-LRAParticipantDeserializer,LRAParticipantDeserializer interface>>.
+This interface will be used during recovery to ask participants to complete or compensate.
 
 How the application obtains an LRAManagement instance is unspecified
 (but CDI injection could be an obvious choice).
@@ -484,9 +484,9 @@ nothing" guarantees that traditional transactions give). The
 deserializer provides a mechanism for the recovery component to recreate
 participants from their persistent form. Note that, in contrast to the
 JAX-RS based support, an installation must ensure that the java class
-definitions of `LRAParticipant`s be made available to the recovery system
+definitions of <<source-LRAParticipant,LRAParticipants>> are made available to the recovery system
 and that deserializers are registered as soon as the JVM hosting the original
-participants is started. An typical implementation might, for example, register
+participants is started. A typical implementation might, for example, register
 a proxy participant on behalf of application registrations which knows how
 to communicate and listen for remote compensation requests.
 
@@ -496,7 +496,7 @@ the JAX-RS based solution need only persist resource paths which are likely
 to correspond to existing microservice endpoints. In other words, from
 an administrative and manageability point of view, it is desirable to
 use one of the other APIs such as the <<java-annotations-for-lras,Java
-Annotations for LRAs>>
+Annotations for LRAs>>.
 
 _An implementation might, for example, implement recovery by depending on an
 maven artifact that automatically starts up a proxy participant which
@@ -526,10 +526,10 @@ include::{sourcedir}/org/eclipse/microprofile/lra/client/IllegalLRAStateExceptio
 ----
 <<<
 
-=== ConpensatorStatus
-[[source-ConpensatorStatus]]
+=== CompensatorStatus
+[[source-CompensatorStatus]]
 ----
-include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[ConpensatorStatus]
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[CompensatorStatus]
 ----
 <<<
 

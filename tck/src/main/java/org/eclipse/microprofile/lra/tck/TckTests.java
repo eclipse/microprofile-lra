@@ -49,7 +49,6 @@ import java.util.stream.IntStream;
 
 import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_HOST_KEY;
 import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_PORT_KEY;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_PATH_KEY;
 import static org.eclipse.microprofile.lra.client.LRAClient.LRA_RECOVERY_PATH_KEY;
 import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACTIVITIES_PATH;
@@ -82,10 +81,8 @@ public class TckTests {
         initTck(lraClient);
     }
 
-    public TckResult runTck(LRAClient lraClient, String testname, boolean verbose) {
+    public TckResult runTck(String testname, boolean verbose) {
         TckResult run = new TckResult();
-
-        initTck(lraClient);
 
         run.add("timeLimit", TckTests::timeLimit, verbose);
         run.add("startLRA", TckTests::startLRA, verbose);
@@ -125,13 +122,9 @@ public class TckTests {
             int servicePort = Integer.getInteger("service.http.port", TEST_SWARM_PORT);
             String rcHost = System.getProperty(LRA_COORDINATOR_HOST_KEY, "localhost");
             int rcPort = Integer.getInteger(LRA_COORDINATOR_PORT_KEY, COORDINATOR_SWARM_PORT);
-            String coordinatorPath = System.getProperty(LRA_COORDINATOR_PATH_KEY, "lra-coordinator");
-            String rcPath = System.getProperty(LRA_RECOVERY_PATH_KEY, "lra-recovery-coordinator");
 
             micrserviceBaseUrl = new URL(String.format("http://localhost:%d", servicePort));
             rcBaseUrl = new URL(String.format("http://%s:%d/%s", rcHost, rcPort, rcPath));
-
-            lraClient.setCoordinatorURI(new URI(String.format("http://%s:%d/%s", rcHost, rcPort, coordinatorPath)));
 
             msClient = ClientBuilder.newClient();
             rcClient = ClientBuilder.newClient();

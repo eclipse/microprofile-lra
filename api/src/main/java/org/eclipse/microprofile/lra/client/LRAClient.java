@@ -303,11 +303,14 @@ public interface LRAClient {
 
     /**
      * Join an LRA passing in a class that will act as the participant.
-     * Similar to {@link LRAClient#joinLRA(URL, Class, URI, String)} except
+     * Similar to {@link LRAClient#joinLRA(URL, Long, URL, URL, URL, URL, URL, String)} except
      * that the various participant URLs are expressed as CDI annotations on
      * the passed in resource class.
      *
      * @param lraId The unique identifier of the LRA (required)
+     * @param timelimit The time limit (in seconds) that the participant can
+     *                 guarantee that it can compensate the work performed while
+     *                 the LRA is active.
      * @param resourceClass An annotated class for the participant methods:
      * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
      * @param baseUri Base uri for the participant endpoints
@@ -323,7 +326,8 @@ public interface LRAClient {
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    String joinLRA(URL lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
+    String joinLRA(URL lraId, Long timelimit, 
+                   Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
 
     /**

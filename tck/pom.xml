@@ -70,7 +70,7 @@
     </dependencies>
 
     <build>
-        <finalName>lra-test</finalName>
+        <finalName>microprofile-lra-tck</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

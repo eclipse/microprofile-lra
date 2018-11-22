@@ -22,6 +22,7 @@ package org.eclipse.microprofile.lra.tck;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.client.LRAClient;
 import org.eclipse.microprofile.lra.client.LRAInfo;
+import org.eclipse.microprofile.lra.tck.participant.api.StandardController;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -38,6 +39,7 @@ import javax.ws.rs.core.Response;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -58,6 +60,8 @@ public class TckTests {
 
     private static final int COORDINATOR_SWARM_PORT = 8082;
     private static final int TEST_SWARM_PORT = 8080;
+
+    private static final String RECOVERY_PATH_TEXT = "recovery";
 
     private static LRAClient lraClient;
     private static Client msClient;
@@ -99,6 +103,7 @@ public class TckTests {
         run.add("cancelOn", TckTests::cancelOn, verbose);
         run.add("cancelOnFamily", TckTests::cancelOnFamily, verbose);
         run.add("acceptTest", TckTests::acceptTest, verbose);
+        run.add("noLRATest", TckTests::noLRATest, verbose);
 
         run.runTests(this, testname);
 
@@ -119,7 +124,7 @@ public class TckTests {
             int rcPort = Integer.getInteger(LRA_COORDINATOR_PORT_KEY, COORDINATOR_SWARM_PORT);
 
             micrserviceBaseUrl = new URL(String.format("http://localhost:%d", servicePort));
-            rcBaseUrl = new URL(String.format("http://%s:%d", rcHost, rcPort));
+            rcBaseUrl = new URL(String.format("http://%s:%d/%s", rcHost, rcPort, rcPath));
 
             msClient = ClientBuilder.newClient();
             rcClient = ClientBuilder.newClient();
@@ -141,9 +146,11 @@ public class TckTests {
     @Before
     public void before() {
         try {
+            String rcPath = System.getProperty(LRA_RECOVERY_PATH_KEY, "lra-recovery-coordinator");
+
             msTarget = msClient.target(URI.create(new URL(micrserviceBaseUrl, "/").toExternalForm()));
-            recoveryTarget = rcClient.target(URI.create(new URL(rcBaseUrl, "/").toExternalForm()));
-        } catch (MalformedURLException e) {
+            recoveryTarget = rcClient.target(rcBaseUrl.toURI());
+        } catch (MalformedURLException | URISyntaxException  e) {
             throw new RuntimeException(e);
         }
     }
@@ -584,10 +591,9 @@ public class TckTests {
             lraClient.cancelLRA(lra);
 
         if (waitForRecovery) {
-            String recoveryPath = System.getProperty(LRA_RECOVERY_PATH_KEY, "lra-recovery-coordinator");
             // trigger a recovery scan which trigger a replay attempt on any participants
             // that have responded to complete/compensate requests with Response.Status.ACCEPTED
-            resourcePath = recoveryTarget.path(recoveryPath).path("recovery");
+            resourcePath = recoveryTarget.path(RECOVERY_PATH_TEXT);
             Response response2 = resourcePath
                     .request().get();
 
@@ -596,7 +602,38 @@ public class TckTests {
 
         int countAfter = lraClient.getActiveLRAs().size();
 
-        assertEquals(countBefore, countAfter, "joinAndEnd: wrong LRA count", resourcePath);
+        assertEquals(0, countAfter, "joinAndEnd: some LRAs were not recovered", resourcePath);
+    }
+
+    @Test
+    private String noLRATest() throws WebApplicationException {
+        WebTarget resourcePath = msTarget
+                .path(StandardController.ACTIVITIES_PATH3)
+                .path(StandardController.NON_TRANSACTIONAL_WORK);
+
+        int[] cnt1 = {completedCount(true), completedCount(false)};
+        URL lra = lraClient.startLRA(null, "SpecTest#noLRATest",
+            LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+
+        Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra)
+            .put(Entity.text(""));
+
+        String result = checkStatusAndClose(response, Response.Status.OK.getStatusCode(),
+             true, resourcePath);
+
+        assertEquals(result, lra.toExternalForm(), "service returned the wrong LRA", null);
+
+        lraClient.cancelLRA(lra);
+
+        // check that second service (the LRA aware one), namely
+        // {@link org.eclipse.microprofile.lra.tck.participant.api.ActivityController#activityWithMandatoryLRA(String, String)}
+        // was told to compensate
+        int[] cnt2 = {completedCount(true), completedCount(false)};
+
+        assertEquals(cnt1[0], cnt2[0], "complete should not have been called", resourcePath);
+        assertEquals(cnt1[1] + 1, cnt2[1], "compensate should have been called", resourcePath);
+
+        return "passed";
     }
 
     private void renewTimeLimit() {
@@ -636,8 +673,9 @@ public class TckTests {
         try {
             if (expected != -1 && response.getStatus() != expected) {
                 if (webTarget != null) {
-                    throw new WebApplicationException(webTarget.getUri().toString(), response);
-                }
+                    throw new WebApplicationException(
+                            String.format("%s: expected status %d got %d",
+                                    webTarget.getUri().toString(), expected, response.getStatus()), response);                }
 
                 throw new WebApplicationException(response);
             }

@@ -76,10 +76,6 @@ import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_RECOVERY_HE
 public class ActivityController {
     public static final String ACTIVITIES_PATH = "activities";
     public static final String ACCEPT_WORK = "acceptWork";
-
-    static final String WORK_RESOURCE_PATH = "/work";
-    static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
-
     private static final Logger LOGGER = Logger.getLogger(ActivityController.class.getName());
 
     @Inject
@@ -307,7 +303,7 @@ public class ActivityController {
     }
 
     @PUT
-    @Path(WORK_RESOURCE_PATH)
+    @Path("/work")
     @LRA(LRA.Type.REQUIRED)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                     @HeaderParam(LRA_HTTP_HEADER) String lraId) {
@@ -337,14 +333,6 @@ public class ActivityController {
         checkStatusAndClose(response, Response.Status.OK.getStatusCode());
 
         return id;
-    }
-
-    @PUT
-    @Path(MANDATORY_LRA_RESOURCE_PATH)
-    @LRA(LRA.Type.MANDATORY)
-    public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
-                                             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
-        return activityWithLRA(rcvId, lraId);
     }
 
     @PUT

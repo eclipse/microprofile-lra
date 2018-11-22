@@ -21,35 +21,54 @@
 package org.eclipse.microprofile.lra.annotation;
 
 /**
- * The status of a participant. The status is only valid after the coordinator
- * has told the participant to complete or compensate. The name value of the
- * enum should be returned by participant methods marked with
- * the {@link Status} annotation.
+ * A representation of the status of a participant according to a
+ * participant state model:
+ *
+ * The initial state Compensating is entered when a compensate
+ * notification is received (which indicates that the associated
+ * LRA was cancelled). The transition to end state Compensated
+ * should occur when the participant has compensated for any actions
+ * it performed when the LRA was executing. If compensation is not
+ * possible then the final state of FailedToCompensate is entered and
+ * the participant cannot leave this state until it receives a
+ * forget notification {@link Forget}.
+ *
+ * Similarly the initial state Completing is entered when a complete
+ * notification is received (which indicates that the associated
+ * LRA was closed). This state is followed by Completed
+ * or FailedToComplete depending upon whether the participant was or
+ * was not able to tidy up.
+
+ * Note that according to this state model a participant does not
+ * have a state until it is asked to complete or compensate. The name
+ * value of the enum should be returned by participant methods marked with
+ * the {@link Status}, {@link Compensate} and {@link Complete} annotations.
  */
 public enum CompensatorStatus {
     /**
-     * The Compensator is currently compensating for the LRA
+     * The participant is currently compensating any work it performed
      */
     Compensating,
     /**
-     * The Compensator has successfully compensated for the LRA
+     * The participant has successfully compensated for any work it performed
      */
     Compensated,
     /**
-     * The Compensator was not able to compensate for the LRA (and must remember
-     * it could not compensate until such time that it receives a forget message)
+     * The participant was not able to compensate the work it performed (and must
+     * remember it could not compensate until such time that it receives a forget
+     * message ({@link Forget})
      */
     FailedToCompensate,
     /**
-     * The Compensator is tidying up after being told to complete
+     * The participant is tidying up after being told to complete
      */
     Completing,
     /**
-     * The Compensator has confirmed
+     * The participant has confirmed
      */
     Completed,
     /**
-     * The Compensator was unable to tidy-up
+     * The participant was unable to tidy-up
      */
     FailedToComplete,
 }

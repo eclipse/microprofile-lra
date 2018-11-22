@@ -30,6 +30,16 @@ import java.lang.annotation.Target;
 /**
  * An annotation for controlling the lifecycle of Long Running Actions (LRAs).
  *
+ * The annotation SHOULD be applied to JAX-RS annotated methods otherwise
+ * it MAY have no effect. The annotation determines whether or not the annotated
+ * method will run in the context of an LRA and controls whether or not:
+ *
+ * - any incomming context should be suspended and if so if a new one should be started.
+ * - to start an new LRA.
+ * - to end any LRA context when the method ends.
+ * - to throw an exception if there should be an LRA present on method entry.
+ * - to throw an exception if the method returns particular HTTP status codes.
+ *
  * Newly created LRAs are uniquely identified and the id is referred to as the
  * LRA context. The context is passed around using a JAX-RS request/response header
  * called {@link org.eclipse.microprofile.lra.client.LRAClient#LRA_HTTP_HEADER}.
@@ -38,9 +48,19 @@ import java.lang.annotation.Target;
  * propagation and destruction of LRAs using the @LRA annotation. When a JAX-RS bean
  * method is invoked in the context of an LRA any JAX-RS client requests that it
  * performs will carry the same header so that the receiving resource knows that it
- * is inside an LRA context (typically achieved using JAX-RS client filters).
+ * is inside an LRA context.
  *
- * Resource methods can access the context id, if required, by injecting it via
+ * If an LRA is propagated to a resource that is not annotated with any
+ * particular LRA behaviour then the LRA will be suspended. But if this resource
+ * then performs an outgoing JAX-RS request then the suspended LRA must be propagated
+ * on this second outgoing request. For example, suppose resource A starts an LRA
+ * and then performs a JAX-RS request to resource B which does not contain any LRA
+ * annotations. If resource B then performs a JAX-RS request to a third service, C say,
+ * which does contain LRA annotations then the LRA context started at A must be propagated
+ * to C (for example if C uses LRAClient or annotations to join the LRA, then C must be
+ * enlisted in the LRA that was started at A).
+ *
+ * Resource methods can access the LRA context id, if required, by injecting it via
  * the JAX-RS @HeaderParam annotation. This may be useful, for example, for
  * associating business work with an LRA.
  */
@@ -51,33 +71,62 @@ public @interface LRA {
 
     /**
      * The Type element of the LRA annotation indicates whether a bean method
-     * is to be executed within a compensatable LRA context.
+     * is to be executed within the context of a LRA.
+     *
+     * If the method is to run in the context of an LRA and the annotated class
+     * also contains methods annotated with {@link Compensate}/{@link Compensate}
+     * then the bean will enlisted with the LRA. Enlisting with an LRA means that
+     * the bean will be notified when the current LRA is later cancelled/closed.
+     *
+     * The element values
+     * {@link LRA.Type#REQUIRED} and {@link LRA.Type#REQUIRES_NEW} can start
+     * new LRAs which by default will be closed when the annotated method
+     * completes. This default behaviour can be overridden using the
+     * {@link LRA#delayClose()} attibute which will leave the new LRA active
+     * when the method completes. To force the LRA to cancel instead of complete
+     * use the {@link LRA#cancelOnFamily()} or {@link LRA#cancelOn()} atributes.
+     *
+     * If an LRA was already present before the annotated method is invoked then it
+     * will remain active after the method completes. This default behaviour can be
+     * overridden using the {@link LRA#terminal()} attibute which will force
+     * the LRA to complete or cancel (if the {@link LRA#cancelOnFamily()} or
+     * {@link LRA#cancelOn()} atributes are present).
+     *
+     * When an LRA is present its identifer MUST be made available to
+     * the business logic in the JAX-RS request and response header
+     * {@link org.eclipse.microprofile.lra.client.LRAClient#LRA_HTTP_HEADER}
+     *
      * @return whether a bean method is to be executed within a transaction context.
      */
     Type value() default Type.REQUIRED;
 
-    /**
-     * The Type element of the annotation indicates whether a bean method
-     * is to be executed within a compensatable transaction (aka LRA) context
-     * where the values provide the following behaviors:
-     */
     enum Type {
         /**
-         *  If called outside a LRA context a JAX-RS filter will begin a new
-         *  LRA for the duration of the method call and when the call completes
-         *  another JAX-RS filter will complete the LRA.
+         * If called outside a LRA context a new LRA will be created for the
+         * the duration of the method call and when the call completes it will
+         * be closed.
+         *
+         * If called inside a LRA context the invoked method will run with the
+         * same context and the context will remain active after the method
+         * completes.
          */
         REQUIRED,
 
         /**
-         *  If called outside a LRA context a JAX-RS filter will begin a new
-         *  LRA for the duration of the method call and when the call completes
-         *  another JAX-RS filter will complete the LRA.
+         * If called outside a LRA context a new LRA will be created for the
+         * the duration of the method call and when the call completes it will
+         * be terminated (closed or cancelled).
          *
-         *  If called inside a LRA context a JAX-RS filter will suspend it and
-         *  begin a new LRA for the duration of the method call and when the call
-         *  completes another JAX-RS filter will complete the LRA and resume the
-         *  one that was active on entry to the method.
+         * If called inside a LRA context it will be suspended and a new LRA
+         * context will be created for the duration of the call. When the method
+         * finishes this new LRA will be terminated (closed or cancelled) and
+         * the original context will be resumed.
+         *
+         * But note that if there was already a context active before the method
+         * was invoked and the {@link LRA#delayClose} attribute is set to true
+         * then the new LRA is left active. In this case the original LRA will
+         * remain suspended unless the {@link LRA#terminal()} attribute was also
+         * set to true in which case the original LRA cntext will be closed/cancelled.
          */
         REQUIRES_NEW,
 
@@ -139,7 +188,7 @@ public @interface LRA {
 
     /**
      * The cancelOnFamily element can be set to indicate which families of
-     * HTTP response codes will cause the LRA to cancel. By default client
+     * HTTP response codes will cause the current LRA to cancel. By default client
      * errors (4xx codes) and server errors (5xx codes) will result in
      * cancellation of the LRA.
      *
@@ -151,10 +200,10 @@ public @interface LRA {
 
     /**
      * The cancelOn element can be set to indicate which  HTTP response
-     * codes will cause the LRA to cancel
+     * codes will cause the current LRA to cancel
      *
      * @return the {@link Response.Status} HTTP status codes that will cause
      * cancellation of the LRA
      */
-    Response.Status [] cancelOn() default {};
+    Response.Status[] cancelOn() default {};
 }

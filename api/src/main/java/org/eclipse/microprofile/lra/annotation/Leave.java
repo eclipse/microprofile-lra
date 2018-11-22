@@ -30,7 +30,9 @@ import java.lang.annotation.Target;
  * participant annotations on the class it will join the LRA (as a participant).
  * In addition, if it also contains a method annotated with @Leave then any
  * subsequent call to this @Leave method in the context of the same LRA will
- * cause participant to leave the LRA. But do note that if any of the other resource
+ * cause participant to leave the LRA.
+ *
+ * But do note that if any of the other resource
  * methods are invoked again in the same LRA context it will rejoin the LRA.
  */
 @Retention(RetentionPolicy.RUNTIME)

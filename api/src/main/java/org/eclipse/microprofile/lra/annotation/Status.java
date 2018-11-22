@@ -27,20 +27,32 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * LRA annoations support distributed communications amongst software
+ * components and due to the unreliable nature of networks,
+ * messages/requests can be lost, delayed or duplicated etc and the
+ * implementation component responsible for invoking {@link Compensate}
+ * and {@link Complete} annotated methods may loose track of the status of
+ * a particpant. In this case, ideally it would just resend the completion
+ * or compensation notication but if the participant (the class that
+ * contains the Compensate and Complete annotations) does not
+ * support idempotency then it must be able to report its' status by
+ * by annotating one of the methods with this <em>@Status</em> annotation
+ * together with the <em>@GET</em> JAX-RS annotation.
+ * The annotated method should report the status according to one of the
+ * {@link CompensatorStatus} enum values.
  *
- * In order to support recovery compensators must be able to report their status
- * once the completion part of the protocol starts.
+ * If the participant has already responded successfully to an invocation
+ * of the <em>@Compensate</em> or <em>@Complete</em> method then it may
+ * report <em>404 Not Found</em> HTTP status code. This enables the
+ * participant to free up resources.
  *
- * Methods annotated with this annotation must be JAX-RS resources and respond
- * to GET requests (ie are annotated with javax.ws.rs.Path and javax.ws.rs.GET,
- * respectively). They must report their status using one of the enum names
- * listed in {@link CompensatorStatus} whenever an HTTP GET request is made on
- * the method.
- *
- * If the participant has not yet been asked to complete or compensate it should
- * return with a <code>412 Precondition Failed</code> HTTP status code. NB although
- * this circumstance could be detected via the framework it would necessitate a
- * network call to the LRA coordinator.
+ * If this status method is invoked before either of the <em>@Compensate</em>
+ * or <em>@Complete</em> methods have been called then the participant
+ * should report that it does not yet have a status using a JAX-RS
+ * exception mapper that maps to a <em>412 Precondition Failed</em> HTTP
+ * status code (such as
+ * {@link org.eclipse.microprofile.lra.client.IllegalLRAStateException}
+ * but any exception that maps to 412 will do).
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)

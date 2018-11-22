@@ -26,10 +26,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * If a participant is unable to compensate it must remember the fact (by
- * reporting it when asked for its' {@link Status}) until it is explicitly
- * told to forget. To support this requirement the developer should annotate
- * one of the participant methods with @Forget.
+ * If a participant is unable to complete or compensate immediately
+ * (ie it has indicated that the request has been accepted and is
+ * in progress) or because of a failure (ie will never be able to finish)
+ * then it must remember the fact (by reporting it when asked for its'
+ * {@link Status})) until explicitly told that it can clean
+ * up using this <em>@Forget</em> annotation. The annotated method
+ * must be a standard JAX-RS endpoint annotated with the JAX-RS
+ * <em>@DELETE</em> annotation.
+ *
+ * Related information is provided in the javadoc for the {@link Status}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

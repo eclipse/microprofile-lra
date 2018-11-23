@@ -332,9 +332,10 @@ public interface LRAClient {
      * @param recoveryUrl the recovery URL returned from a participant join request
      * @param compensateUrl the URL to invoke when the LRA is cancelled
      * @param completeUrl the URL to invoke when the LRA is closed
+     * @param forgetUrl used to inform the participant that it can forget about this LRA
+     * @param leaveUrl the URL to invoke when the participant should be removed from the LRA
      * @param statusUrl if a participant cannot finish immediately then it provides
      *                  this URL that the coordinator uses to monitor the progress
-     * @param forgetUrl used to inform the participant that can forget about this LRA
      * @param compensatorData opaque data that returned to the participant when the
      *                       LRA is closed or cancelled
      * @return an updated recovery URL for this participant
@@ -343,8 +344,26 @@ public interface LRAClient {
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
     URL updateCompensator(URL recoveryUrl, URL compensateUrl, URL completeUrl,
-                          URL forgetUrl, URL statusUrl,
+                          URL forgetUrl, URL leaveUrl, URL statusUrl,
                           String compensatorData) throws GenericLRAException;
+
+    /**
+     * Change the endpoints that a participant can be contacted on.
+     * Similar to {@link LRAClient#updateCompensator(URL, URL, URL, URL, URL, URL, String)}.
+     *
+     * @param recoveryUrl the recovery URL returned from a participant join request
+     * @param resourceClass An annotated class for the participant methods:
+     *      * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
+     * @param baseUri Base uri for the participant endpoints
+     * @param compensatorData opaque data that returned to the participant when the
+     *                       LRA is closed or cancelled
+     * @return an updated recovery URL for this participant
+     * @throws GenericLRAException if the request to the coordinator failed.
+     * {@link GenericLRAException#getCause()} and/or
+     * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
+     */
+    URL updateCompensator(URL recoveryUrl, Class<?> resourceClass, URI baseUri, String compensatorData) 
+            throws GenericLRAException;
 
     /**
      * A Compensator can resign from the LRA at any time prior to the completion

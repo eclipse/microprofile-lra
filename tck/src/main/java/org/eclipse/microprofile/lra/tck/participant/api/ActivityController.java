@@ -250,7 +250,6 @@ public class ActivityController {
     @PUT
     @Path(ActivityController.ACCEPT_WORK)
     @LRA(value = LRA.Type.REQUIRED, terminal = false)
-    // TODO Verify, this seems not used by any of the TCK tests
     public Response acceptWork(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
@@ -269,7 +268,6 @@ public class ActivityController {
     @PUT
     @Path("/supports")
     @LRA(value = LRA.Type.SUPPORTS, terminal = false)
-    // TODO Verify, this seems not used by any of the TCK tests
     public Response supportsLRACall(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 

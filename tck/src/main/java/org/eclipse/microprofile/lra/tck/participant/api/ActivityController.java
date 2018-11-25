@@ -78,6 +78,11 @@ public class ActivityController {
     public static final String ACCEPT_WORK = "acceptWork";
     private static final Logger LOGGER = Logger.getLogger(ActivityController.class.getName());
 
+    static final String WORK_RESOURCE_PATH = "/work";
+    static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
+
+    private static final String MISSING_LRA_DATA = "Missing lra data";
+
     @Inject
     private LRAClient lraClient;
 
@@ -113,8 +118,7 @@ public class ActivityController {
         if (activity.getAndDecrementAcceptCount() <= 0) {
             if (activity.getStatus() == CompensatorStatus.Completing) {
                 activity.setStatus(CompensatorStatus.Completed);
-            }
-            else if (activity.getStatus() == CompensatorStatus.Compensating) {
+            } else if (activity.getStatus() == CompensatorStatus.Compensating) {
                 activity.setStatus(CompensatorStatus.Compensated);
             }
         }
@@ -258,8 +262,9 @@ public class ActivityController {
 
         Activity activity = addWork(lraId, rcvId);
 
-        if (activity == null)
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity("Missing lra data").build();
+        if (activity == null) {
+            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
+        }
 
         activity.setAcceptedCount(1); // tests that it is possible to asynchronously complete
         return Response.ok(lraId).build();
@@ -296,14 +301,15 @@ public class ActivityController {
         String id = restPutInvocation(lra,"supports", "");
 
         // check that the invoked method saw the LRA
-        if (id == null || !lraId.equals(id))
+        if (!lraId.equals(id)) {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
+        }
 
         return Response.ok(id).build();
     }
 
     @PUT
-    @Path("/work")
+    @Path(WORK_RESOURCE_PATH)
     @LRA(LRA.Type.REQUIRED)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                     @HeaderParam(LRA_HTTP_HEADER) String lraId) {
@@ -311,8 +317,9 @@ public class ActivityController {
 
         Activity activity = addWork(lraId, rcvId);
 
-        if (activity == null)
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity("Missing lra data").build();
+        if (activity == null) {
+            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
+        }
 
         return Response.ok(lraId).build();
     }
@@ -327,12 +334,21 @@ public class ActivityController {
                 .header(LRAClient.LRA_HTTP_HEADER, lraURL)
                 .put(Entity.text(bodyText));
 
-        if (response.hasEntity())
+        if (response.hasEntity()) {
             id = response.readEntity(String.class);
+        }
 
         checkStatusAndClose(response, Response.Status.OK.getStatusCode());
 
         return id;
+    }
+
+    @PUT
+    @Path(MANDATORY_LRA_RESOURCE_PATH)
+    @LRA(LRA.Type.MANDATORY)
+    public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
+                                             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
+        return activityWithLRA(rcvId, lraId);
     }
 
     @PUT
@@ -345,8 +361,9 @@ public class ActivityController {
 
         Activity activity = addWork(nestedLRAId, rcvId);
 
-        if (activity == null)
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity("Missing lra data").build();
+        if (activity == null) {
+            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
+        }
 
         return Response.ok(nestedLRAId).build();
     }
@@ -362,15 +379,15 @@ public class ActivityController {
 
         Activity activity = addWork(nestedLRAId, rcvId);
 
-        if (activity == null)
-            return Response.status(Response.Status.EXPECTATION_FAILED).entity("Missing lra data").build();
+        if (activity == null) {
+            return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
+        }
 
         URL lraURL;
 
         try {
             lraURL = new URL(URLDecoder.decode(nestedLRAId, "UTF-8"));
-        }
-        catch (MalformedURLException | UnsupportedEncodingException e) {
+        } catch (MalformedURLException | UnsupportedEncodingException e) {
             throw new InvalidLRAIdException(nestedLRAId, e.getMessage(), e);
         }
 
@@ -387,8 +404,7 @@ public class ActivityController {
 
         try {
             return activityService.getActivity(lraId);
-        }
-        catch (NotFoundException e) {
+        } catch (NotFoundException e) {
             Activity activity = new Activity(lraId);
 
             activity.setRcvUrl(rcvId);
@@ -461,8 +477,7 @@ public class ActivityController {
 
         try {
             Thread.sleep(300); // sleep for 200 miliseconds (should be longer than specified in the @TimeLimit annotation)
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
@@ -487,8 +502,7 @@ public class ActivityController {
             lraClient.renewTimeLimit(lraToURL(lraId, "Invalid LRA id"), 300, TimeUnit.MILLISECONDS);
             // sleep for 200000 micro seconds (should be longer than specified in the @TimeLimit annotation)
             Thread.sleep(200);
-        }
-        catch (InterruptedException e) {
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
         return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
@@ -571,10 +585,10 @@ public class ActivityController {
 
     private void checkStatusAndClose(Response response, int expected) {
         try {
-            if (response.getStatus() != expected)
+            if (response.getStatus() != expected) {
                 throw new WebApplicationException(response);
-        }
-        finally {
+            }
+        } finally {
             response.close();
         }
     }
@@ -582,8 +596,7 @@ public class ActivityController {
     private static URL lraToURL(String lraId, String errorMessage) {
         try {
             return new URL(lraId);
-        }
-        catch (MalformedURLException e) {
+        } catch (MalformedURLException e) {
             LOGGER.log(Level.WARNING, "Can't construct URL from LRA id " + lraId, e);
             throw new GenericLRAException(null, Response.Status.BAD_REQUEST.getStatusCode(),
                     errorMessage + ": " + lraId, e);

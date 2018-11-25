@@ -21,6 +21,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -37,7 +38,7 @@ public class TckResult {
     }
 
     void add(String testName, Function<TckTests, String> testMethod, boolean verbose) {
-        tests.add( new TckMethodResult(testName, testMethod, verbose));
+        tests.add(new TckMethodResult(testName, testMethod, verbose));
     }
 
     void runTests(TckTests testSpec, String testname) {
@@ -48,7 +49,16 @@ public class TckResult {
         if (tckTest.isPresent()) {
             tckTest.get().test(testSpec);
         } else {
-            tests.forEach(t -> t.test(testSpec));
+            List<String> testNames = Arrays.asList(testname.split(","));
+            List<TckMethodResult> intersect = tests.stream()
+                    .filter(t -> testNames.contains(t.getTestName()))
+                    .collect(Collectors.toList());
+
+            if (intersect.size() != 0) {
+                intersect.forEach(t -> t.test(testSpec));
+            } else {
+                tests.forEach(t -> t.test(testSpec));
+            }
         }
 
         failures = tests.stream()

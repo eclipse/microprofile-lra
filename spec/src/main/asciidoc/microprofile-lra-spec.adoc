@@ -366,7 +366,7 @@ provided in the quick overview links above but are worth repeating here:
     the original context will be resumed. +
      +
     But note that if there was already a context active before the method
-    was invoked and the `LRA#delayClose()` attribute is set to true
+    was invoked and the `LRA#terminal()` attribute is set to false
     then the new LRA is left active. In this case the original LRA will
     remain suspended (until the new LRA finishes) unless the `LRA#terminal()`
     attribute was also set to true in which case the original LRA context
@@ -405,7 +405,7 @@ attributes of the LRA:
 `LRA.Type#REQUIRED` and `LRA.Type#REQUIRES_NEW` can start
 new LRAs which by default will be closed when the annotated method
 completes. This default behaviour can be overridden using the
-`LRA#delayClose()` attribute which will leave the new LRA active
+`LRA#terminal()` attribute which will leave the new LRA active
 when the method completes. To force the LRA to cancel instead of complete
 use the `LRA#cancelOnFamily()` or `LRA#cancelOn()` attributes.
 
@@ -487,7 +487,7 @@ The example also shows that when an LRA is present its identifier can be obtaine
 by reading the request and response headers.
 
 The next example demonstrates how to start an LRA in one method and close
-it in a different method using the `delayClose` and `terminal` attributes.
+it in a different method using the `terminal` attribute.
 It also shows how to automatically cancel the LRA if the business method
 returns the particular HTTP status codes identified in the `cancelOn` and
 `cancelOnFamily` attributes:
@@ -503,7 +503,7 @@ returns the particular HTTP status codes identified in the `cancelOn` and
        cancelOnFamily = {
            Response.Status.Family.CLIENT_ERROR // cancel on any 4xx code
        },
-       delayClose = true) // the LRA will continue to run when the method finishes
+       terminal = false) // the LRA will continue to run when the method finishes
   public Response bookTrip(...) { ... }
 
   @PUT
@@ -513,7 +513,7 @@ returns the particular HTTP status codes identified in the `cancelOn` and
   public Booking confirmTrip(Booking booking) throws BookingException { ... }
 ----
 
-The `delayClose = true` attribute on the bookTrip method forces the LRA to continue running when
+The `terminal = false` attribute on the bookTrip method forces the LRA to continue running when
 the method finishes and the `terminal = true` attribute on the confirmTrip method forces the LRA
 (started by the bookTrip method) to close the LRA.
 

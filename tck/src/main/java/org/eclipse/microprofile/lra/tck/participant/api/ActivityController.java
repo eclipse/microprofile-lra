@@ -249,7 +249,7 @@ public class ActivityController {
 
     @PUT
     @Path(ActivityController.ACCEPT_WORK)
-    @LRA(LRA.Type.REQUIRED)
+    @LRA(value = LRA.Type.REQUIRED, terminal = false)
     public Response acceptWork(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
@@ -267,7 +267,7 @@ public class ActivityController {
 
     @PUT
     @Path("/supports")
-    @LRA(LRA.Type.SUPPORTS)
+    @LRA(value = LRA.Type.SUPPORTS, terminal = false)
     public Response supportsLRACall(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
@@ -304,7 +304,7 @@ public class ActivityController {
 
     @PUT
     @Path("/work")
-    @LRA(LRA.Type.REQUIRED)
+    @LRA(value = LRA.Type.REQUIRED, terminal = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                     @HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
@@ -337,7 +337,7 @@ public class ActivityController {
 
     @PUT
     @Path("/nestedActivity")
-    @LRA(LRA.Type.MANDATORY)
+    @LRA(value = LRA.Type.MANDATORY, terminal = false)
     @NestedLRA
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                    @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId) {
@@ -353,7 +353,7 @@ public class ActivityController {
 
     @PUT
     @Path("/multiLevelNestedActivity")
-    @LRA(LRA.Type.MANDATORY)
+    @LRA(value = LRA.Type.MANDATORY, terminal = false)
     public Response multiLevelNestedActivity(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
             @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId,
@@ -453,7 +453,7 @@ public class ActivityController {
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
-    @LRA(value = LRA.Type.REQUIRED)
+    @LRA(value = LRA.Type.REQUIRED, terminal = false)
     public Response timeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
@@ -472,7 +472,7 @@ public class ActivityController {
     @Path("/renewTimeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
-    @LRA(value = LRA.Type.REQUIRED)
+    @LRA(value = LRA.Type.REQUIRED, terminal = false)
     public Response extendTimeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 

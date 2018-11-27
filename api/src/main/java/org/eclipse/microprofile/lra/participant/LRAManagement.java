@@ -22,7 +22,7 @@ package org.eclipse.microprofile.lra.participant;
 
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URL;
-import java.util.concurrent.TimeUnit;
+import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
 public interface LRAManagement {
@@ -44,7 +44,7 @@ public interface LRAManagement {
      * {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
     String joinLRA(LRAParticipant participant, URL lraId, Long timeLimit,
-                   TimeUnit unit)
+                   ChronoUnit unit)
             throws JoinLRAException;
 
     /**

@@ -22,7 +22,6 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Leave;
-import org.eclipse.microprofile.lra.annotation.TimeLimit;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
@@ -73,11 +72,6 @@ public class Util {
 
                 if (checkMethod(paths, COMPENSATE, (Path) pathAnnotation,
                         method.getAnnotation(Compensate.class), uriPrefix) != 0) {
-                    TimeLimit timeLimit = method.getAnnotation(TimeLimit.class);
-
-//                    if (timeLimit != null)
-//                        paths.put(TIMELIMIT_PARAM_NAME, Long.toString(timeLimit.unit().toMillis(timeLimit.limit())));
-
                     if (isAsyncCompletion(method))
                         asyncTermination[0] = true;
                 }

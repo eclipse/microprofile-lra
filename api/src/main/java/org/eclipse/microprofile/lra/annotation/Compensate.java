@@ -24,6 +24,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.temporal.ChronoUnit;
 
 /**
  * When a bean method executes in the context of an LRA any methods in the bean
@@ -32,12 +33,27 @@ import java.lang.annotation.Target;
  *
  * If the associated LRA is subsequently cancelled the method on which this
  * annotation is present will be invoked.
- *
- * The annotation can be combined with {@link TimeLimit} annotation to limit
- * the time that the participant will be guaranteed to be able to compensate.
- * If the timelimit is reached then annotated method will be invoked.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Compensate {
+    /**
+     * The period for which the participant will guarantee it will be able
+     * to compensate for any work that it performed during the associated LRA.
+     * When this period elapses the LRA that it joined becomes eligible for
+     * cancellation. The units are specified in the {@link Compensate#timeUnit()}
+     * attribute.
+     *
+     * A value of zero indicates that it will always be able to compensate.
+     *
+     * @return the period for which the participant can guarantee it
+     * will be able to compensate when asked to do so
+     */
+    long timeLimit() default 0;
+
+    /**
+     * @return the unit of time that the {@link Compensate#timeLimit()} attribute is
+     * measured in.
+     */
+    ChronoUnit timeUnit() default ChronoUnit.SECONDS;
 }

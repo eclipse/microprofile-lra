@@ -26,6 +26,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.temporal.ChronoUnit;
 
 /**
  * An annotation for controlling the lifecycle of Long Running Actions (LRAs).
@@ -164,6 +165,23 @@ public @interface LRA {
          */
         NEVER
     }
+
+    /**
+     * The period for which the LRA will remain valid. When this period has
+     * elapsed the LRA becomes eligble for cancellation. The units are
+     * specified in the {@link LRA#timeUnit()} attribute.
+     * A value of zero indicates that the LRA will always remain valid.
+     *
+     * @return the period for which the LRA is guaranteed to run for before
+     * becoming eligible for cancellation.
+     */
+    long timeLimit() default 0;
+
+    /**
+     * @return the unit of time that the {@link LRA#timeLimit()} attribute is
+     * measured in.
+     */
+    ChronoUnit timeUnit() default ChronoUnit.SECONDS;
 
     /**
      * Normally if an LRA is present when a bean method is executed it will not

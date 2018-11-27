@@ -28,7 +28,6 @@ import java.net.URL;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public interface LRAClient {
     /**
@@ -40,7 +39,7 @@ public interface LRAClient {
     /**
      * the name of the HTTP header field that contains a recovery URL corresponding
      * to a participant
-     * enlistment in an LRA {@link LRAClient#updateCompensator}
+     * enlistment in an LRA {@link LRAClient#joinLRA(URL, Class, URI, String)}
      */
     String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
@@ -108,12 +107,12 @@ public interface LRAClient {
      *
      * @return the identifier of the new LRA
      */
-    URL startLRA(URL parentLRA, String clientID, Long timeout, TimeUnit unit)
+    URL startLRA(URL parentLRA, String clientID, Long timeout, ChronoUnit unit)
             throws GenericLRAException;
 
     /**
      * Start a top level LRA (ie similar to
-     * {@link LRAClient#startLRA(URL, String, Long, TimeUnit)}
+     * {@link LRAClient#startLRA(URL, String, Long, ChronoUnit)}
      *
      * @param clientID The client may provide a (preferably) unique identity which
      *                will be reported back when the LRA is queried.
@@ -128,7 +127,7 @@ public interface LRAClient {
      *
      * @return the identifier of the new LRA
      */
-    URL startLRA(String clientID, Long timeout, TimeUnit unit)
+    URL startLRA(String clientID, Long timeout, ChronoUnit unit)
             throws GenericLRAException;
 
     /**
@@ -152,8 +151,8 @@ public interface LRAClient {
      * reason is available in {@link GenericLRAException#getStatusCode()}
      *
      * @return the identifier of the new LRA
-     * 
-     * @see LRAClient#startLRA(String, Long, ChronoUnit) 
+     *
+     * @see LRAClient#startLRA(String, Long, ChronoUnit)
      * @see LRAClient#joinLRA(URL, Class, URI, String)
      */
     URL startLRA(String clientID, Long timeout, ChronoUnit unit,
@@ -350,7 +349,7 @@ public interface LRAClient {
      * @param limit the new timeout period
      * @param unit the time unit for limit
      */
-    void renewTimeLimit(URL lraId, long limit, TimeUnit unit);
+    void renewTimeLimit(URL lraId, long limit, ChronoUnit unit);
 
     /**
      * checks whether there is an LRA associated with the calling thread
@@ -362,5 +361,4 @@ public interface LRAClient {
      * @return the current LRA (can be null)
      */
     URL getCurrent();
-    
 }

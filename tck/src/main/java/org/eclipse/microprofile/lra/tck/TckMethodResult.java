@@ -60,8 +60,12 @@ class TckMethodResult {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         TckMethodResult tckMethodResult = (TckMethodResult) o;
         return Objects.equals(testName, tckMethodResult.testName);
     }
@@ -72,7 +76,7 @@ class TckMethodResult {
         return Objects.hash(testName);
     }
 
-    void test(TckTests suite){
+    void test(TckTests suite) {
         System.out.printf("Starting test %s%n", testName);
 
         suite.before();
@@ -82,11 +86,20 @@ class TckMethodResult {
             result = testMethod.apply(suite);
             passed = true;
             failureReason = null;
+            System.out.printf("Test %s passed%n", testName);
         } catch (Throwable t) {
             result = t.getMessage();
             passed = false;
-            failureReason = verbose ? t : null;
+            System.out.printf("Test %s failed: %s%n", testName, result);
+
+            if (verbose) {
+                t.printStackTrace(System.out);
+                failureReason = t;
+            } else {
+                failureReason = null;
+            }
         } finally {
+
             suite.after();
         }
     }

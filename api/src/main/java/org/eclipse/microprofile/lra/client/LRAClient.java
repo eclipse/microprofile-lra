@@ -98,6 +98,7 @@ public interface LRAClient {
      *                will be reported back when the LRA is queried.
      * @param timeout Specifies the maximum time that the LRA will exist for. If the
      *               LRA is terminated because of a timeout it will be cancelled.
+     *               The value 0 means that there is no timeout specified.
      * @param unit Specifies the unit that the timeout is measured in
      *
      * @throws NotFoundException if the parent LRA is known to no longer exist
@@ -111,6 +112,16 @@ public interface LRAClient {
             throws GenericLRAException;
 
     /**
+     * {@link LRAClient#startLRA(URL, String, Long, TimeUnit)} variant with
+     * the default timeout specified.
+     * 
+     * @see LRAClient#startLRA(URL, String, Long, TimeUnit)
+     */
+    default URL startLRA(URL parentLRA, String clientID) throws GenericLRAException {
+        return startLRA(parentLRA, clientID, 0L, TimeUnit.SECONDS);
+    }
+
+    /**
      * Start a top level LRA (ie similar to
      * {@link LRAClient#startLRA(URL, String, Long, TimeUnit)}
      *
@@ -118,6 +129,7 @@ public interface LRAClient {
      *                will be reported back when the LRA is queried.
      * @param timeout Specifies the maximum time that the LRA will exist for. If the
      *               LRA is terminated because of a timeout it will be cancelled.
+     *               The value 0 means that there is no timeout specified.
      * @param unit Specifies the unit that the timeout is measured in
      *
      * @throws NotFoundException if the parent LRA is known to no longer exist
@@ -129,6 +141,16 @@ public interface LRAClient {
      */
     URL startLRA(String clientID, Long timeout, TimeUnit unit)
             throws GenericLRAException;
+
+    /**
+     * {@link LRAClient#startLRA(String, Long, TimeUnit)} variant with
+     * the default timeout specified.
+     * 
+     * @see LRAClient#startLRA(String, Long, TimeUnit)
+     */
+    default URL startLRA(String clientID) throws GenericLRAException {
+        return startLRA(clientID, 0L, TimeUnit.SECONDS);
+    }
 
     /**
      * Attempt to cancel an LRA
@@ -277,7 +299,8 @@ public interface LRAClient {
      * @param lraId   The unique identifier of the LRA (required) to enlist with
      * @param timelimit The time limit (in seconds) that the participant can
      *                 guarantee that it can compensate the work performed while
-     *                 the LRA is active.
+     *                 the LRA is active. The value 0 means that there is no 
+     *                 timeout specified.
      * @param compensateUrl the `compensatation URL`
      * @param completeUrl the `completion URL`
      * @param forgetUrl the `forget URL`
@@ -300,6 +323,20 @@ public interface LRAClient {
                    URL compensateUrl, URL completeUrl, URL forgetUrl,
                    URL leaveUrl, URL statusUrl,
                    String compensatorData) throws GenericLRAException;
+
+    /**
+     * {@link LRAClient#joinLRA(URL, Long, URL, URL, URL, URL, URL, String)} variant
+     * with the default timelimit specified.
+     * 
+     * @see LRAClient#joinLRA(URL, Long, URL, URL, URL, URL, URL, String)
+     */
+    default String joinLRA(URL lraId,
+                   URL compensateUrl, URL completeUrl, URL forgetUrl,
+                   URL leaveUrl, URL statusUrl,
+                   String compensatorData) throws GenericLRAException {
+        return joinLRA(lraId, 0L, compensateUrl, completeUrl,
+                forgetUrl, leaveUrl, statusUrl, compensatorData);
+    }
 
     /**
      * Join an LRA passing in a class that will act as the participant.

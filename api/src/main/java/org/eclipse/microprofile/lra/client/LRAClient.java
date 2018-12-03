@@ -268,39 +268,6 @@ public interface LRAClient {
      * may provide a more specific reason.     */
     Boolean isCompletedLRA(URL lraId) throws GenericLRAException;
 
-
-    /**
-     * A participant can join with the LRA at any time prior to the completion of
-     * an activity. The participant provides end points on which it will listen
-     * for LRA related events.
-     *
-     * @param lraId   The unique identifier of the LRA (required) to enlist with
-     * @param timelimit The time limit (in seconds) that the participant can
-     *                 guarantee that it can compensate the work performed while
-     *                 the LRA is active.
-     * @param compensateUrl the `compensatation URL`
-     * @param completeUrl the `completion URL`
-     * @param forgetUrl the `forget URL`
-     * @param leaveUrl the `leave URL`
-     * @param statusUrl the `status URL`
-     *
-     * @param compensatorData data that will be stored with the coordinator and
-     *                       passed back to the participant when the LRA is closed
-     *                       or cancelled
-     * @return a recovery URL for this enlistment
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @throws GenericLRAException  if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()}
-     * may provide a more specific reason.
-     */
-    String joinLRA(URL lraId, Long timelimit,
-                   URL compensateUrl, URL completeUrl, URL forgetUrl,
-                   URL leaveUrl, URL statusUrl,
-                   String compensatorData) throws GenericLRAException;
-
     /**
      * Join an LRA passing in a class that will act as the participant.
      * Similar to {@link LRAClient#joinLRA(URL, Class, URI, String)} except
@@ -325,26 +292,6 @@ public interface LRAClient {
      */
     String joinLRA(URL lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
-
-    /**
-     * Change the endpoints that a participant can be contacted on.
-     *
-     * @param recoveryUrl the recovery URL returned from a participant join request
-     * @param compensateUrl the URL to invoke when the LRA is cancelled
-     * @param completeUrl the URL to invoke when the LRA is closed
-     * @param statusUrl if a participant cannot finish immediately then it provides
-     *                  this URL that the coordinator uses to monitor the progress
-     * @param forgetUrl used to inform the participant that can forget about this LRA
-     * @param compensatorData opaque data that returned to the participant when the
-     *                       LRA is closed or cancelled
-     * @return an updated recovery URL for this participant
-     * @throws GenericLRAException if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
-     */
-    URL updateCompensator(URL recoveryUrl, URL compensateUrl, URL completeUrl,
-                          URL forgetUrl, URL statusUrl,
-                          String compensatorData) throws GenericLRAException;
 
     /**
      * A Compensator can resign from the LRA at any time prior to the completion

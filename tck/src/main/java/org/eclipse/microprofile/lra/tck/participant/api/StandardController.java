@@ -49,7 +49,7 @@ public class StandardController {
     public Response work2(@HeaderParam(LRA_HTTP_HEADER) String lraId) throws NotFoundException {
 
         if (lraId != null) {
-            return Response.status(Response.Status.PRECONDITION_FAILED).entity(Entity.text("Unexpected LRA context")).build();
+            return Response.status(Response.Status.PRECONDITION_FAILED).entity("Unexpected LRA context").build();
         }
 
         WebTarget resourcePath = ClientBuilder.newClient().target(context.getBaseUri())
@@ -61,7 +61,7 @@ public class StandardController {
         String id = checkStatusAndClose(response, Response.Status.OK.getStatusCode(), true, resourcePath);
 
         if (id == null) {
-            return Response.status(Response.Status.PRECONDITION_FAILED).entity(Entity.text("LRA context was not propagated")).build();
+            return Response.status(Response.Status.PRECONDITION_FAILED).entity("LRA context was not propagated").build();
         }
 
         return Response.ok(id).build();

@@ -28,8 +28,7 @@ import java.util.concurrent.Future;
 /**
  * The API for notifying participants that a LRA is completing or cancelling.
  * A participant joins with an LRA via a call to
- * {@link LRAManagement#joinLRA(LRAParticipant, URL, Long,
- * java.util.concurrent.TimeUnit)}
+ * {@link LRAManagement#joinLRA(LRAParticipant, URL)}
  */
 public interface LRAParticipant extends Serializable {
     /**

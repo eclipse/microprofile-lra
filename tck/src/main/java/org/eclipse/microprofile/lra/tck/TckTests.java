@@ -41,9 +41,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_HOST_KEY;
@@ -178,7 +178,7 @@ public class TckTests {
 
     @Test
     private String startLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#startLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#startLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         lraClient.closeLRA(lra);
 
@@ -187,7 +187,7 @@ public class TckTests {
 
     @Test
     private String cancelLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null,"SpecTest#cancelLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null,"SpecTest#cancelLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         lraClient.cancelLRA(lra);
 
@@ -200,7 +200,7 @@ public class TckTests {
 
     @Test
     private String closeLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#closelLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#closelLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         lraClient.closeLRA(lra);
 
@@ -213,7 +213,7 @@ public class TckTests {
 
     @Test
     private String getActiveLRAs() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         List<LRAInfo> lras = lraClient.getActiveLRAs();
 
         assertNotNull(getLra(lras, lra.toExternalForm()), "getActiveLRAs: getLra returned null", null);
@@ -225,7 +225,7 @@ public class TckTests {
 
     @Test
     private String getAllLRAs() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         List<LRAInfo> lras = lraClient.getAllLRAs();
 
         assertNotNull(getLra(lras, lra.toExternalForm()), "getAllLRAs: getLra returned null", null);
@@ -242,7 +242,7 @@ public class TckTests {
 
     @Test
     private String isActiveLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         assertTrue(lraClient.isActiveLRA(lra), null, null, lra);
 
@@ -254,7 +254,7 @@ public class TckTests {
     // the coordinator cleans up when canceled
     @Test
     private String isCompensatedLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#isCompensatedLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isCompensatedLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         lraClient.cancelLRA(lra);
 
@@ -266,7 +266,7 @@ public class TckTests {
     // the coordinator cleans up when completed
     @Test
     private String isCompletedLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#isCompletedLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isCompletedLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         lraClient.closeLRA(lra);
 
@@ -294,7 +294,7 @@ public class TckTests {
 
     @Test
     private String nestedActivity() throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#nestedActivity", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#nestedActivity", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget
                 .path(ACTIVITIES_PATH).path("nestedActivity");
 
@@ -343,7 +343,7 @@ public class TckTests {
     private String joinLRAViaHeader() throws WebApplicationException {
         int cnt1 = completedCount(true);
 
-        URL lra = lraClient.startLRA(null, "SpecTest#joinLRAViaBody", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#joinLRAViaBody", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
         Response response = resourcePath
@@ -372,7 +372,7 @@ public class TckTests {
     private String join() throws WebApplicationException {
         List<LRAInfo> lras = lraClient.getActiveLRAs();
         int count = lras.size();
-        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
         Response response = resourcePath
                 .request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
@@ -389,7 +389,7 @@ public class TckTests {
     @Test
     private String leaveLRA() throws WebApplicationException {
         int cnt1 = completedCount(true);
-        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
         Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
@@ -420,7 +420,7 @@ public class TckTests {
     @Test
     private String leaveLRAViaAPI() throws WebApplicationException {
         int cnt1 = completedCount(true);
-        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
 
@@ -518,9 +518,9 @@ public class TckTests {
             int[] cnt2 = {completedCount(true), completedCount(false)};
 
             /*
-             * The call to activities/timeLimit should have started an LRA whch should have timed out
-             * (because the called resource method sleeps for long than the @TimeLimit annotation specifies).
-             * Therefore the it should have compensated:
+             * The call to activities/timeLimit should have started an LRA which should have timed out
+             * (because the invoked resource method sleeps for longer than the timeLimit annotation
+             * attribute specifies). Therefore the participant should have compensated:
              */
             assertEquals(cnt1[0], cnt2[0],
                     "timeLimit: complete was called instead of compensate", resourcePath);
@@ -578,7 +578,8 @@ public class TckTests {
     // TODO the spec does not specifiy recovery semantics
     @Test
     private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2) throws WebApplicationException {
-        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        int countBefore = lraClient.getActiveLRAs().size();
+        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget.path(path).path(path2);
 
         Response response = resourcePath
@@ -604,7 +605,7 @@ public class TckTests {
 
         int countAfter = lraClient.getActiveLRAs().size();
 
-        assertEquals(0, countAfter, "joinAndEnd: some LRAs were not recovered", resourcePath);
+        assertEquals(countBefore, countAfter, "joinAndEnd: some LRAs were not recovered", resourcePath);
     }
 
     @Test
@@ -615,7 +616,7 @@ public class TckTests {
 
         int[] cnt1 = {completedCount(true), completedCount(false)};
         URL lra = lraClient.startLRA(null, "SpecTest#noLRATest",
-                LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra)
                 .put(Entity.text(""));
@@ -658,8 +659,8 @@ public class TckTests {
             /*
              * The call to activities/timeLimit should have started an LRA whch should not have timed out
              * (because the called resource method renews the timeLimit before sleeping for longer than
-              * the @TimeLimit annotation specifies).
-             * Therefore the it should not have compensated:
+             * the timeLimit annotation attribute specifies).
+             * Therefore the participant should not have compensated:
              */
             assertEquals(cnt1[0] + 1, cnt2[0],
                     resourcePath.getUri().toString() + ": compensate was called instead of complete", resourcePath);
@@ -725,7 +726,7 @@ public class TckTests {
             how = CompletionType.complete;
         }
 
-        URL lra = lraClient.startLRA(null, "SpecTest#multiLevelNestedActivity", LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#multiLevelNestedActivity", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         String lraId = lra.toString();
 
         Response response = resourcePath
@@ -839,7 +840,7 @@ public class TckTests {
 
     private void cancelCheck(String path) {
         int[] cnt1 = {completedCount(true), completedCount(false)};
-        URL lra = lraClient.startLRA(null, "SpecTest#" + path, LRA_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        URL lra = lraClient.startLRA(null, "SpecTest#" + path, LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         Response response = null;
 
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(path);

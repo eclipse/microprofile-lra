@@ -24,6 +24,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.time.temporal.ChronoUnit;
 
 /**
  * When a bean method executes in the context of an LRA any methods in the bean
@@ -36,4 +37,23 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Complete {
+    /**
+     * The period for which the participant will guarantee it will be able
+     * to complete for any work that it performed during the associated LRA.
+     * When this period elapses the LRA that it joined becomes eligible for
+     * cancellation. The units are specified in the {@link Complete#timeUnit()}
+     * attribute.
+     *
+     * A value of zero indicates that it will always be able to complete.
+     *
+     * @return the period for which the participant can guarantee it
+     * will be able to complete when asked to do so
+     */
+    long timeLimit() default 0;
+
+    /**
+     * @return the unit of time that the {@link Complete#timeLimit()} attribute is
+     * measured in.
+     */
+    ChronoUnit timeUnit() default ChronoUnit.SECONDS;
 }

@@ -274,8 +274,6 @@ package:
   | Indicates that this class is no longer interested in this LRA.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Status.java#L30[@Status]
   | When the annotated method is invoked it should report the status.
-| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/TimeLimit.java#L30[@TimeLimit]
-  | Limits the time that an LRA or a compensation remains valid for.
 |===
 
 Briefly, these annotations are used as follows:
@@ -632,35 +630,34 @@ used for this purpose if required.
 ==== Timing out LRAs and Participants
 
 The business logic may wish to control how long an LRA should remain active
-for before it becomes eligible for automatic cancellation by annotating methods
-that start LRAs with the `@TimeLimit` annotation footnote:[issue #34 will change
-this to be an attribute of both the LRA, Compensate and Complete annotations].
-For example, to indicate that an LRA should automatically cancel after 100 milliseconds:
+for before it becomes eligible for automatic cancellation by providing values
+for the `timeLimit` and `timeUnit` attributes of the `@LRA` annotation. For
+example, to indicate that an LRA should automatically cancel after 100 milliseconds:
 
 [source,java]
 ----
   @GET
   @Path("/doitASAP")
   @Produces(MediaType.APPLICATION_JSON)
-  @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
-  @LRA(value = LRA.Type.REQUIRED)
+  @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLI)
   public Response theClockIsTicking(
       @HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId) {...}
 ----
 
-Furthermore, the ability to compensate may be a transient capability of a
+Furthermore, the ability to compensate or complete may be transient capabilities of a
 service so participants can also be timed out. When the time limit is reached
 the LRA is cancelled and participants will be notified via their compensation
 (ie the method annotated with `@Compensate`). To set such a time limit add the
-`@TimeLimit` annotation to the `@Compensate` method. An example of how a participant
-could indicate that its' ability to compensate is limited to 100 milliseconds could be:
+`timeLimit` and `timeUnit` attributes to the `@Compensate` and `@Complete`
+annotations. If different time limits are set on these two methods then the
+earliest of the two will take effect. An example of how a participant could
+indicate that its' ability to compensate is limited to 100 milliseconds could be:
 
 [source,java]
 ----
     @PUT
     @Path("/compensate")
-    @Compensate
-    @TimeLimit(limit = 100, unit = TimeUnit.MILLISECONDS)
+    @Compensate(timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     public Response completeWork(@HeaderParam(LRA_HTTP_HEADER) String lraId,
                                  String userData) { ... }
 ----
@@ -800,10 +797,10 @@ public class UnannotatedParticpant implements LRAParticipant, Serializable {
     {
         // start a new LRA with an unlimited timeout
         URL lraId = lraClient.startLRA(
-                        "Unannotated client", 0L, TimeUnit.MILLISECONDS);
+                        "Unannotated client", 0L, ChronoUnit.MILLIS);
 
         // Join the LRA as a participant.
-        lraManagement.joinLRA(this, lraId, 0L, TimeUnit.SECONDS);
+        lraManagement.joinLRA(this, lraId, 0L, ChronoUnit.SECONDS);
 
         // do something interesting
 

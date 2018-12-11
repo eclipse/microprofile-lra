@@ -323,6 +323,27 @@ public interface LRAClient {
             throws GenericLRAException;
 
     /**
+     * Change the endpoints that a participant can be contacted on.
+     *
+     * @param recoveryUrl the recovery URL returned from a participant join request
+     * @param resourceClass An annotated class for the participant methods:
+     *      * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
+     * @param baseUri Base uri for the participant endpoints
+     * @param compensatorData opaque data that returned to the participant when the
+     *                       LRA is closed or cancelled
+     *
+     * @return an updated recovery URL for this participant
+     *
+     * @throws NotFoundException if the LRA no longer exists
+     *
+     * @throws GenericLRAException if the request to the coordinator failed.
+     * {@link GenericLRAException#getCause()} and/or
+     * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
+     */
+    URL updateCompensator(URL recoveryUrl, Class<?> resourceClass, URI baseUri, String compensatorData)
+            throws GenericLRAException;
+
+    /**
      * A Compensator can resign from the LRA at any time prior to the completion
      * of an activity
      *

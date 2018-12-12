@@ -405,8 +405,6 @@ public class TckTests {
         response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
 
-        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAOldClient
-
         lraClient.closeLRA(lra);
 
         // check that participant was not told to complete
@@ -420,7 +418,7 @@ public class TckTests {
     @Test
     private String leaveLRAViaAPI() throws WebApplicationException {
         int cnt1 = completedCount(true);
-        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRAViaAPI", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
 
@@ -430,21 +428,25 @@ public class TckTests {
         // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
         resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
         response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+
+        String recoveryUrl = response.getHeaderString(LRAClient.LRA_HTTP_RECOVERY_HEADER);        
+        
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
 
         // call a method annotated with @Leave (should remove the participant from the LRA)
         try {
             resourcePath = msTarget.path(ACTIVITIES_PATH).path("leave");
             response = resourcePath.path(URLEncoder.encode(lra.toString(), "UTF-8"))
-                    .request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                    .request()
+                    .header(LRAClient.LRA_HTTP_HEADER, lra)
+                    .header(LRAClient.LRA_HTTP_RECOVERY_HEADER, recoveryUrl)
+                    .put(Entity.text(""));
         } catch (UnsupportedEncodingException e) {
             throw new WebApplicationException(
                     Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(
                             Entity.text(String.format("%s: %s", resourcePath.getUri().toString(), e.getMessage()))).build());
         }
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
-
-        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAOldClient
 
         lraClient.closeLRA(lra);
 

@@ -31,8 +31,8 @@ public interface LRAManagement {
      *
      * @param participant an instance of a {@link LRAParticipant} that will be
      *                   notified when the target LRA ends
-     * @param lraId the LRA that the join request pertains to @param timeLimit
-     *             the time for which the participant should remain valid. When
+     * @param lraId the LRA that the join request pertains to
+     * @param timeLimit the time for which the participant should remain valid. When
      *             this time limit is exceeded the participant may longer be able
      *             to fulfil the protocol guarantees.
      * @param unit the unit that the timeLimit parameter is expressed in

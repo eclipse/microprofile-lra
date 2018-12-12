@@ -46,9 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_HOST_KEY;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_COORDINATOR_PORT_KEY;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_RECOVERY_PATH_KEY;
+import static org.eclipse.microprofile.lra.client.LRAClient.LRA_RECOVERY_URL;
 import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACTIVITIES_PATH;
 
@@ -121,13 +119,8 @@ public class TckTests {
             }
 
             int servicePort = Integer.getInteger("service.http.port", TEST_SWARM_PORT);
-            // TODO issue 42 will be removing these endpoint references
-            String rcHost = System.getProperty(LRA_COORDINATOR_HOST_KEY, "localhost");
-            String rcPath = System.getProperty(LRA_RECOVERY_PATH_KEY, "lra-recovery-coordinator");
-            int rcPort = Integer.getInteger(LRA_COORDINATOR_PORT_KEY, COORDINATOR_SWARM_PORT);
-
             micrserviceBaseUrl = new URL(String.format("http://localhost:%d", servicePort));
-            rcBaseUrl = new URL(String.format("http://%s:%d/%s", rcHost, rcPort, rcPath));
+            rcBaseUrl = new URL(System.getProperty(LRA_RECOVERY_URL, "http://localhost:8080"));
 
             msClient = ClientBuilder.newClient();
             rcClient = ClientBuilder.newClient();

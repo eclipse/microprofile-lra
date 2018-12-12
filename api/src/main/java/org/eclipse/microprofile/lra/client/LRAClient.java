@@ -44,40 +44,14 @@ public interface LRAClient {
     String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
     /**
-     * Key for looking up the config property that specifies which host a
-     * coordinator is running on
+     * The config property that specifies a URL exposed for LRA orchestration and management
      */
-    String LRA_COORDINATOR_HOST_KEY = "lra.http.host";
-
+    String LRA_HTTP_URL = "lra.http.url";
+    
     /**
-     * Key for looking up the config property that specifies which port a
-     * coordinator is running on
+     * The config property that specifies a URL exposed for the LRA recovery semantics
      */
-    String LRA_COORDINATOR_PORT_KEY = "lra.http.port";
-
-    /**
-     * Key for looking up the config property that specifies which JAX-RS path a
-     * coordinator is running on
-     */
-    String LRA_COORDINATOR_PATH_KEY = "lra.coordinator.path";
-
-    /**
-     * Key for looking up the config property that specifies which JAX-RS path a
-     * recovery coordinator is running on
-     */
-    String LRA_RECOVERY_HOST_KEY = "lra.http.recovery.host";
-
-    /**
-     * Key for looking up the config property that specifies which JAX-RS path a
-     * recovery coordinator is running on
-     */
-    String LRA_RECOVERY_PORT_KEY = "lra.http.recovery.port";
-
-    /**
-     * Key for looking up the config property that specifies which JAX-RS path a
-     * recovery coordinator is running on
-     */
-    String LRA_RECOVERY_PATH_KEY = "lra.coordinator.recovery.path";
+    String LRA_RECOVERY_URL= "lra.http.recovery.url";
 
     /**
      * Explicitly dispose of all resources. After this call the instance may no

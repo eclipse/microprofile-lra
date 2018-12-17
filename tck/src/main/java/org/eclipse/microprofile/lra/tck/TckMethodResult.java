@@ -90,7 +90,7 @@ class TckMethodResult {
         } catch (Throwable t) {
             result = t.getMessage();
             passed = false;
-            System.out.printf("Test %s failed: %s%n", testName, result);
+            System.out.printf("Test %s failed: %s: %s%n", testName, t.getClass().getName(), result);
 
             if (verbose) {
                 t.printStackTrace(System.out);

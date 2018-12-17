@@ -71,7 +71,7 @@ import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_RECOVERY_HE
 
 @ApplicationScoped
 @Path(ActivityController.ACTIVITIES_PATH)
-@LRA(LRA.Type.SUPPORTS)
+@LRA(value = LRA.Type.SUPPORTS, terminal = false)
 public class ActivityController {
     public static final String ACTIVITIES_PATH = "activities";
     public static final String ACCEPT_WORK = "acceptWork";
@@ -106,7 +106,7 @@ public class ActivityController {
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
     @Status
-    @LRA(LRA.Type.NOT_SUPPORTED)
+    @LRA(value = LRA.Type.NOT_SUPPORTED)
     public Response status(@HeaderParam(LRA_HTTP_HEADER) String lraId) throws NotFoundException {
         Activity activity = activityService.getActivity(lraId);
 
@@ -344,7 +344,7 @@ public class ActivityController {
 
     @PUT
     @Path(MANDATORY_LRA_RESOURCE_PATH)
-    @LRA(LRA.Type.MANDATORY)
+    @LRA(value = LRA.Type.MANDATORY, terminal = false)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                              @HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return activityWithLRA(rcvId, lraId);
@@ -352,7 +352,7 @@ public class ActivityController {
 
     @PUT
     @Path("/nestedActivity")
-    @LRA(value = LRA.Type.MANDATORY, terminal = false)
+    @LRA(value = LRA.Type.MANDATORY, terminal = true)
     @NestedLRA
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                    @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId) {
@@ -467,7 +467,7 @@ public class ActivityController {
     @GET
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, terminal = false, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
+    @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     public Response timeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 

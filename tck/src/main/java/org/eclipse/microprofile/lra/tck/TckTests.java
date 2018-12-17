@@ -310,13 +310,11 @@ public class TckTests {
 
         String nestedLraId = checkStatusAndClose(response, Response.Status.OK.getStatusCode(), true, resourcePath);
 
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
-
         // close the LRA
         lraClient.closeLRA(lra);
 
         // validate that the nested LRA was closed
-        lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraClient.getActiveLRAs();
 
         // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
         assertNull(getLra(lras, nestedLraId), "nestedActivity: nested LRA should not be active", resourcePath);
@@ -749,14 +747,14 @@ public class TckTests {
                         resourcePath.getUri().toString(), e.getMessage()));
             }
         });
-        // check that the multiLevelNestedActivity method returned the mandatory LRA followed by two nested LRAs
+        // check that the multiLevelNestedActivity method returned the mandatory LRA followed by any nested LRAs
         assertEquals(nestedCnt + 1, lraArray.length, "multiLevelNestedActivity: step 1", resourcePath);
         assertEquals(lraId, lraArray[0], "multiLevelNestedActivity: step 2", resourcePath); // first element should be the mandatory LRA
 
         // check that the coordinator knows about the two nested LRAs started by the multiLevelNestedActivity method
         // NB even though they should have completed they are held in memory pending the enclosing LRA finishing
         IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertNotNull(getLra(lras, lraArray[i]),
-                "missing nested LRA",
+                " missing nested LRA: step 2b",
                 resourcePath));
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
@@ -764,7 +762,7 @@ public class TckTests {
 
         int[] cnt2 = {completedCount(true), completedCount(false)};
 
-        // check that both nested activities were told to complete
+        // check that all nested activities were told to complete
         assertEquals(cnt1[0] + nestedCnt, cnt2[0], "multiLevelNestedActivity: step 3", resourcePath);
         // and that neither were told to compensate
         assertEquals(cnt1[1], cnt2[1], "multiLevelNestedActivity: step 4", resourcePath);

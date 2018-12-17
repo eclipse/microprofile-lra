@@ -319,7 +319,7 @@ public interface LRAClient {
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    String joinLRA(URL lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
+    URL joinLRA(URL lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
 
     /**

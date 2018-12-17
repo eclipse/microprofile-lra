@@ -60,7 +60,6 @@ import java.net.URL;
 import java.net.URLDecoder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -135,14 +134,12 @@ public class ActivityController {
     @PUT
     @Path("/leave/{LraUrl}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response leaveWorkViaAPI(@PathParam("LraUrl")String lraUrl)
+    public Response leaveWorkViaAPI(@PathParam("LraUrl")String lraUrl,
+                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryUrl)
         throws NotFoundException, MalformedURLException {
 
-        if (lraUrl != null) {
-            // TODO this encoding of LRA URIs will be Narayana specific
-            Map<String, String> terminateURIs =
-                Util.getTerminationUris(this.getClass(), context.getBaseUri());
-            lraClient.leaveLRA(new URL(lraUrl), terminateURIs.get("Link"));
+        if (lraUrl != null && recoveryUrl != null) {
+            lraClient.leaveLRA(new URL(recoveryUrl));
 
             activityService.getActivity(lraUrl);
 
@@ -320,7 +317,7 @@ public class ActivityController {
             return Response.status(Response.Status.EXPECTATION_FAILED).entity(MISSING_LRA_DATA).build();
         }
 
-        return Response.ok(lraId).build();
+        return Response.ok(lraId).header(LRA_HTTP_RECOVERY_HEADER, rcvId).build();
     }
 
     private String restPutInvocation(URL lraURL, String path, String bodyText) {

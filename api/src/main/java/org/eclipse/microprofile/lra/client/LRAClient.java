@@ -347,18 +347,15 @@ public interface LRAClient {
      * A Compensator can resign from the LRA at any time prior to the completion
      * of an activity
      *
-     * @param lraId The unique identifier of the LRA (required)
-     * @param body  (optional)
-     *
-     *              @throws NotFoundException if the LRA no longer exists
-     *
+     * @param recoveryUrl the recovery URL returned from a participant join request
+     *                    
      * @throws NotFoundException if the LRA no longer exists
      *
      * @throws GenericLRAException if the request to the coordinator failed.
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    void leaveLRA(URL lraId, String body) throws GenericLRAException;
+    void leaveLRA(URL recoveryUrl) throws GenericLRAException;
 
     /**
      * LRAs can be created with timeouts after which they are cancelled. Use this

@@ -150,13 +150,14 @@ public interface LRAClient {
      * @throws GenericLRAException a new LRA could not be started. The specific
      * reason is available in {@link GenericLRAException#getStatusCode()}
      *
-     * @return the identifier of the new LRA
+     * @return the identifier of the new LRA and the recovery URL for 
+     * this enlistment
      *
      * @see LRAClient#startLRA(String, Long, ChronoUnit)
      * @see LRAClient#joinLRA(URL, Class, URI, String)
      */
-    URL startLRA(String clientID, Long timeout, ChronoUnit unit,
-                 Class<?> resourceClass, URI baseUri, String compensatorData)
+    StartLRAResultPair startLRA(String clientID, Long timeout, ChronoUnit unit,
+                                Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
 
     /**

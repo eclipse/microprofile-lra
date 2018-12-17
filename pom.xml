@@ -54,34 +54,7 @@
         <system>GitHub</system>
         <url>https://github.com/eclipse/microprofile-lra/issues</url>
     </issueManagement>
-
-    <developers>
-        <developer>
-            <name>Michael Musgrove</name>
-            <url>https://github.com/mmusgrov</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.jboss.org</organizationUrl>
-        </developer>
-        <developer>
-            <name>Nicola Ferraro</name>
-            <url>https://github.com/nicolaferraro</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.jboss.org</organizationUrl>
-        </developer>
-        <developer>
-            <name>Ondra Chaloupka</name>
-            <url>https://github.com/ochaloup</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.jboss.org</organizationUrl>
-        </developer>
-        <developer>
-            <name>Tom Jenkinson</name>
-            <url>https://github.com/tomjenkinson</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.jboss.org</organizationUrl>
-        </developer>
-    </developers>
-
+    
     <scm>
         <connection>scm:git:https://github.com/eclipse/microprofile-lra.git</connection>
         <developerConnection>scm:git:https://github.com/eclipse/microprofile-lra.git</developerConnection>

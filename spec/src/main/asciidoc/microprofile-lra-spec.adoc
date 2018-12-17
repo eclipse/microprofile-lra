@@ -12,8 +12,6 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-:authors: Michael Musgrove, Nicola Ferraro, Ondra Chaloupka, Tom Jenkinson, MP google groups forum, ad hoc discussions ...
-:email: mmusgrov@redhat.com, ni.ferraro@gmail.com, ochaloup@redhat.com, tom.jenkinson@redhat.com
 :revnumber: 0.1
 :revdate: 2018-03-27
 :revremark: Specification

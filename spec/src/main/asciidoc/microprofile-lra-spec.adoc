@@ -764,14 +764,9 @@ If an application does not directly expose JAX-RS endpoints for
 compensation activities then participants can join an LRA directly using an instance of
 <<source-LRAManagement,LRAManagement>>
 (https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/participant[github link]).
-This interface requires that a participant be a serializable java class conforming to the
+This interface requires that a participant be a Java class conforming to the
 <<source-LRAParticipant,LRAParticipant interface>>
 (https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/participant[github link]).
-To support the crash recovery requirements of this specification the application MAY provide
-a class that is capable of recreating a participant from its serialized form by registering an
-<<source-LRAParticipantDeserializer,LRAParticipantDeserializer interface>>
-(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/participant[github link]).
-This interface will be used during recovery to ask participants to complete or compensate.
 
 When an LRA is closed or cancelled the implementation [of this specification] is responsible
 for invoking LRAParticipant completion or compensation
@@ -784,7 +779,7 @@ shows how to inject instances of the API and how to perform work in the context 
 [source,java]
 ----
 @Path("/")
-public class UnannotatedParticpant implements LRAParticipant, Serializable {
+public class UnannotatedParticpant implements LRAParticipant {
     @Inject
     private LRAClient lraClient;
 
@@ -826,21 +821,13 @@ public class UnannotatedParticpant implements LRAParticipant, Serializable {
 }
 ----
 
-It is important to stress that participants must be serializable for this approach
-to work and that the need for the registration of deserializers is to support recovery
-scenarios where one or more components fail: the framework must guarantee that participants
-will still be triggered (the LRA protocol still provides the "all or
-nothing" guarantees that traditional transactions give). The
-deserializer provides a mechanism for the recovery component to recreate
-participants from their persistent form. Note that, in contrast to the
-JAX-RS based support, an installation must ensure that the java class
-definitions of <<source-LRAParticipant,LRAParticipants>>
-(https://github.com/eclipse/microprofile-lra/blob/master/api/src/main/java/org/eclipse/microprofile/lra/participant/LRAParticipant.java[github link])
-are made available to the recovery system
-and that deserializers are registered as soon as the JVM hosting the original
-participants is started. A typical implementation might, for example, register
-a proxy participant on behalf of application registrations which knows how
-to communicate and listen for remote compensation requests.
+The framework must guarantee that participants will still be triggered (the LRA protocol still provides the "all or
+nothing" guarantees that traditional transactions give). +
+This means that an implementation for all JAX-RS resources which implement the _LRAParticipant_ interface directly
+or indirectly, MUST create some proxy which can be called by the coordinator. +
+This to ensure that after this class has joined an LRA (through the _lraManagement.joinLRA()_ ) the _complete_ or
+_compensate_ methods can be called by the coordinator in case the micro-service crashed before this notification could
+be delivered.
 
 Serializable participants need to know how to contact the original
 business application in order to trigger compensation activities whereas
@@ -980,13 +967,6 @@ include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAManagement.java
 [[source-LRAParticipant]]
 ----
 include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAParticipant.java[LRAParticipant]
-----
-<<<
-
-=== LRAParticipantDeserializer
-[[source-LRAParticipantDeserializer]]
-----
-include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAParticipantDeserializer.java[LRAParticipantDeserializer]
 ----
 <<<
 

@@ -65,29 +65,4 @@ public interface LRAManagement {
      */
     String joinLRA(LRAParticipant participant, URL lraId) throws JoinLRAException;
 
-    /**
-     * Register an object for recreating participants during recovery. Use this
-     * mechanism after a JVM that hosted a LRA participant has terminated with
-     * outstanding LRAs. The LRA recovery coordinator will use this to ask the
-     * application to recreate an instance of LRAParticipant that will be notified
-     * when an LRA is closing or canceling.
-     *
-     * @param deserializer an object that knows how to recreate participants.
-     *                     Note that when the LRA manager is recreating a
-     *                     participant it may run through all registered
-     *                     deserializers. In recovery scenarios the first such
-     *                     deserializer returning a valid {@link LRAParticipant}
-     *                     is used for sending completion or compensation
-     *                     notifications
-     */
-    void registerDeserializer(LRAParticipantDeserializer deserializer);
-
-    /**
-     * Unregister a participant deserializer. The first deserializer registered
-     * with the LRA manager for which the equals method returns true is removed
-     * from LRA manager
-     *
-     * @param deserializer the deserializer to unregister
-     */
-    void unregisterDeserializer(LRAParticipantDeserializer deserializer);
 }

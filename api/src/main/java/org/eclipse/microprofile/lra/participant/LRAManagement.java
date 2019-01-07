@@ -43,7 +43,7 @@ public interface LRAManagement {
      * {@link JoinLRAException#getCause()} and/or
      * {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    String joinLRA(LRAParticipant participant, URL lraId, Long timeLimit,
+    URL joinLRA(LRAParticipant participant, URL lraId, Long timeLimit,
                    ChronoUnit unit)
             throws JoinLRAException;
 
@@ -63,6 +63,6 @@ public interface LRAManagement {
      * {@link JoinLRAException#getCause()} and/or
      * {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    String joinLRA(LRAParticipant participant, URL lraId) throws JoinLRAException;
+    URL joinLRA(LRAParticipant participant, URL lraId) throws JoinLRAException;
 
 }

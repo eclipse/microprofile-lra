@@ -25,16 +25,18 @@ state "NoLRAContext" as NoLRAContext
 NoLRAContext : "There is no active LRA context"
 
 state NoLRAContext {
-  NoLRAContext --> ActiveLRA : startLRA
-  ActiveLRA --> NoLRAContext : cancel failed
-  ActiveLRA --> NoLRAContext : cancelled
-  ActiveLRA --> NoLRAContext : close failed
-  ActiveLRA --> NoLRAContext : closed
+  NoLRAContext --> LRAContext : startLRA
+  LRAContext --> NoLRAContext : cancel failed
+  LRAContext --> NoLRAContext : cancelled
+  LRAContext --> NoLRAContext : close failed
+  LRAContext --> NoLRAContext : closed
 }
 
-state ActiveLRA {
-  [*] --> Cancelling : cancel
-  note left of Cancelling : initial state
+state LRAContext {
+  [*] --> ActiveLRA : startLRA
+  ActiveLRA : "LRA exists and has not yet been asked to close or cancel"
+  note left of ActiveLRA : initial state
+  ActiveLRA --> Cancelling : cancel
   state "FailedToCancel" as FailedToCancel
   FailedToCancel : "One or more participants\ndid not compensate"
   state "FailedToClose" as FailedToClose
@@ -51,8 +53,7 @@ state ActiveLRA {
   Cancelling --> Cancelled
   Cancelling --> FailedToCancel
 
-  [*] --> Closing : close
-  note right of Closing : initial state
+  ActiveLRA --> Closing : close
   Closing --> Closed
   Closing --> FailedToClose
 }

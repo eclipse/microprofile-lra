@@ -19,7 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.model;
 
-import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -28,7 +28,7 @@ public class Activity implements Serializable {
     private String id;
     private String rcvUrl;
     private String statusUrl;
-    private CompensatorStatus status;
+    private ParticipantStatus status;
     private String userData;
     private String endData;
 
@@ -62,11 +62,11 @@ public class Activity implements Serializable {
         this.statusUrl = statusUrl;
     }
 
-    public CompensatorStatus getStatus() {
+    public ParticipantStatus getStatus() {
         return status;
     }
 
-    public void setStatus(CompensatorStatus status) {
+    public void setStatus(ParticipantStatus status) {
         this.status = status;
     }
 

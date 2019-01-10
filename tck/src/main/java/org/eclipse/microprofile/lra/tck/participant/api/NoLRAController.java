@@ -33,19 +33,19 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_HEADER;
-import static org.eclipse.microprofile.lra.tck.participant.api.ActivityController.ACTIVITIES_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
 
 @ApplicationScoped
-@Path(StandardController.ACTIVITIES_PATH3)
-public class StandardController {
-    public static final String ACTIVITIES_PATH3 = "activities3";
-    public static final String NON_TRANSACTIONAL_WORK = "/work";
+@Path(NoLRAController.NO_LRA_CONTROLLER_PATH)
+public class NoLRAController {
+    public static final String NO_LRA_CONTROLLER_PATH = "nolracontroller";
+    public static final String NON_TRANSACTIONAL_WORK_PATH = "work";
 
     @Context
     private UriInfo context;
 
     @PUT
-    @Path(NON_TRANSACTIONAL_WORK)
+    @Path(NON_TRANSACTIONAL_WORK_PATH)
     public Response work2(@HeaderParam(LRA_HTTP_HEADER) String lraId) throws NotFoundException {
 
         if (lraId != null) {
@@ -53,8 +53,8 @@ public class StandardController {
         }
 
         WebTarget resourcePath = ClientBuilder.newClient().target(context.getBaseUri())
-                .path(ACTIVITIES_PATH)
-                .path(ActivityController.MANDATORY_LRA_RESOURCE_PATH);
+                .path(LRA_CONTROLLER_PATH)
+                .path(LraController.MANDATORY_LRA_RESOURCE_PATH);
 
         Response response = resourcePath.request().put(Entity.text(""));
 

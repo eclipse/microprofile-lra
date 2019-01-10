@@ -1,3 +1,4 @@
+
 //   Copyright (c) 2018 Contributors to the Eclipse Foundation
 // 
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,38 +15,97 @@
 
 = Running the Microprofile LRA TCK
 
-The TCK provides a JAX-RS participant resource together with a resource for invoking the test sutie.
+The TCK uses `JUnit 4` and `Arquillian`.
 
-== Dependencies
+== Configuration
 
-To enable the tests in your implementation of this specification you need to add the
-following dependency to your build:
+The LRA TCK suite can be parametrized by following properties, handled in the suite with MicroProfile Config
+
+`lra.tck.base.url`::
+  The URL where the TCK suite deployment is exposed at. The TCK suite will construct path based on this URL.
+  The default base URL is `http://localhost:8180`.
+`lra.tck.timeout.factor`::
+  Timeout factor adjust timeout values used in the TCK suite. The default value is `1.0`.
+  When set bigger than `1.0` then timeout value will be bigger and waiting time is longer.
+  When set-up lower then the timeouts will be shorter.
+  Thus on slower machines it's expected longer timeouts will be needed. For example if test expects
+  some waiting time to be 10 seconds and this factor is set to `1.5` then the result waiting time is 15 seconds.
+`lra.http.recovery.host`, `lra.http.recovery.port`, `lra.http.recovery.path`::
+  Hostname, port and path for the recovery endpoint that will be contacted in tests checking recovery capabilities.
+
+== Prerequisites for the MicroProfile LRA TCK implementation
+
+* `pom.xml` dependencies are set-up
+* the LRA TCK suite requires MicroProfile Config
+* a default Arquillian container is configured in `arquillian.xml` (tests manually deploy with use of `@ArquillianResource Deployer`)
+* implementation provides one implementation of `org.eclipse.microprofile.lra.client.LRAClient` as it's injected by TCK suite
+* implementation has to provide one implementation of `org.eclipse.microprofile.lra.tck.spi.ManagementSPI`. This is an interface
+  with definition of util methods used by the TCK suite for its run.
+
+=== Setting-up pom.xml dependencies and running the tests
+
+To enable the tests in your implementation of this specification you need to add the following dependency to your build:
 
 [source, xml]
 ----
 <dependency>
     <groupId>org.eclipse.microprofile.lra</groupId>
     <artifactId>microprofile-lra-tck</artifactId>
-    <version>${version.microprofile-lra-tck-to-test}
-    </version>
+    <version>${version.microprofile-lra-tck-to-test}</version>
+    <scope>test</scope>
 </dependency>
 ----
 
-and then start a MicroProfile enabled container that scans this dependency for the JAX-RS resources
-that comrise the TCK. The TCK relies upon an instance of `org.eclipse.microprofile.lra.client.LRAClient`
-to be injected, via CDI, into the test suite. Your own dependencies should provide an already configured implementation
-of LRAClient that can be used by CDI to satisfy the injection point.
+Next you need to specify what are tests to be run. You need to inject the TCK suite tests to be run automatically.
+Here we use integration tests with `maven failsafe` where dependency to scan is set to include particular test classes.
 
-With this set up, you may trigger the TCK by sending a PUT request to the path tck/all:
+[source, xml]
+----
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+                <dependenciesToScan>
+                    <dependency>org.eclipse.microprofile.lra:microprofile-lra-tck</dependency>
+                </dependenciesToScan>
+                <includes>
+                    <include>**/*Test*.java</include>
+                </includes>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+----
 
-    curl -XPUT http://localhost:8080/tck/all?verbose=false | jq
+=== MicroProfile Config being available
 
-where jq is a json pretty printer such as https://stedolan.github.io/jq and the `tck/all` path runs
-all tests in the TCK. Setting verbose=true will include the full stack trace of any test failures.
+The testsuite uses configuration while expecting MicroProfile Config is available. The maven coordinates
+of config are `org.eclipse.microprofile.config:microprofile-config-api`.
 
-If you want to run a single test replace `all` with the name of the test you wish to run chosen from:
-`timeLimit`, `startLRA`, `cancelLRA`, `closeLRA`, `getActiveLRAs`, `getAllLRAs`, `isActiveLRA,
-`nestedActivity`, `completeMultiLevelNestedActivity`, `compensateMultiLevelNestedActivity`,
-`mixedMultiLevelNestedActivity`, `joinLRAViaHeader`, `join`, `leaveLRA`, `leaveLRAViaAPI`,
-`dependentLRA`, `cancelOn`, `cancelOnFamily` or `acceptTest`.
+=== Arquillian container
 
+The `arquillian-*.xml` has to define a container that will be started and managed by Arquillian lifecycle
+but that provide a way to deploy and undeploy deployments. That container to be expected with default type `suite`.
+
+
+[source, xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+
+<arquillian>
+    <container qualifier="lra-test-container" default="true" mode="suite">
+        <configuration>
+        ...
+        </configuration>
+    </container>
+<arquillian>
+----
+
+== Debugging tests
+
+Debugging is dependent on the TCK implementor. The implementor configures Arquillian to use particular runtime
+to deploy the test deployments and run the LRA client side implementation there. In general we can say that
+the runtime needs to define java debug properties `-Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y`.
+Then debugger may be connected to port 8787 and to track the test execution.

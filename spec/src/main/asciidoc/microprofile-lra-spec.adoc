@@ -362,9 +362,9 @@ provided in the quick overview links above but are worth repeating here:
     the original context will be resumed. +
      +
     But note that if there was already a context active before the method
-    was invoked and the `LRA#terminal()` attribute is set to false
+    was invoked and the `LRA#end()` attribute is set to false
     then the new LRA is left active. In this case the original LRA will
-    remain suspended (until the new LRA finishes) unless the `LRA#terminal()`
+    remain suspended (until the new LRA finishes) unless the `LRA#end()`
     attribute was also set to true in which case the original LRA context
     will be closed/cancelled.
 
@@ -401,13 +401,13 @@ attributes of the LRA:
 `LRA.Type#REQUIRED` and `LRA.Type#REQUIRES_NEW` can start
 new LRAs which by default will be closed when the annotated method
 completes. This default behaviour can be overridden using the
-`LRA#terminal()` attribute which will leave the new LRA active
+`LRA#end()` attribute which will leave the new LRA active
 when the method completes. To force the LRA to cancel instead of complete
 use the `LRA#cancelOnFamily()` or `LRA#cancelOn()` attributes.
 
 If an LRA was already present before the annotated method is invoked then it
 will remain active after the method completes. This default behaviour can be
-overridden using the `LRA#terminal()` attribute which will force
+overridden using the `LRA#end()` attribute which will force
 the LRA to complete or cancel.
 
 When an LRA is present its identifier MUST be made available to
@@ -483,7 +483,7 @@ The example also shows that when an LRA is present its identifier can be obtaine
 by reading the request and response headers.
 
 The next example demonstrates how to start an LRA in one method and close
-it in a different method using the `terminal` attribute.
+it in a different method using the `end` attribute.
 It also shows how to automatically cancel the LRA if the business method
 returns the particular HTTP status codes identified in the `cancelOn` and
 `cancelOnFamily` attributes:
@@ -499,18 +499,18 @@ returns the particular HTTP status codes identified in the `cancelOn` and
        cancelOnFamily = {
            Response.Status.Family.CLIENT_ERROR // cancel on any 4xx code
        },
-       terminal = false) // the LRA will continue to run when the method finishes
+       end = false) // the LRA will continue to run when the method finishes
   public Response bookTrip(...) { ... }
 
   @PUT
   @Path("/confirm")
   @LRA(LRA.Type.SUPPORTS,
-       terminal = true) // end the LRA started by the bookTrip method
+       end = true) // end the LRA started by the bookTrip method
   public Booking confirmTrip(Booking booking) throws BookingException { ... }
 ----
 
-The `terminal = false` attribute on the bookTrip method forces the LRA to continue running when
-the method finishes and the `terminal = true` attribute on the confirmTrip method forces the LRA
+The `end = false` attribute on the bookTrip method forces the LRA to continue running when
+the method finishes and the `end = true` attribute on the confirmTrip method forces the LRA
 (started by the bookTrip method) to close the LRA.
 
 [[compensating-activities]]

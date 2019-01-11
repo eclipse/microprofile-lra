@@ -70,7 +70,7 @@ import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_RECOVERY_HE
 
 @ApplicationScoped
 @Path(ActivityController.ACTIVITIES_PATH)
-@LRA(value = LRA.Type.SUPPORTS, terminal = false)
+@LRA(value = LRA.Type.SUPPORTS, end = false)
 public class ActivityController {
     public static final String ACTIVITIES_PATH = "activities";
     public static final String ACCEPT_WORK = "acceptWork";
@@ -249,7 +249,7 @@ public class ActivityController {
 
     @PUT
     @Path(ActivityController.ACCEPT_WORK)
-    @LRA(value = LRA.Type.REQUIRED, terminal = false)
+    @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response acceptWork(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
@@ -268,7 +268,7 @@ public class ActivityController {
 
     @PUT
     @Path("/supports")
-    @LRA(value = LRA.Type.SUPPORTS, terminal = false)
+    @LRA(value = LRA.Type.SUPPORTS, end = false)
     public Response supportsLRACall(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
@@ -306,7 +306,7 @@ public class ActivityController {
 
     @PUT
     @Path(WORK_RESOURCE_PATH)
-    @LRA(value = LRA.Type.REQUIRED, terminal = false)
+    @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                     @HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
@@ -341,7 +341,7 @@ public class ActivityController {
 
     @PUT
     @Path(MANDATORY_LRA_RESOURCE_PATH)
-    @LRA(value = LRA.Type.MANDATORY, terminal = false)
+    @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                              @HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return activityWithLRA(rcvId, lraId);
@@ -349,7 +349,7 @@ public class ActivityController {
 
     @PUT
     @Path("/nestedActivity")
-    @LRA(value = LRA.Type.MANDATORY, terminal = true)
+    @LRA(value = LRA.Type.MANDATORY, end = true)
     @NestedLRA
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
                                    @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId) {
@@ -366,7 +366,7 @@ public class ActivityController {
 
     @PUT
     @Path("/multiLevelNestedActivity")
-    @LRA(value = LRA.Type.MANDATORY, terminal = false)
+    @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response multiLevelNestedActivity(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String rcvId,
             @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId,
@@ -481,7 +481,7 @@ public class ActivityController {
     @GET
     @Path("/renewTimeLimit")
     @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, terminal = false, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
+    @LRA(value = LRA.Type.REQUIRED, end = false, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     public Response extendTimeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 

@@ -83,13 +83,13 @@ public @interface LRA {
      * {@link LRA.Type#REQUIRED} and {@link LRA.Type#REQUIRES_NEW} can start
      * new LRAs which by default will be closed when the annotated method
      * completes. This default behaviour can be overridden using the
-     * {@link LRA#terminal()} attribute which will leave the new LRA active
+     * {@link LRA#end()} attribute which will leave the new LRA active
      * when the method completes. To force the LRA to cancel instead of complete
      * use the {@link LRA#cancelOnFamily()} or {@link LRA#cancelOn()} attributes.
      *
      * If an LRA was already present before the annotated method is invoked then it
      * will remain active after the method completes. This default behaviour can be
-     * overridden using the {@link LRA#terminal()} attibute which will force
+     * overridden using the {@link LRA#end()} attibute which will force
      * the LRA to complete or cancel (if the {@link LRA#cancelOnFamily()} or
      * {@link LRA#cancelOn()} attributes are present).
      *
@@ -124,7 +124,7 @@ public @interface LRA {
          * the original context will be resumed.
          *
          * But note that if there was already a context active before the method
-         * was invoked and the {@link LRA#terminal} attribute is set to false
+         * was invoked and the {@link LRA#end} attribute is set to false
          * then the new LRA is left active. In this case the original LRA will
          * remain suspended.
          */
@@ -186,12 +186,12 @@ public @interface LRA {
     /**
      * Normally if an LRA is present when a bean method is executed it will not
      * be ended when the method returns. To override this behaviour and force LRA
-     * termination on exit use the terminal element
+     * termination on exit use the end element
      *
      * @return true if an LRA that was present before method execution will be
      * terminated when the bean method finishes.
      */
-    boolean terminal() default true;
+    boolean end() default true;
 
     /**
      * The cancelOnFamily element can be set to indicate which families of

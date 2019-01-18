@@ -131,35 +131,6 @@ public interface LRAClient {
             throws GenericLRAException;
 
     /**
-     * Start a top level LRA and join associated participant. This method
-     * combines {@link LRAClient#startLRA(String, Long, ChronoUnit)} and
-     * {@link LRAClient#joinLRA(URL, Class, URI, String)} in a single invocation.
-     *
-     * @param clientID The client may provide a (preferably) unique identity which
-     *                will be reported back when the LRA is queried.
-     * @param timeout Specifies the maximum time that the LRA will exist for. If the
-     *               LRA is terminated because of a timeout it will be cancelled.
-     * @param unit Specifies the unit that the timeout is measured in
-     * @param resourceClass An annotated class for the participant methods:
-     * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
-     * @param baseUri Base uri for the participant endpoints
-     * @param compensatorData Compensator specific data that the coordinator will
-     *                       pass to the participant when the LRA is closed or
-     *                       cancelled
-     *
-     * @throws GenericLRAException a new LRA could not be started. The specific
-     * reason is available in {@link GenericLRAException#getStatusCode()}
-     *
-     * @return the identifier of the new LRA
-     *
-     * @see LRAClient#startLRA(String, Long, ChronoUnit)
-     * @see LRAClient#joinLRA(URL, Class, URI, String)
-     */
-    URL startLRA(String clientID, Long timeout, ChronoUnit unit,
-                 Class<?> resourceClass, URI baseUri, String compensatorData)
-            throws GenericLRAException;
-
-    /**
      * Attempt to cancel an LRA
      *
      * Trigger compensation of all participants enlisted with the LRA (ie the

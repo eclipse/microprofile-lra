@@ -22,7 +22,6 @@ package org.eclipse.microprofile.lra.tck;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.client.LRAClient;
-import org.eclipse.microprofile.lra.client.LRAInfo;
 import org.eclipse.microprofile.lra.tck.spi.ManagementSPI;
 import org.eclipse.microprofile.lra.tck.participant.api.StandardController;
 import org.junit.After;

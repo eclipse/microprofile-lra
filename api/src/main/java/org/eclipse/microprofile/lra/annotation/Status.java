@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  * by annotating one of the methods with this <em>@Status</em> annotation
  * together with the <em>@GET</em> JAX-RS annotation.
  * The annotated method should report the status according to one of the
- * {@link CompensatorStatus} enum values.
+ * {@link ParticipantStatus} enum values.
  *
  * If the participant has already responded successfully to an invocation
  * of the <em>@Compensate</em> or <em>@Complete</em> method then it may

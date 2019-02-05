@@ -20,14 +20,13 @@
 
 package org.eclipse.microprofile.lra.client;
 
-import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URI;
 import java.net.URL;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
 
 public interface LRAClient {
     /**
@@ -138,16 +137,15 @@ public interface LRAClient {
      *
      * @param lraId The unique identifier of the LRA (required)
      *
-     * {@link CompensatorStatus#name()}. If the final status is not returned the
-     *             client can still discover the final state using the
-     *             {@link LRAClient#getStatus(URL)} method
-     *
      * @throws NotFoundException if the LRA no longer exists
      *
      * @throws GenericLRAException Communication error (the reason is availalbe via
      * the {@link GenericLRAException#getStatusCode()} method
      *
      * @return the response MAY contain the final status of the LRA as reported by
+     *         {@link LRAStatus#name()}.
+     *         If the final status is not returned the
+     *         client can only discover the final state using proprietary APIs
      */
     String cancelLRA(URL lraId) throws GenericLRAException;
 
@@ -159,120 +157,20 @@ public interface LRAClient {
      *
      * @param lraId The unique identifier of the LRA (required)
      *
-     * {@link CompensatorStatus#name()}. If the final status is not returned the
-     *             client can still discover the final state using the
-     *             {@link LRAClient#getStatus(URL)} method
-     *
      * @throws NotFoundException if the LRA no longer exists
      *
      * @throws GenericLRAException Communication error (the reason is availalbe via
      * the {@link GenericLRAException#getStatusCode()} method
      *
      * @return the response MAY contain the final status of the LRA as reported by
+     *         {@link LRAStatus#name()}
+     *         If the final status is not returned the
+     *         client can only discover the final state using proprietary APIs
      */
     String closeLRA(URL lraId) throws GenericLRAException;
 
     /**
-     * Lookup active LRAs
-     *
-     * @return a list of active LRAs
-     *
-     * @throws GenericLRAException on error
-     */
-    List<LRAInfo> getActiveLRAs() throws GenericLRAException;
-
-    /**
-     * Returns all (both active and recovering) LRAs
-     *
-     * @return a list of all LRAs known to this coordinator
-     *
-     * @throws GenericLRAException on error
-     */
-    List<LRAInfo> getAllLRAs() throws GenericLRAException;
-
-    /**
-     * List recovering Long Running Actions
-     *
-     * @return LRAs that are recovering (ie the participant is still
-     * attempting to complete or compensate
-     *
-     *
-     * @throws GenericLRAException on error
-     */
-    List<LRAInfo> getRecoveringLRAs() throws GenericLRAException;
-
-    /**
-     * Lookup the status of an LRA
-     *
-     * @param lraId the LRA whose status is being requested
-     *
-     * @return the status or empty if the the LRA is still active (ie has not yet
-     * been closed or cancelled)
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @throws GenericLRAException if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()}
-     * may provide a more specific reason.
-     */
-    Optional<CompensatorStatus> getStatus(URL lraId) throws GenericLRAException;
-
-    /**
-     * Indicates whether an LRA is active. The same information can be obtained via
-     * a call to {@link LRAClient#getStatus(URL)}.
-     *
-     * @param lraId The unique identifier of the LRA (required)
-     *
-     * @return whether or not the specified LRA is active
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @throws GenericLRAException if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()}
-     * may provide a more specific reason.
-     */
-    Boolean isActiveLRA(URL lraId) throws GenericLRAException;
-
-    /**
-     * Indicates whether an LRA was compensated. The same information can be
-     * obtained via a call to {@link LRAClient#getStatus(URL)}.
-     *
-     * @param lraId The unique identifier of the LRA (required)
-     *
-     * @return whether or not the specified LRA has been compensated
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @throws GenericLRAException if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()}
-     * may provide a more specific reason.
-     */
-    Boolean isCompensatedLRA(URL lraId) throws GenericLRAException;
-
-    /**
-     * Indicates whether an LRA is complete. The same information can be obtained
-     * via a call to {@link LRAClient#getStatus(URL)}.
-     *
-     * @param lraId The unique identifier of the LRA (required)
-     *
-     * @return whether or not the specified LRA has been completed
-     *
-     * @throws NotFoundException if the LRA no longer exists
-     *
-     * @throws GenericLRAException if the request to the coordinator failed.
-     * {@link GenericLRAException#getCause()} and/or
-     * {@link GenericLRAException#getStatusCode()}
-     * may provide a more specific reason.     */
-    Boolean isCompletedLRA(URL lraId) throws GenericLRAException;
-
-    /**
      * Join an LRA passing in a class that will act as the participant.
-     * Similar to {@link LRAClient#joinLRA(URL, Class, URI, String)} except
-     * that the various participant URLs are expressed as CDI annotations on
-     * the passed in resource class.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @param resourceClass An annotated class for the participant methods:
@@ -319,7 +217,7 @@ public interface LRAClient {
      * of an activity
      *
      * @param recoveryUrl the recovery URL returned from a participant join request
-     *                    
+     *
      * @throws NotFoundException if the LRA no longer exists
      *
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -350,4 +248,22 @@ public interface LRAClient {
      * @return the current LRA (can be null)
      */
     URL getCurrent();
+
+    /**
+     * Lookup the status of an LRA
+     *
+     * @param lraId the LRA whose status is being requested
+     *
+     * @return the status of the the LRA.
+     *
+     * @throws NotFoundException if the LRA no longer exists
+     *
+     * @throws UnknowableException if the status is unknowable
+     *
+     * @throws GenericLRAException if the request to the coordinator failed.
+     * {@link GenericLRAException#getCause()} and/or
+     * {@link GenericLRAException#getStatusCode()}
+     * may provide a more specific reason.
+     */
+    LRAStatus getStatus(URL lraId) throws GenericLRAException;
 }

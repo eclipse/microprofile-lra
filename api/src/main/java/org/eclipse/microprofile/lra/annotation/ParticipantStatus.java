@@ -24,27 +24,36 @@ package org.eclipse.microprofile.lra.annotation;
  * A representation of the status of a participant according to a
  * participant state model:
  *
- * The initial state Compensating is entered when a compensate
+ * The initial state Active is entered when a participant is first
+ * associated with a Long Runing Action.
+ *
+ * The state Compensating is entered when a compensate
  * notification is received (which indicates that the associated
  * LRA was cancelled). The transition to end state Compensated
  * should occur when the participant has compensated for any actions
- * it performed when the LRA was executing. If compensation is not
- * possible then the final state of FailedToCompensate is entered and
- * the participant cannot leave this state until it receives a
- * forget notification {@link Forget}.
+ * it performed when the LRA was executing. If compensation is not,
+ * and will never be, possible then the final state of FailedToCompensate
+ * is entered and the participant cannot leave this state until it receives
+ * a forget notification {@link Forget}.
  *
- * Similarly the initial state Completing is entered when a complete
+ * The state Completing is entered when a complete
  * notification is received (which indicates that the associated
  * LRA was closed). This state is followed by Completed
  * or FailedToComplete depending upon whether the participant was or
  * was not able to tidy up.
-
- * Note that according to this state model a participant does not
- * have a state until it is asked to complete or compensate. The name
- * value of the enum should be returned by participant methods marked with
- * the {@link Status}, {@link Compensate} and {@link Complete} annotations.
+ *
+ * Note that a particant can leave this state model via the {@link Leave}
+ * annotation provided that the associated LRA is in the state
+ * {@link LRAStatus#Active}.
+ *
+ * The name value of the enum should be returned by participant methods marked
+ * with the {@link Status}, {@link Compensate} and {@link Complete} annotations.
  */
-public enum CompensatorStatus {
+public enum ParticipantStatus {
+    /**
+     * The participant has not yet been asked to Complete or Compensate
+     */
+    Active,
     /**
      * The participant is currently compensating any work it performed
      */
@@ -64,7 +73,7 @@ public enum CompensatorStatus {
      */
     Completing,
     /**
-     * The participant has confirmed
+     * The participant has confirmed that is has completed any tidy-up actions
      */
     Completed,
     /**

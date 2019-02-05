@@ -171,6 +171,7 @@ A LRA and a participant both follow similar state models (with slightly
 different wording to indicate that the states refer to the LRA as a whole
 rather than to individual participants):
 
+* `Active`: the LRA exists and has not been asked to close or cancel yet
 * `Cancelling`: the LRA is currently being cancelled
 * `Cancelled`: the LRA has successfully cancelled
 * `FailedToCancel`: at least one participant was not able to
@@ -186,6 +187,8 @@ image::lra-state-model.png[align="center" link="lra-state-model"]
 
 And the participants state model has the following states:
 
+* `Active`: the participant exists and has not been asked to compensate
+or complete yet
 * `Compensating`: a participant is currently compensating for the work
 that it performed during the LRA.
 * `Compensated`: a participant has successfully compensated for the work
@@ -286,7 +289,7 @@ annotated with `@Compensate` and `@Complete` then these methods will be associat
 the active LRA. They will be invoked when the LRA is subsequently cancelled or closed.
 If the participant successfully compensates or completes then it may forget about the LRA.
 Otherwise it should remember that it is still associated with the LRA and it MUST report
-the status of the association using values in the `CompensatorStatus` enum according to
+the status of the association using values in the `ParticipantStatus` enum according to
 the participant state model defined earlier.
 It can report the status directly from the `@Compensate` or `@Complete` methods if they
 are idempotent, otherwise it MUST provide a method annotated with `@Status`.
@@ -449,7 +452,7 @@ public class SimpleLRAParticipant
          * Since there is no @Status method in this class completeWork MUST be
          * idempotent and MUST return the status.
          */
-         return Response.ok(CompensatorStatus.Completed.name()).build();
+         return Response.ok(ParticipantStatus.Completed.name()).build();
     }
 
     @PUT
@@ -466,7 +469,7 @@ public class SimpleLRAParticipant
          * Since there is no @Status method in this class compensateWork MUST be
          * idempotent and MUST return the status
          */
-         return Response.ok(CompensatorStatus.Compensated.name()).build();
+         return Response.ok(ParticipantStatus.Compensated.name()).build();
     }
 
     @DELETE
@@ -532,7 +535,7 @@ For example:
   public Response compensateWork(@HeaderParam(LRAClient.LRA_HTTP_HEADER) String lraId)
   {
     // compensate for whatever activity the business logic has associated with lraId
-    return Response.ok(CompensatorStatus.Compensated.name()).build();
+    return Response.ok(ParticipantStatus.Compensated.name()).build();
   }
 ----
 
@@ -547,7 +550,7 @@ timed out if not confirmed within a predefined period.
 If the participant successfully compensates or completes then it may forget about
 the LRA. Otherwise it should remember that it is still associated with the LRA and
 it MUST report the status of the association using one of the values in the
-`CompensatorStatus` enum according to to the <<participant-state-model,the
+`ParticipantStatus` enum according to to the <<participant-state-model,the
 participant state model>>. If the compensation and completion methods are not
 idempotent then there MUST be a method annotated with `@Status` which reports the
 status. Otherwise the compensation and completion methods should return the status.
@@ -565,7 +568,7 @@ to be invoked until the implementation knows it has the final status.
 If the resource cannot perform a compensation activity
 immediately the `@Compensate` method SHOULD do one or more of the following:
 
-- return `CompensatorStatus.Compensating`
+- return `ParticipantStatus.Compensating`
 - return a `202 Accepted` HTTP status code
 - mark the method as a JAX-RS asynchronous method (using the
   `javax.ws.rs.container.Suspended` annotation).
@@ -699,8 +702,8 @@ support idempotency then it MUST be able to report its' status by
 annotating one of the methods with the `@Status` annotation which should
 report the status according to the
 <<participant-state-model,participant state model>> by returning one of the
-<<source-CompensatorStatus,CompensatorStatus enum values>>
-(https://github.com/eclipse/microprofile-lra/blob/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java[github link]).
+<<source-ParticipantStatus,ParticipantStatus enum values>>
+(https://github.com/eclipse/microprofile-lra/blob/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ParticipantStatus.java[github link]).
 
 If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `404 Not Found`
@@ -942,10 +945,10 @@ include::{sourcedir}/org/eclipse/microprofile/lra/client/IllegalLRAStateExceptio
 ----
 <<<
 
-=== CompensatorStatus
-[[source-CompensatorStatus]]
+=== ParticipantStatus
+[[source-ParticipantStatus]]
 ----
-include::{sourcedir}/org/eclipse/microprofile/lra/annotation/CompensatorStatus.java/[CompensatorStatus]
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/ParticipantStatus.java/[ParticipantStatus]
 ----
 <<<
 

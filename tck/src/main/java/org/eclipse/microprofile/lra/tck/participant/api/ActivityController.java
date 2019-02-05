@@ -32,7 +32,7 @@ import org.eclipse.microprofile.lra.annotation.NestedLRA;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.client.IllegalLRAStateException;
 import org.eclipse.microprofile.lra.tck.participant.model.Activity;
-import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -95,7 +95,7 @@ public class ActivityController {
 
     /**
      * Performing a GET on the participant URL will return the current status of the
-     * participant {@link CompensatorStatus}, or 404 if the participant is no longer present.
+     * participant {@link ParticipantStatus}, or 404 if the participant is no longer present.
      *
      * @param lraId the id of the LRA
      * @return the status of the LRA
@@ -114,10 +114,10 @@ public class ActivityController {
         }
 
         if (activity.getAndDecrementAcceptCount() <= 0) {
-            if (activity.getStatus() == CompensatorStatus.Completing) {
-                activity.setStatus(CompensatorStatus.Completed);
-            } else if (activity.getStatus() == CompensatorStatus.Compensating) {
-                activity.setStatus(CompensatorStatus.Compensated);
+            if (activity.getStatus() == ParticipantStatus.Completing) {
+                activity.setStatus(ParticipantStatus.Completed);
+            } else if (activity.getStatus() == ParticipantStatus.Compensating) {
+                activity.setStatus(ParticipantStatus.Compensated);
             }
         }
 
@@ -184,14 +184,14 @@ public class ActivityController {
         activity.setEndData(userData);
 
         if (activity.getAndDecrementAcceptCount() > 0) {
-            activity.setStatus(CompensatorStatus.Completing);
+            activity.setStatus(ParticipantStatus.Completing);
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
                     ACTIVITIES_PATH, lraId));
 
             return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
         }
 
-        activity.setStatus(CompensatorStatus.Completed);
+        activity.setStatus(ParticipantStatus.Completed);
         activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId));
 
         System.out.printf("ActivityController completing %s%n", lraId);
@@ -214,14 +214,14 @@ public class ActivityController {
         activity.setEndData(userData);
 
         if (activity.getAndDecrementAcceptCount() > 0) {
-            activity.setStatus(CompensatorStatus.Compensating);
+            activity.setStatus(ParticipantStatus.Compensating);
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
                     ACTIVITIES_PATH, lraId));
 
             return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
         }
 
-        activity.setStatus(CompensatorStatus.Compensated);
+        activity.setStatus(ParticipantStatus.Compensated);
         activity.setStatusUrl(String.format("%s/%s/activity/compensated", context.getBaseUri(), lraId));
 
         System.out.printf("ActivityController compensating %s%n", lraId);
@@ -240,7 +240,7 @@ public class ActivityController {
         Activity activity = activityService.getActivity(lraId);
 
         activityService.remove(activity.getId());
-        activity.setStatus(CompensatorStatus.Completed);
+        activity.setStatus(ParticipantStatus.Completed);
         activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId));
 
         System.out.printf("ActivityController forgetting %s%n", lraId);
@@ -523,7 +523,7 @@ public class ActivityController {
     public Response compensate(@PathParam("TxId")String txId) throws NotFoundException {
         Activity activity = activityService.getActivity(txId);
 
-        activity.setStatus(CompensatorStatus.Compensated);
+        activity.setStatus(ParticipantStatus.Compensated);
         activity.setStatusUrl(String.format("%s/%s/activity/compensated", context.getBaseUri(), txId));
 
         return Response.ok(activity.getStatusUrl()).build();
@@ -549,7 +549,7 @@ public class ActivityController {
     public Response complete(@PathParam("TxId")String txId) throws NotFoundException {
         Activity activity = activityService.getActivity(txId);
 
-        activity.setStatus(CompensatorStatus.Completed);
+        activity.setStatus(ParticipantStatus.Completed);
         activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), txId));
 
         return Response.ok(activity.getStatusUrl()).build();
@@ -567,14 +567,14 @@ public class ActivityController {
     @Path("/{TxId}/completed")
     @Produces(MediaType.APPLICATION_JSON)
     public String completedStatus(@PathParam("TxId")String txId) {
-        return CompensatorStatus.Completed.name();
+        return ParticipantStatus.Completed.name();
     }
 
     @GET
     @Path("/{TxId}/compensated")
     @Produces(MediaType.APPLICATION_JSON)
     public String compensatedStatus(@PathParam("TxId")String txId) {
-        return CompensatorStatus.Compensated.name();
+        return ParticipantStatus.Compensated.name();
     }
 
     private void checkStatusAndClose(Response response, int expected) {

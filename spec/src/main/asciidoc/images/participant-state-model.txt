@@ -28,11 +28,14 @@ state NotEnlisted {
   Enlisted --> NotEnlisted : completed
   Enlisted --> NotEnlisted : compensated
   Enlisted --> NotEnlisted : forget
+  Enlisted --> NotEnlisted : leave
 }
 
 state Enlisted {
-  [*] --> Compensating : compensate
-  note left of Compensating : initial state
+  [*] --> Active : join
+  Active : "The participant has joined the LRA and has not yet been asked to compensate or complete"
+  note left of Active : initial state
+  Active --> Compensating : compensate
   state "FailedToCompensate" as FailedToCompensate
   FailedToCompensate : "Must wait for the\n forget message"
   state "FailedToComplete" as CannotComplete
@@ -49,8 +52,7 @@ state Enlisted {
   Compensating --> Compensated
   Compensating --> FailedToCompensate
 
-  [*] --> Completing : complete
-  note right of Completing : initial state
+  Active --> Completing : complete
   Completing --> Completed
   Completing --> CannotComplete
 }

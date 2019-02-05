@@ -19,9 +19,11 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.client.LRAClient;
 import org.eclipse.microprofile.lra.client.LRAInfo;
+import org.eclipse.microprofile.lra.tck.spi.ManagementSPI;
 import org.eclipse.microprofile.lra.tck.participant.api.StandardController;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -65,6 +67,7 @@ public class TckTests {
     private static final String WORK_TEXT = "work";
 
     private static LRAClient lraClient;
+    private static ManagementSPI lraSPI;
     private static Client msClient;
     private static Client rcClient;
 
@@ -78,8 +81,8 @@ public class TckTests {
     }
 
     @BeforeClass
-    public static void beforeClass(LRAClient lraClient) {
-        initTck(lraClient);
+    public static void beforeClass(LRAClient lraClient, ManagementSPI managementSPI) {
+        initTck(lraClient, managementSPI);
     }
 
     public TckResult runTck(String testname, boolean verbose) {
@@ -111,8 +114,9 @@ public class TckTests {
         return run;
     }
 
-    private static void initTck(LRAClient lraClient) {
+    private static void initTck(LRAClient lraClient, ManagementSPI managementSPI) {
         TckTests.lraClient = lraClient;
+        TckTests.lraSPI = managementSPI;
 
         try {
             if (Boolean.valueOf(System.getProperty("enablePause", "true"))) {
@@ -158,7 +162,7 @@ public class TckTests {
 
     @After
     public void after() {
-        List<LRAInfo> activeLRAs = lraClient.getActiveLRAs();
+        List<LRAInfo> activeLRAs = lraSPI.getLRAs(LRAStatus.Active);
 
         if (activeLRAs.size() != 0) {
             activeLRAs.forEach(lra -> {
@@ -191,7 +195,7 @@ public class TckTests {
 
         lraClient.cancelLRA(lra);
 
-        List<LRAInfo> lras = lraClient.getAllLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(null);
 
         assertNull(getLra(lras, lra.toExternalForm()), "cancelLRA via client: lra still active", null);
 
@@ -204,7 +208,7 @@ public class TckTests {
 
         lraClient.closeLRA(lra);
 
-        List<LRAInfo> lras = lraClient.getAllLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(null);
 
         assertNull(getLra(lras, lra.toExternalForm()), "closeLRA via client: lra still active", null);
 
@@ -214,7 +218,7 @@ public class TckTests {
     @Test
     private String getActiveLRAs() throws WebApplicationException {
         URL lra = lraClient.startLRA(null, "SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(null);
 
         assertNotNull(getLra(lras, lra.toExternalForm()), "getActiveLRAs: getLra returned null", null);
 
@@ -226,7 +230,7 @@ public class TckTests {
     @Test
     private String getAllLRAs() throws WebApplicationException {
         URL lra = lraClient.startLRA(null, "SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
-        List<LRAInfo> lras = lraClient.getAllLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(null);
 
         assertNotNull(getLra(lras, lra.toExternalForm()), "getAllLRAs: getLra returned null", null);
 
@@ -244,7 +248,7 @@ public class TckTests {
     private String isActiveLRA() throws WebApplicationException {
         URL lra = lraClient.startLRA(null, "SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
-        assertTrue(lraClient.isActiveLRA(lra), null, null, lra);
+        assertTrue(lraSPI.getStatus(lra).isActive(), null, null, lra);
 
         lraClient.closeLRA(lra);
 
@@ -258,7 +262,7 @@ public class TckTests {
 
         lraClient.cancelLRA(lra);
 
-        assertTrue(lraClient.isCompensatedLRA(lra), null, null, lra);
+        assertTrue(lraSPI.getStatus(lra).isCompensated(), null, null, lra);
 
         return lra.toExternalForm();
     }
@@ -270,7 +274,7 @@ public class TckTests {
 
         lraClient.closeLRA(lra);
 
-        assertTrue(lraClient.isCompletedLRA(lra), null, null, lra);
+        assertTrue(lraSPI.getStatus(lra).isComplete(), null, null, lra);
 
         return lra.toExternalForm();
     }
@@ -284,7 +288,7 @@ public class TckTests {
         String lra = checkStatusAndClose(response, Response.Status.OK.getStatusCode(), true, resourcePath);
 
         // validate that the LRA coordinator no longer knows about lraId
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
 
         // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
         assertNull(getLra(lras, lra), "joinLRAViaBody: lra is still active", resourcePath);
@@ -314,7 +318,7 @@ public class TckTests {
         lraClient.closeLRA(lra);
 
         // validate that the nested LRA was closed
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
 
         // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
         assertNull(getLra(lras, nestedLraId), "nestedActivity: nested LRA should not be active", resourcePath);
@@ -349,14 +353,14 @@ public class TckTests {
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
 
         // validate that the LRA coordinator still knows about lraId
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
         assertNotNull(getLra(lras, lra.toExternalForm()), "joinLRAViaHeader: missing lra", resourcePath);
 
         // close the LRA
         lraClient.closeLRA(lra);
 
         // check that LRA coordinator no longer knows about lraId
-        lras = lraClient.getActiveLRAs();
+        lras = lraSPI.getLRAs(LRAStatus.Active);
         assertNull(getLra(lras, lra.toExternalForm()), "joinLRAViaHeader: LRA should not be active", resourcePath);
 
         // check that participant was told to complete
@@ -368,7 +372,7 @@ public class TckTests {
 
     @Test
     private String join() throws WebApplicationException {
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
         int count = lras.size();
         URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path(WORK_TEXT);
@@ -377,7 +381,7 @@ public class TckTests {
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
         lraClient.closeLRA(lra);
 
-        lras = lraClient.getActiveLRAs();
+        lras = lraSPI.getLRAs(LRAStatus.Active);
         System.out.printf("join ok %d versus %d lras%n", count, lras.size());
         assertEquals(count, lras.size(), "join: wrong LRA count", resourcePath);
 
@@ -541,7 +545,7 @@ public class TckTests {
      * the complete/compensate callbacks
      */
     private void testUserData() {
-        List<LRAInfo> lras = lraClient.getActiveLRAs();
+        List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
         int count = lras.size();
         String testData = "test participant data";
         WebTarget resourcePath = msTarget.path(ACTIVITIES_PATH).path("testUserData");
@@ -552,7 +556,7 @@ public class TckTests {
         String activityId = response.readEntity(String.class);
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false, resourcePath);
 
-        lras = lraClient.getActiveLRAs();
+        lras = lraSPI.getLRAs(LRAStatus.Active);
 
         assertEquals(count, lras.size(), "testUserData: testUserData produced the wrong LRA count",
                 resourcePath);
@@ -578,7 +582,7 @@ public class TckTests {
     // TODO the spec does not specifiy recovery semantics
     @Test
     private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2) throws WebApplicationException {
-        int countBefore = lraClient.getActiveLRAs().size();
+        int countBefore = lraSPI.getLRAs(LRAStatus.Active).size();
         URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
         WebTarget resourcePath = msTarget.path(path).path(path2);
 
@@ -603,7 +607,7 @@ public class TckTests {
             checkStatusAndClose(response2, Response.Status.OK.getStatusCode(), false, resourcePath);
         }
 
-        int countAfter = lraClient.getActiveLRAs().size();
+        int countAfter = lraSPI.getLRAs(LRAStatus.Active).size();
 
         assertEquals(countBefore, countAfter, "joinAndEnd: some LRAs were not recovered", resourcePath);
     }
@@ -738,7 +742,7 @@ public class TckTests {
         String lraStr = checkStatusAndClose(response, Response.Status.OK.getStatusCode(), true, resourcePath);
         assert lraStr != null;
         String[] lraArray = lraStr.split(",");
-        final List<LRAInfo> lras = lraClient.getActiveLRAs();
+        final List<LRAInfo> lras = lraSPI.getLRAs(LRAStatus.Active);
         URL[] urls = new URL[lraArray.length];
 
         IntStream.range(0, urls.length).forEach(i -> {
@@ -794,7 +798,7 @@ public class TckTests {
         }
 
         // validate that the top level and nested LRAs are gone
-        final List<LRAInfo> lras2 = lraClient.getActiveLRAs();
+        final List<LRAInfo> lras2 = lraSPI.getLRAs(LRAStatus.Active);
 
         IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertNull(getLra(lras2, lraArray[i]),
                         "multiLevelNestedActivity: top level or nested activity still active", resourcePath));
@@ -861,7 +865,7 @@ public class TckTests {
             assertEquals(cnt1[1] + 1, cnt2[1], "compensate should have been called", resourcePath);
 
             try {
-                assertTrue(!lraClient.isActiveLRA(lra), "cancelCheck: LRA should have been cancelled", resourcePath, lra);
+                assertTrue(!lraSPI.getStatus(lra).isActive(), "cancelCheck: LRA should have been cancelled", resourcePath, lra);
             } catch (NotFoundException ignore) {
                 // means the LRA has gone
             }

@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-package org.eclipse.microprofile.lra.client;
+package org.eclipse.microprofile.lra.tck;
 
 /**
  * Data object carrying information about an instance

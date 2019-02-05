@@ -20,7 +20,7 @@
 package org.eclipse.microprofile.lra.tck.spi;
 
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.client.LRAInfo;
+import org.eclipse.microprofile.lra.tck.LRAInfo;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URL;

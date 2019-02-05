@@ -21,7 +21,6 @@
 package org.eclipse.microprofile.lra.client;
 
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URI;

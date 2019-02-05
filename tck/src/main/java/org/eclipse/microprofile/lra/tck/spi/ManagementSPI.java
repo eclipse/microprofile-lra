@@ -22,23 +22,13 @@ package org.eclipse.microprofile.lra.tck.spi;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.tck.LRAInfo;
 
-import javax.ws.rs.NotFoundException;
-import java.net.URL;
 import java.util.List;
 
+/**
+ * This is interface expected to be implemented by TCK implementor.
+ * The interface contains methods used in the TCK suite.
+ */
 public interface ManagementSPI {
-    /**
-     * Lookup information about an LRA
-     *
-     * @param lraId the LRA whose status is being requested
-     *
-     * @return the status of the the LRA
-     *
-     * @throws NotFoundException if the LRA no longer exists (which may or may
-     * not indicate that the LRA has already closed or cancelled depending upon
-     * how long the implementation chooses to maintain such information).
-     */
-    LRAInfo getStatus(URL lraId) throws NotFoundException;
 
     /**
      * Lookup LRAs that are in a particular state.

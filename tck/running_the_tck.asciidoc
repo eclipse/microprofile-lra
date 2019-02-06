@@ -23,7 +23,8 @@ The LRA TCK suite can be parametrized by following properties, handled in the su
 
 `lra.tck.base.url`::
   The URL where the TCK suite deployment is exposed at. The TCK suite will construct path based on this URL.
-  The default base URL is `http://localhost:8180`.
+  The default base URL is `http://localhost:8180`. This property needs to be provided for the container,
+  and for the tests themselves (failsafe/surefire) too.
 `lra.tck.timeout.factor`::
   Timeout factor adjust timeout values used in the TCK suite. The default value is `1.0`.
   When set bigger than `1.0` then timeout value will be bigger and waiting time is longer.
@@ -41,6 +42,8 @@ The LRA TCK suite can be parametrized by following properties, handled in the su
 * implementation provides one implementation of `org.eclipse.microprofile.lra.client.LRAClient` as it's injected by TCK suite
 * implementation has to provide one implementation of `org.eclipse.microprofile.lra.tck.spi.ManagementSPI`. This is an interface
   with definition of util methods used by the TCK suite for its run.
+* JAX-RS `ClientBuilder` is used to run REST calls from tests to tested application. Provide the implementation of the
+  JAX-RS `ClientBuilder` on the test class path.
 
 === Setting-up pom.xml dependencies and running the tests
 

@@ -433,30 +433,6 @@ public class LraController {
     }
 
     @GET
-    @Path("/cancelOn")
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, cancelOn = {Response.Status.NOT_FOUND, Response.Status.BAD_REQUEST})
-    public Response cancelOn(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
-        assertHeaderPresent(lraId);
-
-        activityStore.add(new Activity(lraId));
-
-        return Response.status(Response.Status.BAD_REQUEST).entity(Entity.text("Simulate buisiness logic failure")).build();
-    }
-
-    @GET
-    @Path("/cancelOnFamily")
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, cancelOnFamily = {Response.Status.Family.CLIENT_ERROR})
-    public Response cancelOnFamily(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
-        assertHeaderPresent(lraId);
-
-        activityStore.add(new Activity(lraId));
-
-        return Response.status(Response.Status.BAD_REQUEST).entity(Entity.text("Simulate buisiness logic failure")).build();
-    }
-
-    @GET
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)

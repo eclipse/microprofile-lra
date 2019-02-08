@@ -247,7 +247,7 @@ public class TckTests {
     private String isActiveLRA() throws WebApplicationException {
         URL lra = lraClient.startLRA(null, "SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS, ChronoUnit.MILLIS);
 
-        assertTrue(lraSPI.getStatus(lra).isActive(), null, null, lra);
+        assertTrue(lraClient.getStatus(lra) == LRAStatus.Active, null, null, lra);
 
         lraClient.closeLRA(lra);
 
@@ -261,7 +261,7 @@ public class TckTests {
 
         lraClient.cancelLRA(lra);
 
-        assertTrue(lraSPI.getStatus(lra).isCompensated(), null, null, lra);
+        assertTrue(lraClient.getStatus(lra) == LRAStatus.Cancelled, null, null, lra);
 
         return lra.toExternalForm();
     }
@@ -273,7 +273,7 @@ public class TckTests {
 
         lraClient.closeLRA(lra);
 
-        assertTrue(lraSPI.getStatus(lra).isComplete(), null, null, lra);
+        assertTrue(lraClient.getStatus(lra) == LRAStatus.Closed, null, null, lra);
 
         return lra.toExternalForm();
     }
@@ -864,7 +864,7 @@ public class TckTests {
             assertEquals(cnt1[1] + 1, cnt2[1], "compensate should have been called", resourcePath);
 
             try {
-                assertTrue(!lraSPI.getStatus(lra).isActive(), "cancelCheck: LRA should have been cancelled", resourcePath, lra);
+                assertTrue(lraClient.getStatus(lra) != LRAStatus.Active, "cancelCheck: LRA should have been cancelled", resourcePath, lra);
             } catch (NotFoundException ignore) {
                 // means the LRA has gone
             }

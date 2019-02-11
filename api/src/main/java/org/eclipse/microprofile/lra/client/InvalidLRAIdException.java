@@ -22,6 +22,7 @@ package org.eclipse.microprofile.lra.client;
 import javax.ws.rs.WebApplicationException;
 
 public class InvalidLRAIdException extends WebApplicationException {
+    private static final long serialVersionUID = 1271422145863321852L;
     private final String lraId;
 
     /**
@@ -32,7 +33,19 @@ public class InvalidLRAIdException extends WebApplicationException {
      * @param cause  cause exception
      */
     public InvalidLRAIdException(String lraId, String message, Throwable cause) {
-        super(String.format("%s, lra id: %s", message, lraId), cause);
+        super(String.format("%s, LRA id: %s", message, lraId), cause);
+
+        this.lraId = lraId;
+    }
+
+    /**
+     * Invalid LRA id exception.
+     *
+     * @param lraId  LRA id that is behind this exception
+     * @param message  error message of this exception
+     */
+    public InvalidLRAIdException(String lraId, String message) {
+        super(String.format("%s, LRA id: %s", message, lraId));
 
         this.lraId = lraId;
     }

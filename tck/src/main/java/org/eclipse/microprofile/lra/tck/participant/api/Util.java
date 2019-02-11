@@ -19,18 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.Leave;
-import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.Forget;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
-
-import javax.ws.rs.Path;
-import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URI;
@@ -39,6 +27,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.Leave;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
 
 
 public class Util {
@@ -72,14 +73,16 @@ public class Util {
 
                 if (checkMethod(paths, COMPENSATE, (Path) pathAnnotation,
                         method.getAnnotation(Compensate.class), uriPrefix) != 0) {
-                    if (isAsyncCompletion(method))
+                    if (isAsyncCompletion(method)) {
                         asyncTermination[0] = true;
+                    }
                 }
 
                 if (checkMethod(paths, COMPLETE, (Path) pathAnnotation,
                         method.getAnnotation(Complete.class), uriPrefix) != 0) {
-                    if (isAsyncCompletion(method))
+                    if (isAsyncCompletion(method)) {
                         asyncTermination[0] = true;
+                    }
                 }
                 checkMethod(paths, STATUS, (Path) pathAnnotation,
                         method.getAnnotation(Status.class), uriPrefix);
@@ -109,14 +112,16 @@ public class Util {
 
     private static StringBuilder makeLink(StringBuilder b, String uriPrefix, String key, String value) {
 
-        if (value == null)
+        if (value == null) {
             return b;
+        }
 
         String terminationUri = uriPrefix == null ? value : String.format("%s%s", uriPrefix, value);
         Link link =  Link.fromUri(terminationUri).title(key + " URI").rel(key).type(MediaType.TEXT_PLAIN).build();
 
-        if (b.length() != 0)
+        if (b.length() != 0) {
             b.append(',');
+        }
 
         return b.append(link);
     }
@@ -131,15 +136,39 @@ public class Util {
      */
     public static boolean isAsyncCompletion(Method method) {
         if (method.isAnnotationPresent(Complete.class) || method.isAnnotationPresent(Compensate.class)) {
-            for (Annotation[] ann : method.getParameterAnnotations())
-                for (Annotation an : ann)
+            for (Annotation[] ann : method.getParameterAnnotations()) {
+                for (Annotation an : ann) {
                     if (Suspended.class.getName().equals(an.annotationType().getName())) {
                         LOGGER.log(Level.WARNING, "JAX-RS @Suspended annotation is untested");
                         return true;
                     }
+                }
+            }
         }
 
         return false;
+    }
+
+    /**
+     * Adjusting the value by factor. It means it multiplies the value with factor
+     * and returns the rounded (to up) number.
+     *
+     * @param value  value to be adjusted
+     * @param factor  factor for adjusting value
+     * @return  adjusted value by factor
+     */
+    public static int adjust(int value, double factor) {
+        return Math.toIntExact(adjust((long) value, factor));
+    }
+
+    /**
+     * see {@link Util#adjust(int, double)}
+     */
+    public static long adjust(long value, double factor) {
+        if(value < 0){
+            throw new IllegalArgumentException("value to adjust can't be negative");
+        }
+        return (long) Math.ceil(value * factor);
     }
 
     private static int checkMethod(Map<String, String> paths,

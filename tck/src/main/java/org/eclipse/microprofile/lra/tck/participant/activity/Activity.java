@@ -17,16 +17,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package org.eclipse.microprofile.lra.tck.participant.model;
+package org.eclipse.microprofile.lra.tck.participant.activity;
 
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A simple DTO that provides information about
+ * the work processed in the TCK suite controllers.
+ */
 public class Activity implements Serializable {
-    private String id;
-    private String rcvUrl;
+    private static final long serialVersionUID = 1L;
+
+    private String lraId;
+    private String recoveryUrl;
     private String statusUrl;
     private ParticipantStatus status;
     private String userData;
@@ -34,47 +40,51 @@ public class Activity implements Serializable {
 
     private final AtomicInteger acceptedCount = new AtomicInteger(0);
 
-    public Activity(String txId) {
-        this.setId(txId);
+    public Activity(String lraId) {
+        this.setLraId(lraId);
     }
 
-    public String getId() {
-        return id;
+    public String getLraId() {
+        return lraId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public Activity setLraId(String lraId) {
+        this.lraId = lraId;
+        return this;
     }
 
     public String getRcvUrl() {
-        return rcvUrl;
+        return recoveryUrl;
     }
 
-    public void setRcvUrl(String rcvUrl) {
-        this.rcvUrl = rcvUrl;
+    public Activity setRecoveryUrl(String recoveryUrl) {
+        this.recoveryUrl = recoveryUrl;
+        return this;
     }
 
     public String getStatusUrl() {
         return statusUrl;
     }
 
-    public void setStatusUrl(String statusUrl) {
+    public Activity setStatusUrl(String statusUrl) {
         this.statusUrl = statusUrl;
+        return this;
     }
 
     public ParticipantStatus getStatus() {
         return status;
     }
 
-    public void setStatus(ParticipantStatus status) {
+    public Activity setStatus(ParticipantStatus status) {
         this.status = status;
+        return this;
     }
 
     @Override
     public String toString() {
         return "Activity{" +
-                "id='" + getId() + '\'' +
-                ", rcvUrl='" + getRcvUrl() + '\'' +
+                "lraId='" + getLraId() + '\'' +
+                ", recoveryUrl='" + getRcvUrl() + '\'' +
                 ", statusUrl='" + getStatusUrl() + '\'' +
                 ", status=" + getStatus() +
                 ", userData='" + getUserData() + '\'' +
@@ -90,23 +100,26 @@ public class Activity implements Serializable {
         return userData;
     }
 
-    public void setUserData(String userData) {
+    public Activity setUserData(String userData) {
         this.userData = userData;
+        return this;
     }
 
     public String getEndData() {
         return endData;
     }
 
-    public void setEndData(String endData) {
+    public Activity setEndData(String endData) {
         this.endData = endData;
+        return this;
     }
 
     public AtomicInteger getAcceptedCount() {
         return acceptedCount;
     }
 
-    public void setAcceptedCount(int acceptedCount) {
+    public Activity setAcceptedCount(int acceptedCount) {
         this.acceptedCount.set(acceptedCount);
+        return this;
     }
 }

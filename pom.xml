@@ -207,7 +207,7 @@
                                 <module name="EmptyBlock">
                                     <property name="option" value="text" />
                                 </module>
-                                <!--module name="NeedBraces" / -->
+                                <module name="NeedBraces" />
                                 <module name="EmptyStatement" />
                                 <module name="EqualsHashCode" />
                                 <module name="DefaultComesLast" />

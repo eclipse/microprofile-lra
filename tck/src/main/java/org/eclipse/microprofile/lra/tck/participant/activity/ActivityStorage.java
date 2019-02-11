@@ -17,35 +17,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package org.eclipse.microprofile.lra.tck.participant.service;
+package org.eclipse.microprofile.lra.tck.participant.activity;
 
-import org.eclipse.microprofile.lra.tck.participant.model.Activity;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+
+/**
+ * Storing activities processed by controllers during TCK suite run.
+ */
 @ApplicationScoped
-public class ActivityService {
+public class ActivityStorage {
     private Map<String, Activity> activities = new HashMap<>();
 
-    public Activity getActivity(String txId) throws NotFoundException {
-        if (!activities.containsKey(txId))
-            throw new NotFoundException(Response.status(404).entity("Invalid activity id: " + txId).build());
+    public Activity getActivityAndAssertExistence(String lraId, UriInfo jaxrsContext) {
+        if(!activities.containsKey(lraId)) {
+           String errorMessage = String.format("Activity store does not contain LRA id '%s', "
+                   + "invoked from endpoint '%s'", lraId, jaxrsContext.getPath());
+           throw new NotFoundException(Response.status(404).entity(errorMessage).build());
+        }
 
-        return activities.get(txId);
+        return activities.get(lraId);
     }
 
     public List<Activity> findAll() {
         return new ArrayList<>(activities.values());
     }
 
-    public void add(Activity activity) {
-        activities.putIfAbsent(activity.getId(), activity);
+    public Activity add(Activity activity) {
+        activities.putIfAbsent(activity.getLraId(), activity);
+        return activities.get(activity.getLraId());
     }
 
     public void remove(String id) {

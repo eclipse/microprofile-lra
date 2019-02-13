@@ -350,6 +350,7 @@ public class LraController {
 
     @PUT
     @Path(MANDATORY_LRA_RESOURCE_PATH)
+    @Produces(MediaType.TEXT_PLAIN)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
                                              @HeaderParam(LRA_HTTP_HEADER) String lraId) {

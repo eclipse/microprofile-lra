@@ -109,7 +109,7 @@ public class TckTests {
      * the port of LRA recovery is defined by {@link #recoveryPort}.
      */
     @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_PATH_KEY, defaultValue = "lra-recovery-coordinator")
-    private int recoveryPath;
+    private String recoveryPath;
 
     /**
      * Base URL of LRA suite is started at. It's URL where container exposes the test suite deployment.
@@ -162,7 +162,8 @@ public class TckTests {
 
     @Before
     public void before() {
-         setUpTestCase();
+        LOGGER.info("Running test: " + testName.getMethodName());
+        setUpTestCase();
 
         try {
             tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(tckSuiteBaseUrl).toExternalForm()));
@@ -305,7 +306,7 @@ public class TckTests {
         URL lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
         assertEquals("LRA '" + lra + "' is not denoted as active even it was started",
-                LRAStatus.Active, lraManagement.getStatus(lra));
+                LRAStatus.Active, lraClient.getStatus(lra));
 
         lraClient.closeLRA(lra);
     }
@@ -322,7 +323,7 @@ public class TckTests {
         lraClient.cancelLRA(lra);
 
         assertEquals("LRA '" + lra + "' is not denoted as compensated even it was canceled",
-                LRAStatus.Cancelled, lraManagement.getStatus(lra));
+                LRAStatus.Cancelled, lraClient.getStatus(lra));
     }
 
     /**
@@ -337,7 +338,7 @@ public class TckTests {
         lraClient.closeLRA(lra);
 
         assertEquals("LRA '" + lra + "' is not denoted as compensated even it was canceled",
-                LRAStatus.Closed, lraManagement.getStatus(lra));
+                LRAStatus.Closed, lraClient.getStatus(lra));
     }
 
     /**
@@ -935,7 +936,7 @@ public class TckTests {
 
         try {
             assertNotEquals("LRA '" + lra + "' should have been cancelled (called to " + resourcePath.getUri() + ")",
-                    LRAStatus.Active, lraManagement.getStatus(lra));
+                    LRAStatus.Active, lraClient.getStatus(lra));
         } catch (NotFoundException ignore) {
             // means the LRA has gone
         }

@@ -22,42 +22,42 @@ package org.eclipse.microprofile.lra.tck;
 
 /**
  * Data object carrying information about an instance
- * of LRA (specified by lra id) and it's status.
+ * of LRA (specified by LRA id) and it's status.
  */
 public interface LRAInfo {
 
     /**
-     * @return  lra id that lra instance is identified by
+     * @return  LRA id that LRA instance is identified by
      */
     String getLraId();
 
     /**
-     * @return  lra client id
+     * @return  LRA client id
      */
     String getClientId();
 
     /**
-     * @return  true if lra was successfully completed, false otherwise
+     * @return  true if LRA was successfully closed, false otherwise
      */
-    boolean isComplete();
+    boolean isClosed();
 
     /**
-     * @return  true if lra was compensated, false otherwise
+     * @return  true if LRA was cancelled, false otherwise
      */
-    boolean isCompensated();
+    boolean isCancelled();
 
     /**
-     * @return  true if recovery is in progress on the lra, false otherwise
+     * @return  true if recovery is in progress on the LRA, false otherwise
      */
     boolean isRecovering();
 
     /**
-     * @return  true if lra is in active state right now, false otherwise
+     * @return  true if LRA is in active state right now, false otherwise
      */
     boolean isActive();
 
     /**
-     * @return  true if lra is top level (not nested), false otherwise
+     * @return  true if LRA is top level (not nested), false otherwise
      */
     boolean isTopLevel();
 }

@@ -289,8 +289,9 @@ annotated with `@Compensate` and `@Complete` then these methods will be associat
 the active LRA. They will be invoked when the LRA is subsequently cancelled or closed.
 If the participant successfully compensates or completes then it may forget about the LRA.
 Otherwise it should remember that it is still associated with the LRA and it MUST report
-the status of the association using values in the `ParticipantStatus` enum according to
-the participant state model defined earlier.
+the status of the association using values in the
+https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ParticipantStatus.java[`ParticipantStatus`]
+enum according to the participant state model defined earlier.
 It can report the status directly from the `@Compensate` or `@Complete` methods if they
 are idempotent, otherwise it MUST provide a method annotated with `@Status`.
 

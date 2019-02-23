@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2018 Contributors to the Eclipse Foundation
+// Copyright (c) 2019 Contributors to the Eclipse Foundation
 //
 // See the NOTICES file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -19,24 +19,6 @@
 image:https://badges.gitter.im/eclipse/microprofile-lra.svg[link="https://gitter.im/eclipse/microprofile-lra?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge"]
 
 # Long Running Actions for MicroProfile
-
-'''
-## How to contribute
-
-Do you want to contribute to this project? Here is what you can do:
-
-* Fork the repository, make changes, then do a pull request.
-** Remember to https://help.github.com/articles/signing-commits/[sign your commits]
-** Make sure you have signed the https://www.eclipse.org/legal/ECA.php[Eclipse Contributor Agreement]
-* https://github.com/eclipse/microprofile-lra/issues[Create or fix an issue].
-* https://gitter.im/eclipse/microprofile-lra[Join us on Gitter to discuss this project].
-* Join our https://calendar.google.com/calendar/embed?src=gbnbc373ga40n0tvbl88nkc3r4%40group.calendar.google.com[weekly meeting] on Mondays at https://www.timeanddate.com/time/map/[10h00 GMT]. 
-** https://docs.google.com/document/d/1HBPiXpsXcQp9T8JeoT-IDs-EblZX1SxuTV5qjUPzwrM/edit[Minutes and Agenda].
-** https://eclipse.zoom.us/j/949859967[Meeting room].
-* Join the discussions on the https://groups.google.com/forum/#!forum/microprofile[MicroProfile Google Group]
-* https://microprofile.io/blog/[Contribute a blog post].
-
-'''
 
 ## Status
 
@@ -83,3 +65,7 @@ Goals
 * no strong coupling between services
 * allow actions to finish early
 * allow compensating actions if a business activity is cancelled
+
+== Contributing
+
+Do you want to contribute to this project? link:CONTRIBUTING.adoc[Find out how you can help here].

@@ -406,20 +406,37 @@ attributes of the LRA:
 new LRAs which by default will be closed when the annotated method
 completes. This default behaviour can be overridden using the
 `LRA#end()` attribute which will leave the new LRA active
-when the method completes. To force the LRA to cancel instead of complete
+when the method completes.
+
+In normal circumstances the LRA is closed by the end of the method.
+To force the LRA to cancel instead to close
 use the `LRA#cancelOnFamily()` or `LRA#cancelOn()` attributes.
+These attributes defines families or/and sets of status codes
+which when returned as the
+https://javaee.github.io/javaee-spec/javadocs/javax/ws/rs/core/Response.html#status-int-[Response status code]
+cause the LRA to be cancelled.
+
+Bear in mind that the LRA is expected to be used at JAX-RS
+which expects the `Response` being the method return type.
+The specification does not discuss what happens when
+an uncaught exception is thrown from the `@LRA` annotated method.
+It's up to the framework to transform the thrown exception
+to the JAX-RS `Response` error status code.
+It's a usual practice the `RuntimeException` to be transformed
+to the `5xx` `Response` status code.
 
 If an LRA was already present before the annotated method is invoked then it
-will remain active after the method completes. This default behaviour can be
-overridden using the `LRA#end()` attribute which will force
-the LRA to complete or cancel.
+will remain active after the method completes. This default behaviour
+can be overridden using the `LRA#end()` attribute which will force
+the LRA to be finished. If it is closed or cancelled depends on the Response status return code.
 
 When an LRA is present its identifier MUST be made available to
 the business logic via request and response headers as described earlier
 (using a header name specified in the Java constant `LRA_HTTP_HEADER`).
 
 The following is a simple example of how to start an LRA and how to receive
-a notification when the LRA later cancelled or closed:
+a notification when the LRA is later cancelled (`@Compensate` is invoked)
+or closed (`@Complete` is invoked):
 
 [source,java]
 ----
@@ -488,7 +505,7 @@ by reading the request and response headers.
 
 The next example demonstrates how to start an LRA in one method and close
 it in a different method using the `end` attribute.
-It also shows how to automatically cancel the LRA if the business method
+It also shows how to configure the LRA to be automatically cancelled if the business method
 returns the particular HTTP status codes identified in the `cancelOn` and
 `cancelOnFamily` attributes:
 

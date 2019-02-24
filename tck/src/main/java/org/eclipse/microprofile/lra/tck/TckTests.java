@@ -24,7 +24,6 @@ import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.TRANSACTIONAL_WORK_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -41,7 +40,6 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 import javax.inject.Inject;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -49,7 +47,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.client.LRAClient;
 import org.eclipse.microprofile.lra.tck.participant.api.LraController;
@@ -73,54 +70,12 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class TckTests {
     private static final Logger LOGGER = Logger.getLogger(TckTests.class.getName());
-    private final Long LRA_TIMEOUT_MILLIS = 50000L;
 
-    /**
-     * <p>
-     * Timeout factor which adjusts waiting time and timeouts for the TCK suite.
-     * <p>
-     * The default value is set to <code>1.0</code> which means the defined timeout
-     * is multiplied by <code>1</code>.
-     * <p>
-     * If you wish the test waits longer then set the value bigger than <code>1.0</code>.
-     * If you wish the test waits shorter time than designed
-     * or the timeout is elapsed faster then set the value less than <code>1.0</code> 
-     */
-    @Inject @ConfigProperty(name = "lra.tck.timeout.factor", defaultValue = "1.0")
-    private double timeoutFactor;
-    
-    /**
-     * Host name where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
-     * The port is specifed by {@link #recoveryPort}.
-     */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_HOST_KEY, defaultValue = "localhost")
-    private String recoveryHostName;
-    
-    /**
-     * Port where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
-     * The hostname is specifed by {@link #recoveryHostName}.
-     */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_PORT_KEY, defaultValue = "8080")
-    private int recoveryPort;
-    
-    /**
-     * Path where recovery is available to accept requests.
-     * The hostname of LRA recovery is specifed by {@link #recoveryHostName},
-     * the port of LRA recovery is defined by {@link #recoveryPort}.
-     */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_PATH_KEY, defaultValue = "lra-recovery-coordinator")
-    private String recoveryPath;
-
-    /**
-     * Base URL of LRA suite is started at. It's URL where container exposes the test suite deployment.
-     * The test paths will be constructed based on this base URL.
-     * <p>
-     * The default base URL where TCK suite is expected to be started is <code>http://localhost:8180/</code>.
-     */
-    @Inject @ConfigProperty(name = "lra.tck.base.url", defaultValue = "http://localhost:8180/")
-    private String tckSuiteBaseUrl;
 
     @Rule public TestName testName = new TestName();
+
+    @Inject
+    private LraTckConfigBean config;
 
     @Inject
     private LRAClient lraClient;
@@ -166,9 +121,9 @@ public class TckTests {
         setUpTestCase();
 
         try {
-            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(tckSuiteBaseUrl).toExternalForm()));
+            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
         } catch (MalformedURLException mfe) {
-            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + tckSuiteBaseUrl, mfe);
+            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
         recoveryTarget = recoveryCoordinatorClient.target(URI.create(recoveryCoordinatorBaseUrl.toExternalForm()));
     }
@@ -205,7 +160,8 @@ public class TckTests {
 
         try {
             // TODO: what to do with this? recovery tests are valid?
-            recoveryCoordinatorBaseUrl = new URL(String.format("http://%s:%d/%s", recoveryHostName, recoveryPort, recoveryPath));
+            recoveryCoordinatorBaseUrl = new URL(String.format("http://%s:%d/%s",
+                    config.recoveryHostName(), config.recoveryPort(), config.recoveryPath()));
 
             tckSuiteClient = ClientBuilder.newClient();
             recoveryCoordinatorClient = ClientBuilder.newClient();
@@ -562,16 +518,6 @@ public class TckTests {
     }
 
     @Test
-    public void cancelOn() {
-        cancelCheck("cancelOn");
-    }
-
-    @Test
-    public void cancelOnFamily() {
-        cancelCheck("cancelOnFamily");
-    }
-
-    @Test
     public void timeLimit() {
         int beforeCompletedCount = getCompletedCount();
         int beforeCompensatedCount = getCompensatedCount();
@@ -909,39 +855,6 @@ public class TckTests {
         }
     }
 
-    private void cancelCheck(String path) {
-        int beforeCompletedCount = getCompletedCount();
-        int beforeCompensatedCount = getCompensatedCount();
-
-        URL lra = lraClient.startLRA(null, "SpecTest#" + path, lraTimeout(), ChronoUnit.MILLIS);
-
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(path);
-
-        Response response = resourcePath
-                .request()
-                .header(LRAClient.LRA_HTTP_HEADER, lra)
-                .get();
-
-        checkStatusReadAndClose(Response.Status.BAD_REQUEST, response, resourcePath);
-
-        // check that participant was invoked
-        int completedCount = getCompletedCount();
-        int compensatedCount = getCompensatedCount();
-
-        // check that complete was not called and that compensate was
-        assertEquals("complete was called instead of compensate (called to " + resourcePath.getUri() + ")",
-                beforeCompletedCount, completedCount);
-        assertEquals("compensate should have been called (called to " + resourcePath.getUri() + ")",
-                beforeCompensatedCount + 1, compensatedCount);
-
-        try {
-            assertNotEquals("LRA '" + lra + "' should have been cancelled (called to " + resourcePath.getUri() + ")",
-                    LRAStatus.Active, lraClient.getStatus(lra));
-        } catch (NotFoundException ignore) {
-            // means the LRA has gone
-        }
-    }
-
     private boolean containsLraId(List<LRAInfo> lras, URL lraIdURL) {
         String lraId = lraIdURL.toExternalForm();
         return containsLraId(lras, lraId);
@@ -963,6 +876,6 @@ public class TckTests {
      * which can be defined by user.
      */
     private long lraTimeout() {
-        return Util.adjust(LRA_TIMEOUT_MILLIS, timeoutFactor);
+        return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
     }
 }

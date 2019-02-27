@@ -26,14 +26,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * If a JAX-RS resource method is invoked in the context of an LRA and there are
- * participant annotations on the class it will join the LRA (as a participant).
- * In addition, if it also contains a method annotated with @Leave then any
- * subsequent call to this @Leave method in the context of the same LRA will
- * cause participant to leave the LRA.
+ * A resource may be enlisted with an LRA if one of its resource methods
+ * annotated with @LRA is invoked. If the resource also contains a method
+ * annotated with @Leave, then invoking such a method in the context of the
+ * same LRA that it has joined will result in the resource leaving the LRA
+ * (ie it will not receive any callbacks when the LRA is later closed or
+ * cancelled). However, leaving an LRA does not prohibit the resource from
+ * rejoining the LRA if one of the @LRA methods is invoked again in the
+ * context of the same LRA.
  *
- * But do note that if any of the other resource
- * methods are invoked again in the same LRA context it will rejoin the LRA.
+ * Note that it is not possible to join or leave an LRA that has already
+ * been asked to cancel or close.
+ *
+ * Leaving a particular LRA has no effect on any other LRA - ie the same
+ * resource can be enlisted with many different LRA's and leaving one
+ * particular LRA will not affect its participation in any of the other
+ * LRA's it has joined.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

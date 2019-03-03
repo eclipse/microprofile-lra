@@ -18,7 +18,7 @@
  * limitations under the License.
  *******************************************************************************/
 
-package org.eclipse.microprofile.lra.annotation;
+package org.eclipse.microprofile.lra.annotation.ws.rs;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

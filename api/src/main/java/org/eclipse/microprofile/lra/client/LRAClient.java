@@ -21,6 +21,7 @@
 package org.eclipse.microprofile.lra.client;
 
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
+import org.eclipse.microprofile.lra.annotation.Compensate;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URI;
@@ -173,7 +174,7 @@ public interface LRAClient {
      *
      * @param lraId The unique identifier of the LRA (required)
      * @param resourceClass An annotated class for the participant methods:
-     * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
+     * {@link Compensate}, etc.
      * @param baseUri Base uri for the participant endpoints
      * @param compensatorData Compensator specific data that the coordinator will
      *                       pass to the participant when the LRA is closed or
@@ -195,7 +196,7 @@ public interface LRAClient {
      *
      * @param recoveryUrl the recovery URL returned from a participant join request
      * @param resourceClass An annotated class for the participant methods:
-     *      * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
+     *      * {@link Compensate}, etc.
      * @param baseUri Base uri for the participant endpoints
      * @param compensatorData opaque data that returned to the participant when the
      *                       LRA is closed or cancelled

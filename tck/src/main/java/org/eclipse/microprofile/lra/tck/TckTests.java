@@ -48,7 +48,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.client.LRAClient;
 import org.eclipse.microprofile.lra.tck.participant.api.LraController;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
@@ -300,7 +299,7 @@ public class TckTests {
 
     /**
      * HTTP request to {@link LraController#activityWithLRA}
-     * which is a method annotated with {@link LRA.Type#REQUIRED}.
+     * which is a method annotated with {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type#REQUIRED}.
      */
     @Test
     @Ignore

@@ -45,8 +45,8 @@ import javax.ws.rs.core.Response.Status.Family;
 
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.LRA;
-import org.eclipse.microprofile.lra.annotation.LRA.Type;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
 import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 
 @ApplicationScoped

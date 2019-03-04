@@ -18,11 +18,12 @@
  * limitations under the License.
  *******************************************************************************/
 
-package org.eclipse.microprofile.lra.annotation;
+package org.eclipse.microprofile.lra.annotation.ws.rs;
 
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.client.LRAClient;
 
 import java.lang.annotation.ElementType;

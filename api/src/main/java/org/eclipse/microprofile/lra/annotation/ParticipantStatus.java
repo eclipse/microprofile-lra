@@ -20,6 +20,8 @@
 
 package org.eclipse.microprofile.lra.annotation;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
+
 /**
  * A representation of the status of a participant according to a
  * participant state model:

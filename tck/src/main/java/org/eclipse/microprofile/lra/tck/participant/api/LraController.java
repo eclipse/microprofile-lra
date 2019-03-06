@@ -54,9 +54,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -126,27 +125,26 @@ public class LraController {
 
     /**
      * Test that participants can leave an LRA using the {@link LRAClient} programmatic API
-     * @param lraUrl the id of the LRA
-     * @param recoveryUrl header param defines recovery url
-     * @return the url of the LRA if it was successfully removed
+     * @param lraUri the id of the LRA
+     * @param recoveryUri header param defines recovery URI
+     * @return the URI of the LRA if it was successfully removed
      * @throws NotFoundException if the activity was not found
-     * @throws MalformedURLException if the LRA is malformed
      */
     @PUT
-    @Path("/leave/{LraUrl}")
+    @Path("/leave/{LraUri}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response leaveWorkViaAPI(@PathParam("LraUrl")String lraUrl,
-                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryUrl)
-        throws NotFoundException, MalformedURLException {
+    public Response leaveWorkViaAPI(@PathParam("LraUri") String lraUri,
+                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryUri)
+        throws NotFoundException {
 
-        if (lraUrl != null && recoveryUrl != null) {
-            lraClient.leaveLRA(new URL(recoveryUrl));
+        if (lraUri != null && recoveryUri != null) {
+            lraClient.leaveLRA(URI.create(recoveryUri));
 
-            activityStore.getActivityAndAssertExistence(lraUrl, context);
+            activityStore.getActivityAndAssertExistence(lraUri, context);
 
-            activityStore.remove(lraUrl);
+            activityStore.remove(lraUri);
 
-            return Response.ok(lraUrl).build();
+            return Response.ok(lraUri).build();
         }
 
         return Response.ok("non transactional").build();
@@ -286,7 +284,7 @@ public class LraController {
         assertNotHeaderPresent(lraId);
 
         // manually start an LRA via the injection LRAClient api
-        URL lra = lraClient.startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
+        URI lra = lraClient.startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
 
         lraId = lra.toString();
 
@@ -322,14 +320,14 @@ public class LraController {
         return Response.ok(lraId).header(LRA_HTTP_RECOVERY_HEADER, recoveryId).build();
     }
 
-    private String restPutInvocation(URL lraURL, String path, String bodyText) {
+    private String restPutInvocation(URI lraURI, String path, String bodyText) {
         String id = null;
         Response response = ClientBuilder.newClient()
                 .target(context.getBaseUri())
                 .path(LRA_CONTROLLER_PATH)
                 .path(path)
                 .request()
-                .header(LRAClient.LRA_HTTP_HEADER, lraURL)
+                .header(LRAClient.LRA_HTTP_HEADER, lraURI)
                 .put(Entity.text(bodyText));
 
         if (response.hasEntity()) {
@@ -338,7 +336,7 @@ public class LraController {
 
         try {
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new WebApplicationException("Error on REST PUT for LRA '" + lraURL
+                throw new WebApplicationException("Error on REST PUT for LRA '" + lraURI
                         + "' at path '" + path + "' and body '" + bodyText + "'", response);
             }
         } finally {
@@ -381,18 +379,18 @@ public class LraController {
 
         storeActivity(nestedLRAId, recoveryId);
 
-        URL lraURL;
+        URI lraURI;
 
         try {
-            lraURL = new URL(URLDecoder.decode(nestedLRAId, "UTF-8"));
-        } catch (MalformedURLException | UnsupportedEncodingException e) {
+            lraURI = URI.create(URLDecoder.decode(nestedLRAId, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
             throw new InvalidLRAIdException(nestedLRAId, e.getMessage(), e);
         }
 
         // invoke resources that enlist nested LRAs
         String[] lras = new String[nestedCnt + 1];
         lras[0] = nestedLRAId;
-        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(lraURL,"nestedActivity", ""));
+        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(lraURI,"nestedActivity", ""));
 
         return Response.ok(String.join(",", lras)).build();
     }
@@ -401,7 +399,7 @@ public class LraController {
         LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lraId, recoveryId));
 
         Activity activity = new Activity(lraId)
-            .setRecoveryUrl(recoveryId)
+            .setRecoveryUri(recoveryId)
             .setStatus(null);
 
         return activityStore.add(activity);
@@ -464,7 +462,7 @@ public class LraController {
              * attribute update the timeLimit to 300 sleep for 200 return from the method so the LRA will
              * have been running for 200 ms so it should not be cancelled
              */
-            lraClient.renewTimeLimit(lraToURL(lraId, "Invalid LRA id"), 300, ChronoUnit.MILLIS);
+            lraClient.renewTimeLimit(lraToURI(lraId, "Invalid LRA id"), 300, ChronoUnit.MILLIS);
             // sleep for 200000 micro seconds (should be longer than specified in the timeLimit annotation attribute)
             Thread.sleep(200);
         } catch (InterruptedException e) {
@@ -548,11 +546,11 @@ public class LraController {
         return ParticipantStatus.Compensated.name();
     }
 
-    private static URL lraToURL(String lraId, String errorMessage) {
+    private static URI lraToURI(String lraId, String errorMessage) {
         try {
-            return new URL(lraId);
-        } catch (MalformedURLException e) {
-            LOGGER.log(Level.WARNING, "Can't construct URL from LRA id '" + lraId + "'", e);
+            return new URI(lraId);
+        } catch (URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "Can't construct URI from LRA id '" + lraId + "'", e);
             throw new GenericLRAException(null, Response.Status.BAD_REQUEST.getStatusCode(),
                     errorMessage + ": LRA id '" + lraId + "'", e);
         }

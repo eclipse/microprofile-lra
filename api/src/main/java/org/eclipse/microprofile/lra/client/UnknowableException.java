@@ -19,13 +19,13 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.client;
 
-import java.net.URL;
+import java.net.URI;
 
 /**
  * An exception type to indicate that a requested operation can never be completed.
  */
 public class UnknowableException extends GenericLRAException {
-    public UnknowableException(URL lraId, int statusCode, String message, Throwable cause) {
+    public UnknowableException(URI lraId, int statusCode, String message, Throwable cause) {
         super(lraId, statusCode, message, cause);
     }
 }

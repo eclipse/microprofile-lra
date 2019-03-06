@@ -21,7 +21,7 @@
 package org.eclipse.microprofile.lra.participant;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.net.URL;
+import java.net.URI;
 import java.time.temporal.ChronoUnit;
 
 @ApplicationScoped
@@ -37,14 +37,14 @@ public interface LRAManagement {
      *             to fulfil the protocol guarantees.
      * @param unit the unit that the timeLimit parameter is expressed in
      *
-     * @return a recovery URL for this enlistment
+     * @return a recovery URI for this enlistment
      *
      * @throws JoinLRAException if the request to the coordinator failed.
      * {@link JoinLRAException#getCause()} and/or
      * {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    URL joinLRA(LRAParticipant participant, URL lraId, Long timeLimit,
-                   ChronoUnit unit)
+    URI joinLRA(LRAParticipant participant, URI lraId, Long timeLimit,
+                ChronoUnit unit)
             throws JoinLRAException;
 
     /**
@@ -57,12 +57,12 @@ public interface LRAManagement {
      *                   notified when the target LRA ends
      * @param lraId the LRA that the join request pertains to
      *
-     * @return a recovery URL for this enlistment
+     * @return a recovery URI for this enlistment
      *
      * @throws JoinLRAException if the request to the coordinator failed.
      * {@link JoinLRAException#getCause()} and/or
      * {@link JoinLRAException#getStatusCode()} may provide a more specific reason
      */
-    URL joinLRA(LRAParticipant participant, URL lraId) throws JoinLRAException;
+    URI joinLRA(LRAParticipant participant, URI lraId) throws JoinLRAException;
 
 }

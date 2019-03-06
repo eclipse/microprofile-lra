@@ -23,7 +23,7 @@ import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.tck.LRAInfo;
 
 import javax.ws.rs.NotFoundException;
-import java.net.URL;
+import java.net.URI;
 import java.util.List;
 
 public interface ManagementSPI {
@@ -38,7 +38,7 @@ public interface ManagementSPI {
      * not indicate that the LRA has already closed or cancelled depending upon
      * how long the implementation chooses to maintain such information).
      */
-    LRAInfo getStatus(URL lraId) throws NotFoundException;
+    LRAInfo getStatus(URI lraId) throws NotFoundException;
 
     /**
      * Lookup LRAs that are in a particular state.

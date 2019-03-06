@@ -327,7 +327,7 @@ also contains methods annotated with `@Compensate` and `@Complete` then the bean
 (aka participant or compensator) will be enlisted with the LRA. Enlisting with
 an LRA means that the bean will be notified when the current LRA is
 subsequently cancelled or closed. In addition the implementation should generate a
-URL for this participant that can be used with the <<lra-client-api,Client API>>
+URI for this participant that can be used with the <<lra-client-api,Client API>>
 for recovery purposes and should make it available to the participant via a JAX-RS
 header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` as defined
 <<source-LRAClient,in the Client API>>
@@ -810,7 +810,7 @@ public class UnannotatedParticpant implements LRAParticipant {
     public void doInTransaction() throws JoinLRAException
     {
         // start a new LRA with an unlimited timeout
-        URL lraId = lraClient.startLRA(
+        URI lraId = lraClient.startLRA(
                         "Unannotated client", 0L, ChronoUnit.MILLIS);
 
         // Join the LRA as a participant.
@@ -826,7 +826,7 @@ public class UnannotatedParticpant implements LRAParticipant {
 
     // the callback that will be invoked if the LRA is closed
     @Override
-    public Future<Void> completeWork(URL lraId)
+    public Future<Void> completeWork(URI lraId)
         throws NotFoundException, TerminationException
     {
         return null;
@@ -834,7 +834,7 @@ public class UnannotatedParticpant implements LRAParticipant {
 
     // the callback that will be invoked if the LRA is cancelled
     @Override
-    public Future<Void> compensateWork(URL lraId)
+    public Future<Void> compensateWork(URI lraId)
         throws NotFoundException, TerminationException
     {
         return null;
@@ -875,7 +875,7 @@ the option of adding a flight as part of the overall trip:
 @PUT
 @Path("/trip")
 @LRA(LRA.Type.REQUIRED) // ensures an LRA is active when the method executes
-public void bookTrip(@HeaderParam(LRA_HTTP_HEADER) URL lraId) {
+public void bookTrip(@HeaderParam(LRA_HTTP_HEADER) URI lraId) {
     // include a flight in the trip by sending a JAX-RS PUT
     // request to the flight booking service
     ...
@@ -896,7 +896,7 @@ void bookFlight(...) {
 
 @Compensate
 @PUT
-void cancelFlight(@HeaderParam(LRA_HTTP_HEADER) URL lraId) {...}
+void cancelFlight(@HeaderParam(LRA_HTTP_HEADER) URI lraId) {...}
 
 ----
 
@@ -922,7 +922,7 @@ LRA before sending the flight booking request:
     @PUT
     @Path("/trip")
     @LRA(LRA.Type.REQUIRED)
-    public void bookTrip(@HeaderParam(LRA_HTTP_HEADER) URL lraId) {
+    public void bookTrip(@HeaderParam(LRA_HTTP_HEADER) URI lraId) {
         // start a nested LRA with lraId as the parent
         flightLraId = lraClient.startLRA(lraId, ...)
 

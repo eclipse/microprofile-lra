@@ -25,7 +25,6 @@ import org.eclipse.microprofile.lra.annotation.Compensate;
 
 import javax.ws.rs.NotFoundException;
 import java.net.URI;
-import java.net.URL;
 import java.time.temporal.ChronoUnit;
 
 public interface LRAClient {
@@ -36,9 +35,9 @@ public interface LRAClient {
     String LRA_HTTP_HEADER = "Long-Running-Action";
 
     /**
-     * the name of the HTTP header field that contains a recovery URL corresponding
+     * the name of the HTTP header field that contains a recovery URI corresponding
      * to a participant
-     * enlistment in an LRA {@link LRAClient#joinLRA(URL, Class, URI, String)}
+     * enlistment in an LRA {@link LRAClient#joinLRA(URI, Class, URI, String)}
      */
     String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
@@ -106,12 +105,12 @@ public interface LRAClient {
      *
      * @return the identifier of the new LRA
      */
-    URL startLRA(URL parentLRA, String clientID, Long timeout, ChronoUnit unit)
+    URI startLRA(URI parentLRA, String clientID, Long timeout, ChronoUnit unit)
             throws GenericLRAException;
 
     /**
      * Start a top level LRA (ie similar to
-     * {@link LRAClient#startLRA(URL, String, Long, ChronoUnit)}
+     * {@link LRAClient#startLRA(URI, String, Long, ChronoUnit)}
      *
      * @param clientID The client may provide a (preferably) unique identity which
      *                will be reported back when the LRA is queried.
@@ -126,7 +125,7 @@ public interface LRAClient {
      *
      * @return the identifier of the new LRA
      */
-    URL startLRA(String clientID, Long timeout, ChronoUnit unit)
+    URI startLRA(String clientID, Long timeout, ChronoUnit unit)
             throws GenericLRAException;
 
     /**
@@ -147,7 +146,7 @@ public interface LRAClient {
      *         If the final status is not returned the
      *         client can only discover the final state using proprietary APIs
      */
-    String cancelLRA(URL lraId) throws GenericLRAException;
+    String cancelLRA(URI lraId) throws GenericLRAException;
 
     /**
      * Attempt to close an LRA
@@ -167,7 +166,7 @@ public interface LRAClient {
      *         If the final status is not returned the
      *         client can only discover the final state using proprietary APIs
      */
-    String closeLRA(URL lraId) throws GenericLRAException;
+    String closeLRA(URI lraId) throws GenericLRAException;
 
     /**
      * Join an LRA passing in a class that will act as the participant.
@@ -180,7 +179,7 @@ public interface LRAClient {
      *                       pass to the participant when the LRA is closed or
      *                       cancelled
      *
-     * @return a recovery URL for this enlistment
+     * @return a recovery URI for this enlistment
      *
      * @throws NotFoundException if the LRA no longer exists
      *
@@ -188,20 +187,20 @@ public interface LRAClient {
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    URL joinLRA(URL lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
+    URI joinLRA(URI lraId, Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
 
     /**
      * Change the endpoints that a participant can be contacted on.
      *
-     * @param recoveryUrl the recovery URL returned from a participant join request
+     * @param recoveryUri the recovery URI returned from a participant join request
      * @param resourceClass An annotated class for the participant methods:
      *      * {@link Compensate}, etc.
      * @param baseUri Base uri for the participant endpoints
      * @param compensatorData opaque data that returned to the participant when the
      *                       LRA is closed or cancelled
      *
-     * @return an updated recovery URL for this participant
+     * @return an updated recovery URI for this participant
      *
      * @throws NotFoundException if the LRA no longer exists
      *
@@ -209,14 +208,14 @@ public interface LRAClient {
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    URL updateCompensator(URL recoveryUrl, Class<?> resourceClass, URI baseUri, String compensatorData)
+    URI updateCompensator(URI recoveryUri, Class<?> resourceClass, URI baseUri, String compensatorData)
             throws GenericLRAException;
 
     /**
      * A Compensator can resign from the LRA at any time prior to the completion
      * of an activity
      *
-     * @param recoveryUrl the recovery URL returned from a participant join request
+     * @param recoveryUri the recovery URI returned from a participant join request
      *
      * @throws NotFoundException if the LRA no longer exists
      *
@@ -224,7 +223,7 @@ public interface LRAClient {
      * {@link GenericLRAException#getCause()} and/or
      * {@link GenericLRAException#getStatusCode()} may provide a more specific reason.
      */
-    void leaveLRA(URL recoveryUrl) throws GenericLRAException;
+    void leaveLRA(URI recoveryUri) throws GenericLRAException;
 
     /**
      * LRAs can be created with timeouts after which they are cancelled. Use this
@@ -236,7 +235,7 @@ public interface LRAClient {
      * @param limit the new timeout period
      * @param unit the time unit for limit
      */
-    void renewTimeLimit(URL lraId, long limit, ChronoUnit unit);
+    void renewTimeLimit(URI lraId, long limit, ChronoUnit unit);
 
     /**
      * checks whether there is an LRA associated with the calling thread
@@ -247,7 +246,7 @@ public interface LRAClient {
      *
      * @return the current LRA (can be null)
      */
-    URL getCurrent();
+    URI getCurrent();
 
     /**
      * Lookup the status of an LRA
@@ -265,5 +264,5 @@ public interface LRAClient {
      * {@link GenericLRAException#getStatusCode()}
      * may provide a more specific reason.
      */
-    LRAStatus getStatus(URL lraId) throws GenericLRAException;
+    LRAStatus getStatus(URI lraId) throws GenericLRAException;
 }

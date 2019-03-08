@@ -32,7 +32,7 @@ public class Activity implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String lraId;
-    private String recoveryUrl;
+    private String recoveryUri;
     private String statusUrl;
     private ParticipantStatus status;
     private String userData;
@@ -53,12 +53,12 @@ public class Activity implements Serializable {
         return this;
     }
 
-    public String getRcvUrl() {
-        return recoveryUrl;
+    public String getRcvUri() {
+        return recoveryUri;
     }
 
-    public Activity setRecoveryUrl(String recoveryUrl) {
-        this.recoveryUrl = recoveryUrl;
+    public Activity setRecoveryUri(String recoveryUri) {
+        this.recoveryUri = recoveryUri;
         return this;
     }
 
@@ -84,7 +84,7 @@ public class Activity implements Serializable {
     public String toString() {
         return "Activity{" +
                 "lraId='" + getLraId() + '\'' +
-                ", recoveryUrl='" + getRcvUrl() + '\'' +
+                ", recoveryUri='" + getRcvUri() + '\'' +
                 ", statusUrl='" + getStatusUrl() + '\'' +
                 ", status=" + getStatus() +
                 ", userData='" + getUserData() + '\'' +

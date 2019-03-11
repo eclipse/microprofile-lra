@@ -20,6 +20,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnRemoteCallController.LRA_CANCEL_ON_REMOTE_CALL_CONTROLLER_PATH;
 import static org.junit.Assert.assertEquals;
 
 import java.net.MalformedURLException;
@@ -34,6 +35,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController;
+import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnRemoteCallController;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -169,12 +171,12 @@ public class TckCancelOnTests {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelFromRemoteCall()}
+     * See {@link LraCancelOnRemoteCallController#cancelFromRemoteCall()}
      */
     @Test
     public void cancelFromRemoteCall() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL).request().get();
+        Response response = getSuiteTarget().path(LRA_CANCEL_ON_REMOTE_CALL_CONTROLLER_PATH)
+                .path(LraCancelOnRemoteCallController.CANCEL_FROM_REMOTE_CALL).request().get();
         assertEquals("The 200 status response is expected", Status.OK.getStatusCode(), response.getStatus());
         assertEquals("Status was 200 but compensate should be called twice as LRA should be cancelled for remotely called participant as well",
                 beforeCompensatedCount + 2, getCompensateCount());

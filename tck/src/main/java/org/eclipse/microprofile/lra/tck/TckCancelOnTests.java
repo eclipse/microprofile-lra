@@ -20,20 +20,25 @@
 package org.eclipse.microprofile.lra.tck;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnRemoteCallController.LRA_CANCEL_ON_REMOTE_CALL_CONTROLLER_PATH;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController;
+import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnRemoteCallController;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
@@ -86,6 +91,7 @@ public class TckCancelOnTests {
     @Before
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
+        clearParticipants();
         this.beforeCompletedCount = getCompletedCount();
         this.beforeCompensatedCount = getCompensateCount();
     }
@@ -169,30 +175,52 @@ public class TckCancelOnTests {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelFromRemoteCall()}
+     * See {@link LraCancelOnRemoteCallController#cancelFromRemoteCall()}
      */
     @Test
     public void cancelFromRemoteCall() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL).request().get();
+        Response response = getSuiteTarget().path(LRA_CANCEL_ON_REMOTE_CALL_CONTROLLER_PATH)
+                .path(LraCancelOnRemoteCallController.CANCEL_FROM_REMOTE_CALL).request().get();
         assertEquals("The 200 status response is expected", Status.OK.getStatusCode(), response.getStatus());
+
+        List<String> completedParticipants = getCompletedParticipants();
+        List<String> compensatedParticipants = getCompensatedParticipants();
+        
         assertEquals("Status was 200 but compensate should be called twice as LRA should be cancelled for remotely called participant as well",
-                beforeCompensatedCount + 2, getCompensateCount());
+                beforeCompensatedCount + 2, compensatedParticipants.size());
         assertEquals("Even the 200 status was received the remotly called participant should cause the LRA being cancelled",
-                beforeCompletedCount, getCompletedCount());
+                beforeCompletedCount, completedParticipants.size());
+        assertTrue("Compensate should have been called on each enlisted participant",
+            compensatedParticipants.contains(LraCancelOnController.class.getName()) && 
+                compensatedParticipants.contains(LraCancelOnRemoteCallController.class.getName()));
+    }
+    
+    private void clearParticipants() {
+        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CLEAR).request().get();
+        
+        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            throw new IllegalStateException("List of participants cannot be cleared before test");
+        }
     }
 
-
-
     private int getCompletedCount() {
+        return getCompletedParticipants().size();
+    }
+
+    private List<String> getCompletedParticipants() {
         Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
                 .path(LraCancelOnController.COMPLETED_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
+        return response.readEntity(new GenericType<List<String>>() {});
     }
 
     private int getCompensateCount() {
+        return getCompensatedParticipants().size();
+    }
+
+    private List<String> getCompensatedParticipants() {
         Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
                 .path(LraCancelOnController.COMPENSATED_COUNT_PATH).request().get();
-        return Integer.valueOf(response.readEntity(String.class));
+        return response.readEntity(new GenericType<List<String>>() {});
     }
 }

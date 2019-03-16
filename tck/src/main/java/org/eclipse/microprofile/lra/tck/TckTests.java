@@ -28,15 +28,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
@@ -48,18 +44,16 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.client.LRAClient;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.tck.participant.api.LraController;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
-import org.eclipse.microprofile.lra.tck.spi.ManagementSPI;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -78,11 +72,7 @@ public class TckTests {
     @Inject
     private LraTckConfigBean config;
 
-    @Inject
-    private LRAClient lraClient;
-
-    @Inject
-    private ManagementSPI lraManagement;
+    private LRAClientOps lraClient;
 
     private static URL recoveryCoordinatorBaseUrl;
     private static Client tckSuiteClient;
@@ -90,8 +80,6 @@ public class TckTests {
 
     private WebTarget tckSuiteTarget;
     private WebTarget recoveryTarget;
-
-    private static List<LRAInfo> notProperlyClosedLRAs = new ArrayList<>();
 
     private enum CompletionType {
         complete, compensate, mixed
@@ -123,31 +111,11 @@ public class TckTests {
 
         try {
             tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
+            lraClient = new LRAClientOps(tckSuiteTarget);
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
         recoveryTarget = recoveryCoordinatorClient.target(URI.create(recoveryCoordinatorBaseUrl.toExternalForm()));
-    }
-
-    @After
-    public void after() {
-        List<LRAInfo> activeLRAs = lraManagement.getLRAs(LRAStatus.Active);
-
-        if (activeLRAs.size() != 0) {
-            activeLRAs.forEach(lra -> {
-                try {
-                    if (!notProperlyClosedLRAs.contains(lra)) {
-                        LOGGER.warning(String.format(
-                                "<after test> %s: test did not close %s%n", testName.getMethodName(), lra.getLraId()));
-                        notProperlyClosedLRAs.add(lra);
-                        lraClient.closeLRA(URI.create(lra.getLraId()));
-                    }
-                } catch (WebApplicationException e) {
-                    LOGGER.warning(String.format("<after test> %s: exception %s closing %s%n",
-                            testName.getMethodName(), e.getMessage(), lra.getLraId()));
-                }
-            });
-        }
     }
 
     /**
@@ -171,14 +139,6 @@ public class TckTests {
         }
     }
 
-    // TODO: what's difference to closeLRA?
-    @Test
-    public void startLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        lraClient.closeLRA(lra);
-    }
-
     /**
      * <p>
      * Starting LRA and canceling it.
@@ -187,15 +147,17 @@ public class TckTests {
      */
     @Test
     public void cancelLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null,lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        try {
+            URI lra = lraClient.startLRA(null,lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
-        lraClient.cancelLRA(lra);
+            lraClient.cancelLRA(lra);
 
-        List<LRAInfo> allClientLRAs = lraManagement.getLRAs(null);
-        boolean isLraIdInList = containsLraId(allClientLRAs, lra);
-
-        assertFalse("LRA '" + lra + "' should not be active anymore but was found in the list of all lras "
-            + allClientLRAs, isLraIdInList);
+            assertTrue("LRA '" + lra + "' should not be active ",
+                    lraClient.isLRAFinished(lra));
+        } catch (GenericLRAException e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
@@ -210,100 +172,16 @@ public class TckTests {
 
         lraClient.closeLRA(lra);
 
-        List<LRAInfo> allClientLRAs = lraManagement.getLRAs(null);
-        boolean isLraIdInList = containsLraId(allClientLRAs, lra);
-
-        assertFalse("LRA '" + lra + "' should not be active anymore but was found in the list of all lras "
-                + allClientLRAs, isLraIdInList);
-    }
-
-    /**
-     * Started LRA should be listed amongst active LRAs.
-     */
-    @Test
-    public void getActiveLRAs() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        List<LRAInfo> allActiveLRAs = lraManagement.getLRAs(LRAStatus.Active);
-        boolean isLraIdInList = containsLraId(allActiveLRAs, lra);
-
-        assertTrue("LRA '" + lra + "' should be listed in the list of the active LRAs, as it was not closed yet",
-                isLraIdInList);
-
-        lraClient.closeLRA(lra);
-    }
-
-    /**
-     * Started LRA should be listed amongst active LRAs.
-     */
-    @Test
-    public void getAllLRAs() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        List<LRAInfo> allClientLRAs = lraManagement.getLRAs(null);
-        boolean isLraIdInList = containsLraId(allClientLRAs, lra);
-
-        assertTrue("LRA '" + lra + "' should be listed in the list of the all LRAs, as it was not closed yet, but it isn't",
-                isLraIdInList);
-
-        lraClient.closeLRA(lra);
-    }
-
-    @Test
-    @Ignore
-    public void getRecoveringLRAs() throws WebApplicationException {
-        // TODO
-    }
-
-    /**
-     * Started LRA should be in state 'active'.
-     */
-    @Test
-    public void isActiveLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        assertEquals("LRA '" + lra + "' is not denoted as active even it was started",
-                LRAStatus.Active, lraClient.getStatus(lra));
-
-        lraClient.closeLRA(lra);
-    }
-
-    /**
-     * Canceled LRA should be in state 'compensated'.
-     * NOTE: the coordinator cleans up when canceled
-     */
-    @Test
-    @Ignore
-    public void isCompensatedLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        lraClient.cancelLRA(lra);
-
-        assertEquals("LRA '" + lra + "' is not denoted as compensated even it was canceled",
-                LRAStatus.Cancelled, lraClient.getStatus(lra));
-    }
-
-    /**
-     * Closed LRA should be in state 'completed'.
-     * NOTE: the coordinator cleans up when completed
-     */
-    @Test
-    @Ignore
-    public void isCompletedLRA() throws WebApplicationException {
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        lraClient.closeLRA(lra);
-
-        assertEquals("LRA '" + lra + "' is not denoted as compensated even it was canceled",
-                LRAStatus.Closed, lraClient.getStatus(lra));
+        assertTrue("LRA '" + lra + "' should not be active anymore",
+                lraClient.isLRAFinished(lra));
     }
 
     /**
      * HTTP request to {@link LraController#activityWithLRA}
-     * which is a method annotated with {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type#REQUIRED}.
+     * which is a method annotated with LRA.Type#REQUIRED}.
      */
     @Test
-    @Ignore
+    @Ignore // TODO why is this ignored
     public void joinLRAViaBody() throws WebApplicationException {
 
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
@@ -312,12 +190,8 @@ public class TckTests {
         String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
 
         // validate that the LRA coordinator no longer knows about lraId
-        List<LRAInfo> activeLras = lraManagement.getLRAs(LRAStatus.Active);
-        boolean isLraIdInList = containsLraId(activeLras, lraId);
-
-        // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
-        assertFalse("LRA work was processed and the annotated method finished but the LRA id '" + lraId + "'"
-            + "is still part of known active LRAs " + activeLras, isLraIdInList);
+        assertTrue("LRA work was processed and the annotated method finished but the LRA id '" + lraId + "'"
+            + "is still active", lraClient.isLRAFinished(lraId));
     }
 
     @Test
@@ -330,13 +204,13 @@ public class TckTests {
         try {
             response = resourcePath
                     .request()
-                    .header(LRAClient.LRA_HTTP_HEADER, lra)
+                    .header(LRA.LRA_HTTP_HEADER, lra)
                     .put(Entity.text(""));
     
             assertEquals("Response status to ' " + resourcePath.getUri() + "' does not match.",
                     Response.Status.OK.getStatusCode(), response.getStatus());
     
-            Object parentId = response.getHeaders().getFirst(LRAClient.LRA_HTTP_HEADER);
+            Object parentId = response.getHeaders().getFirst(LRA.LRA_HTTP_HEADER);
     
             assertNotNull("Expecting to get parent LRA id as response from " + resourcePath.getUri(), parentId);
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
@@ -348,12 +222,10 @@ public class TckTests {
             lraClient.closeLRA(lra);
     
             // validate that the nested LRA was closed
-            List<LRAInfo> activeLras = lraManagement.getLRAs(LRAStatus.Active);
-            boolean isLraIdInList = containsLraId(activeLras, nestedLraId);
-    
+
             // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
-            assertFalse("Nested LRA id '" + lra + "' should be listed in the list of the active LRAs (from call to "
-                    + resourcePath.getUri() + ")", isLraIdInList);        
+            assertTrue("Nested LRA id '" + lra + "' should be listed in the list of the active LRAs (from call to "
+                    + resourcePath.getUri() + ")", lraClient.isLRAFinished(nestedLraId));
         } finally {
             if(response != null) {
                 response.close();
@@ -384,23 +256,20 @@ public class TckTests {
 
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
-                .request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
 
         // validate that the LRA coordinator still knows about lraId
-        List<LRAInfo> allActiveLRAs = lraManagement.getLRAs(LRAStatus.Active);
-        boolean isLraIdInList = containsLraId(allActiveLRAs, lra);
-        assertTrue("LRA '" + lra + "' should be active as it is not closed yet. But it was not found in the list of active LRAs "
-                + allActiveLRAs, isLraIdInList);
+        assertFalse("LRA '" + lra + "' should be active as it is not closed yet.",
+                lraClient.isLRAFinished(lra));
 
         // close the LRA
         lraClient.closeLRA(lra);
 
         // check that LRA coordinator no longer knows about lraId
-        allActiveLRAs = lraManagement.getLRAs(LRAStatus.Active);
-        assertFalse("LRA '" + lra + "' should not be active anymore as it was closed yet. But it was not found amongst active LRAs "
-                + allActiveLRAs, containsLraId(allActiveLRAs, lra));
+        assertTrue("LRA '" + lra + "' should not be active anymore as it was closed yet.",
+                lraClient.isLRAFinished(lra));
 
         // check that participant was told to complete
         int completedCount = getCompletedCount();
@@ -410,18 +279,14 @@ public class TckTests {
 
     @Test
     public void join() throws WebApplicationException {
-        List<LRAInfo> lras = lraManagement.getLRAs(LRAStatus.Active);
-        int count = lras.size();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
-                .request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
-
-        lras = lraManagement.getLRAs(LRAStatus.Active);
-        assertEquals("Number of LRA instances before the test does not match current number of active LRAs. The joint LRA should be closed already. "
-                + "The test call went to LRA controller at " + resourcePath.getUri(), count, lras.size());
+        assertTrue("LRA '" + lra + "' should be active as it is not closed yet.",
+                lraClient.isLRAFinished(lra));
     }
 
     @Test
@@ -429,18 +294,18 @@ public class TckTests {
         int beforeCompletedCount = getCompletedCount();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
 
         // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
 
         // call a method annotated with @Leave (should remove the participant from the LRA)
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("leave");
-        response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
 
         lraClient.closeLRA(lra);
@@ -454,61 +319,18 @@ public class TckTests {
     }
 
     @Test
-    public void leaveLRAViaAPI() throws WebApplicationException {
-        int beforeCompletedCount = getCompletedCount();
-        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
-
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-
-        Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
-
-        // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
-        resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
-
-        String recoveryUri = response.getHeaderString(LRAClient.LRA_HTTP_RECOVERY_HEADER);        
-        
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
-
-        // call a method annotated with @Leave (should remove the participant from the LRA)
-        try {
-            resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("leave");
-            response = resourcePath.path(URLEncoder.encode(lra.toString(), "UTF-8"))
-                    .request()
-                    .header(LRAClient.LRA_HTTP_HEADER, lra)
-                    .header(LRAClient.LRA_HTTP_RECOVERY_HEADER, recoveryUri)
-                    .put(Entity.text(""));
-        } catch (UnsupportedEncodingException e) {
-            throw new WebApplicationException(
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(
-                            Entity.text(String.format("%s: %s", resourcePath.getUri().toString(), e.getMessage()))).build());
-        }
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
-
-        lraClient.closeLRA(lra);
-
-        // check that participant was not told to complete
-        int completedCount = getCompletedCount();
-
-        assertEquals("Wrong completion count when participant left the LRA by calling @Leave method. "
-                + "Expecting the completed count hasn't change between start and end of the test. "
-                + "The test call went to LRA controller at " + resourcePath.getUri(), beforeCompletedCount, completedCount);
-    }
-
-    @Test
     public void dependentLRA() throws WebApplicationException {
         // call a method annotated with NOT_SUPPORTED but one which programatically starts an LRA and returns it via a header
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("startViaApi");
         Response response = resourcePath.request().put(Entity.text(""));
         // check that the method started an LRA
-        Object lraHeader = response.getHeaders().getFirst(LRAClient.LRA_HTTP_HEADER);
+        Object lraHeader = response.getHeaders().getFirst(LRA.LRA_HTTP_HEADER);
 
         String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
 
         // the value returned via the header and body should be equal
 
-        assertNotNull("JAX-RS response to PUT request should have returned the header " + LRAClient.LRA_HTTP_HEADER
+        assertNotNull("JAX-RS response to PUT request should have returned the header " + LRA.LRA_HTTP_HEADER
                 + ". The test call went to " + resourcePath.getUri(), lraHeader);
         assertNotNull("JAX-RS response to PUT request should have returned content of LRA id. The test call went to "
                 + resourcePath.getUri(), lraId);
@@ -551,51 +373,24 @@ public class TckTests {
                 + "The test call went to " + resourcePath.getUri(), beforeCompensatedCount + 1, compensatedCount);
     }
 
-    /*
-     * Participants can pass data during enlistment and this data will be returned during
-     * the complete/compensate callbacks
-     */
-    // TODO: is this test to be run?
-    private void testUserData() {
-        List<LRAInfo> beforeActiveLRAs = lraManagement.getLRAs(LRAStatus.Active);
-        String testData = "test participant data";
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("testUserData");
-
-        Response response = resourcePath
-                .request().put(Entity.text(testData));
-
-        String activityId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
-
-        List<LRAInfo> activeLRAs = lraManagement.getLRAs(LRAStatus.Active);
-
-        assertEquals("produced the wrong LRA count on call of method " + resourcePath.getUri(),
-                beforeActiveLRAs.size(), activeLRAs.size());
-
-        response = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("getActivity")
-                .queryParam("activityId", activityId)
-                .request()
-                .get();
-
-        String activity = response.readEntity(String.class);
-
-        // validate that the service received the correct data during the complete call
-        assertTrue("service should receive userData field during complete call", activity.contains("userData='" + testData));
-        assertTrue("service should receive endData field during complete call", activity.contains("endData='" + testData));
-    }
-
     @Test
-    public void acceptTest() throws WebApplicationException {
+    public void acceptCloseTest() throws WebApplicationException {
         joinAndEnd(true, true, LRA_CONTROLLER_PATH, ACCEPT_WORK);
     }
 
-    // TODO the spec does not specifiy recovery semantics
+    @Test
+    public void acceptCancelTest() throws WebApplicationException {
+        joinAndEnd(true, false, LRA_CONTROLLER_PATH, ACCEPT_WORK);
+    }
+
     private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2) throws WebApplicationException {
-        int beforeActiveLRACount = lraManagement.getLRAs(LRAStatus.Active).size();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        int beforeCompletionCount = getCompletedCount();
+        int beforeCompensationCount = getCompensatedCount();
         WebTarget resourcePath = tckSuiteTarget.path(path).path(path2);
 
         Response response = resourcePath
-                .request().header(LRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndClose(Response.Status.OK, response, resourcePath);
 
@@ -606,20 +401,32 @@ public class TckTests {
         }
 
         if (waitForRecovery) {
+            // TODO the spec does not specifiy recovery semantics
+
             // trigger a recovery scan which trigger a replay attempt on any participants
             // that have responded to complete/compensate requests with Response.Status.ACCEPTED
-            resourcePath = recoveryTarget.path("recovery");
-            Response response2 = resourcePath
+            WebTarget recoveryPath = recoveryTarget.path("recovery");
+            Response response2 = recoveryPath
                     .request().get();
 
-            checkStatusAndClose(Response.Status.OK, response2, resourcePath);
+            checkStatusAndClose(Response.Status.OK, response2, recoveryPath);
         }
 
-        int activeLRACount = lraManagement.getLRAs(LRAStatus.Active).size();
+        int completionCount = getCompletedCount() - beforeCompletionCount;
+        int compensationCount = getCompensatedCount() - beforeCompensationCount;
 
-        assertEquals("Expecting all LRAs were recovered and the number of active LRAs before test matches the number after. "
-                + "The test call went to " + resourcePath.getUri(),
-                beforeActiveLRACount, activeLRACount);
+        boolean wasCalled = (close ? completionCount > 0 : compensationCount > 0);
+        boolean wasNotCalled = (close ? compensationCount == 0 : completionCount == 0);
+        String lraMode = (close ? "close" : "cancel");
+        String participantMode = (close ? "complete" : "compensate");
+
+        assertTrue(String.format("acceptTest with %s: participant (%s) was not asked to %s",
+                lraMode, resourcePath.getUri(), participantMode),
+                wasCalled);
+        assertTrue(String.format("acceptTest with %s: participant (%s) was asked to %s",
+                lraMode, resourcePath.getUri(), participantMode),
+                wasNotCalled);
+        assertTrue("acceptTest: LRA did not finish", lraClient.isLRAFinished(lra));
     }
 
     @Test
@@ -632,7 +439,7 @@ public class TckTests {
         int beforeCompensatedCount = getCompensatedCount();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
-        Response response = resourcePath.request().header(LRAClient.LRA_HTTP_HEADER, lra)
+        Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra)
                 .put(Entity.text(""));
 
         String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
@@ -653,36 +460,6 @@ public class TckTests {
                 + "The test call went to " + resourcePath.getUri(), beforeCompletedCount, completedCount);
         assertEquals("Compensate service should be called on LRA aware service. The number of compensated count after test is bigger for one. "
                 + "The test call went to " + resourcePath.getUri(), beforeCompensatedCount + 1, compensatedCount);
-    }
-
-    // TODO: is this test to be run?
-    private void renewTimeLimit() {
-        int beforeCompletedCount = getCompletedCount();
-        int beforeCompensatedCount = getCompensatedCount();
-
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH)
-                .path("renewTimeLimit");
-
-        Response response = resourcePath
-                .request()
-                .get();
-
-        response.close();
-
-        // check that participant was invoked
-        int completedCount = getCompletedCount();
-        int compensatedCount = getCompensatedCount();
-
-        /*
-         * The call to activities/timeLimit should have started an LRA whch should not have timed out
-         * (because the called resource method renews the timeLimit before sleeping for longer than
-         * the timeLimit annotation attribute specifies).
-         * Therefore the participant should not have compensated:
-         */
-        assertEquals("Compensate was called instead of complete. The test call went to " + resourcePath.getUri(),
-                beforeCompletedCount + 1, completedCount);
-        assertEquals("Compensate should not have been called. The test call went to " + resourcePath.getUri(),
-                beforeCompensatedCount, compensatedCount);
     }
 
     private void checkStatusAndClose(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
@@ -737,14 +514,12 @@ public class TckTests {
         Response response = resourcePath
                 .queryParam("nestedCnt", nestedCnt)
                 .request()
-                .header(LRAClient.LRA_HTTP_HEADER, lra)
+                .header(LRA.LRA_HTTP_HEADER, lra)
                 .put(Entity.text(""));
 
         String lraStr = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
         assertNotNull("expecting a LRA string returned from " + resourcePath.getUri(), lraStr);
-        assert lraStr != null;
         String[] lraArray = lraStr.split(",");
-        final List<LRAInfo> lras = lraManagement.getLRAs(LRAStatus.Active);
         URI[] uris = new URI[lraArray.length];
 
         IntStream.range(0, uris.length).forEach(i -> {
@@ -764,12 +539,13 @@ public class TckTests {
 
         // check that the coordinator knows about the two nested LRAs started by the multiLevelNestedActivity method
         // NB even though they should have completed they are held in memory pending the enclosing LRA finishing
-        IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertTrue("missing nested LRA: step 2b (path called " + resourcePath + ")",
-                containsLraId(lras, lraArray[i])));
+        IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertFalse(
+                "multiLevelNestedActivity: nested LRA should be active: step 2b (path called " + resourcePath + ")",
+                lraClient.isLRAFinished(lraArray[i])));
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
-        assertTrue("lra should have been found (path called " + resourcePath.getUri() + ")",
-                containsLraId(lras, lraArray[0]));
+        assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
+                lraClient.isLRAFinished(lraArray[0]));
 
         int inMiddleCompletedCount = getCompletedCount();
         int inMiddleCompensatedCount = getCompensatedCount();
@@ -806,11 +582,10 @@ public class TckTests {
         }
 
         // validate that the top level and nested LRAs are gone
-        final List<LRAInfo> lras2 = lraManagement.getLRAs(LRAStatus.Active);
-
-        IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertFalse(
-                "multiLevelNestedActivity: top level or nested activity still active (called path " + resourcePath.getUri() + ")",
-                containsLraId(lras2, lraArray[i])));
+        IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertTrue(
+                String.format("multiLevelNestedActivity: %s LRA still active (resouce path was %s)",
+                        (i == 0 ? "top level" : "nested"), resourcePath.getUri()),
+                lraClient.isLRAFinished(lraArray[i])));
 
         int afterCompletedCount = getCompletedCount();
         int afterCompensatedCount = getCompensatedCount();
@@ -839,7 +614,7 @@ public class TckTests {
                     inMiddleCompensatedCount + 1 + nestedCnt, afterCompensatedCount);
         } else {
             /*
-             * The test is calling for a mixed uutcome:
+             * The test is calling for a mixed outcome:
              * - the top level LRA was closed
              * - one of the nested LRAs was compensated the rest should have been completed
              */
@@ -854,15 +629,6 @@ public class TckTests {
             assertEquals("multiLevelNestedActivity: step 10 (called test path " + resourcePath.getUri() + ")",
                     nestedCnt + 1, afterCompletedCount - beforeCompletedCount);
         }
-    }
-
-    private boolean containsLraId(List<LRAInfo> lras, URI lraIdURI) {
-        String lraId = lraIdURI.toString();
-        return containsLraId(lras, lraId);
-    }
-
-    private boolean containsLraId(List<LRAInfo> lras, String lraId) {
-        return lras.stream().anyMatch(lrainfo -> lrainfo.getLraId().equals(lraId));
     }
 
     /**

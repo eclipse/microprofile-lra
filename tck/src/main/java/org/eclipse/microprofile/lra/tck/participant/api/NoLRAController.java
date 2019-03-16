@@ -32,7 +32,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
 
 @ApplicationScoped

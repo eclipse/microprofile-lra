@@ -22,7 +22,7 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.client.InvalidLRAIdException;
-import org.eclipse.microprofile.lra.client.LRAClient;
+import org.eclipse.microprofile.lra.tck.LRAClientOps;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.activity.ActivityStorage;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
@@ -47,8 +47,10 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -64,8 +66,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_HEADER;
-import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_RECOVERY_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 @ApplicationScoped
 @Path(LraController.LRA_CONTROLLER_PATH)
@@ -79,9 +81,6 @@ public class LraController {
     static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
 
     private static final String MISSING_LRA_DATA = "Missing LRA data";
-
-    @Inject
-    private LRAClient lraClient;
 
     private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
     private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
@@ -121,33 +120,6 @@ public class LraController {
         }
 
         return Response.ok(activity.getStatus().name()).build();
-    }
-
-    /**
-     * Test that participants can leave an LRA using the {@link LRAClient} programmatic API
-     * @param lraUri the id of the LRA
-     * @param recoveryUri header param defines recovery URI
-     * @return the URI of the LRA if it was successfully removed
-     * @throws NotFoundException if the activity was not found
-     */
-    @PUT
-    @Path("/leave/{LraUri}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response leaveWorkViaAPI(@PathParam("LraUri") String lraUri,
-                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryUri)
-        throws NotFoundException {
-
-        if (lraUri != null && recoveryUri != null) {
-            lraClient.leaveLRA(URI.create(recoveryUri));
-
-            activityStore.getActivityAndAssertExistence(lraUri, context);
-
-            activityStore.remove(lraUri);
-
-            return Response.ok(lraUri).build();
-        }
-
-        return Response.ok("non transactional").build();
     }
 
     @PUT
@@ -283,25 +255,33 @@ public class LraController {
     public Response subActivity(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         assertNotHeaderPresent(lraId);
 
-        // manually start an LRA via the injection LRAClient api
-        URI lra = lraClient.startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
+        Client client = null;
 
-        lraId = lra.toString();
+        try {
+            client = ClientBuilder.newClient();
+            WebTarget target = client.target(context.getBaseUri());
+            URI lra = new LRAClientOps(target).startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
 
-        storeActivity(lraId, null);
+            lraId = lra.toString();
 
-        // invoke a method that SUPPORTS LRAs. The filters should detect the LRA we just
-        // started via the injected client
-        // and add it as a header before calling the method at path /supports (ie supportsLRACall()).
-        // The supportsLRACall method will return LRA id in the body if it is present.
-        String id = restPutInvocation(lra,"supports", "");
+            storeActivity(lraId, null);
 
-        // check that the invoked method saw the LRA
-        if (!lraId.equals(id)) {
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
+            // invoke a method that SUPPORTS LRAs. The filters should detect the LRA we just started
+            // and add it as a header before calling the method at path /supports (ie supportsLRACall()).
+            // The supportsLRACall method will return LRA id in the body if it is present.
+            String id = restPutInvocation(lra,"supports", "");
+
+            // check that the invoked method saw the LRA
+            if (!lraId.equals(id)) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
+            }
+
+            return Response.ok(id).build();
+        } finally {
+            if (client != null) {
+                client.close();
+            }
         }
-
-        return Response.ok(id).build();
     }
 
     @PUT
@@ -327,7 +307,7 @@ public class LraController {
                 .path(LRA_CONTROLLER_PATH)
                 .path(path)
                 .request()
-                .header(LRAClient.LRA_HTTP_HEADER, lraURI)
+                .header(LRA_HTTP_HEADER, lraURI)
                 .put(Entity.text(bodyText));
 
         if (response.hasEntity()) {
@@ -443,30 +423,6 @@ public class LraController {
             Thread.sleep(300); // sleep for longer than specified in the timeLimit annotation attribute
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted becaused time limit elapsed", e);
-        }
-        return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
-    }
-
-    @GET
-    @Path("/renewTimeLimit")
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, end = false, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
-    public Response extendTimeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
-        assertHeaderPresent(lraId);
-
-        activityStore.add(new Activity(lraId));
-
-        try {
-            /*
-             * the incoming LRA was created with a timeLimit of 100 ms via the timeLimit annotation
-             * attribute update the timeLimit to 300 sleep for 200 return from the method so the LRA will
-             * have been running for 200 ms so it should not be cancelled
-             */
-            lraClient.renewTimeLimit(lraToURI(lraId, "Invalid LRA id"), 300, ChronoUnit.MILLIS);
-            // sleep for 200000 micro seconds (should be longer than specified in the timeLimit annotation attribute)
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.FINE, "Interrupted because the renewed time limit elapsed", e);
         }
         return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
     }

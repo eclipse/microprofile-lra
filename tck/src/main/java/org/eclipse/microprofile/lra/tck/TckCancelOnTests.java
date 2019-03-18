@@ -176,8 +176,9 @@ public class TckCancelOnTests {
         Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
                 .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL).request().get();
         assertEquals("The 200 status response is expected", Status.OK.getStatusCode(), response.getStatus());
-        assertEquals("Status was 200 but compensate should be called twice as LRA should be cancelled for remotely called participant as well",
-                beforeCompensatedCount + 2, getCompensateCount());
+        // LraCancelOnController enlists twice the same participant, compensate is expected to be called only once
+        assertEquals("Status was 200 but compensate should be called as LRA should be cancelled for remotely called participant as well",
+                beforeCompensatedCount + 1, getCompensateCount());
         assertEquals("Even the 200 status was received the remotly called participant should cause the LRA being cancelled",
                 beforeCompletedCount, getCompletedCount());
     }

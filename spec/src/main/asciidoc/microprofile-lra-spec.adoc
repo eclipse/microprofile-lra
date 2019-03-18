@@ -210,6 +210,9 @@ enter the state model until it receives a complete or compensate message:
 .Participant State Model
 image::participant-state-model.png[align="center" link="participant-state-model"]
 
+The participant can be enlisted only once per LRA instance. When participant
+is about to be enlisted multiple times (e.g. client calls the same `@LRA` method
+several times) the follow-up enlistments of such participant MUST be ignored.
 
 Different usage patterns for LRAs are possible, for example LRAs may be
 used sequentially and/or concurrently, where the termination of one LRA

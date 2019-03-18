@@ -127,9 +127,20 @@ public class LraCancelOnController {
 
     public static final String CANCEL_FROM_REMOTE_CALL = "cancelFromRemoteCall";
     /**
+     * <p>
      * Returning <code>200</code> thus the LRA should be closed but
-     * it calls the remote method which ends with 5xx which is the
+     * beforehand it makes a remote REST call which returns 5xx which is the
      * default for the cancelling and so the whole LRA should be cancelled.
+     * </p>
+     * <p>
+     * The remote REST call invokes the same controller class {@link LraCancelOnController}
+     * That assumes the call to the representative of the same LRA participant
+     * as it's already enlisted by the method {@link #cancelFromRemoteCall()} invoked by the test.
+     * Because the specification mandates that the same participant can be enlisted
+     * only once per LRA instance then
+     * the {@link Compensate} method {@link #compensateWork(String, String)}
+     * will be called only once for the test invocation.
+     * </p>
      */
     @GET
     @Path(CANCEL_FROM_REMOTE_CALL)

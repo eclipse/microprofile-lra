@@ -43,6 +43,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -172,6 +173,7 @@ public class TckCancelOnTests {
      * See {@link LraCancelOnController#cancelFromRemoteCall()}
      */
     @Test
+    @Ignore
     public void cancelFromRemoteCall() {
         Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
                 .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL).request().get();

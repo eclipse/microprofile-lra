@@ -39,9 +39,6 @@ The LRA TCK suite can be parametrized by following properties, handled in the su
 * `pom.xml` dependencies are set-up
 * the LRA TCK suite requires MicroProfile Config
 * a default Arquillian container is configured in `arquillian.xml` (tests manually deploy with use of `@ArquillianResource Deployer`)
-* implementation provides one implementation of `org.eclipse.microprofile.lra.client.LRAClient` as it's injected by TCK suite
-* implementation has to provide one implementation of `org.eclipse.microprofile.lra.tck.spi.ManagementSPI`. This is an interface
-  with definition of util methods used by the TCK suite for its run.
 * JAX-RS `ClientBuilder` is used to run REST calls from tests to tested application. Provide the implementation of the
   JAX-RS `ClientBuilder` on the test class path.
 

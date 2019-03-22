@@ -24,7 +24,6 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.client.LRAClient;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -54,7 +53,7 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Newly created LRAs are uniquely identified and the id is referred to as the
  * LRA context. The context is passed around using a JAX-RS request/response header
- * called {@link org.eclipse.microprofile.lra.client.LRAClient#LRA_HTTP_HEADER}.
+ * called {@value #LRA_HTTP_HEADER}.
  * The implementation (of the LRA specification) is expected to manage this context
  * and the application developer is expected to declaratively control the creation,
  * propagation and destruction of LRAs using the {@link LRA} annotation. When a JAX-RS bean
@@ -71,7 +70,7 @@ import java.time.temporal.ChronoUnit;
  * and then performs a JAX-RS request to resource <code>B</code> which does not contain any LRA
  * annotations. If resource <code>B</code> then performs a JAX-RS request to a third service, <code>C</code> say,
  * which does contain LRA annotations then the LRA context started at <code>A</code> must be propagated
- * to <code>C</code> (for example if <code>C</code> uses {@link LRAClient} or annotations to join the LRA,
+ * to <code>C</code> (for example if <code>C</code> uses an annotation to join the LRA,
  * then <code>C</code> must be enlisted in the LRA that was started at <code>A</code>).
  * </p>
  *
@@ -85,6 +84,18 @@ import java.time.temporal.ChronoUnit;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface LRA {
+    /**
+     * When a JAX-RS invocation is made with an active LRA it is made available
+     * via an HTTP header field with the following name. The value contains
+     * the LRA id associated with the HTTP request/response
+     */
+    String LRA_HTTP_HEADER = "Long-Running-Action";
+
+    /**
+     * the name of the HTTP header field that contains a recovery URI corresponding
+     * to a participant enlistment in an LRA
+     */
+    String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
     /**
      * <p>
@@ -116,7 +127,7 @@ public @interface LRA {
      * <p>
      * When an LRA is present its identifer <b>MUST</b> be made available to
      * the business logic in the JAX-RS request and response header
-     * {@link org.eclipse.microprofile.lra.client.LRAClient#LRA_HTTP_HEADER}
+     * {@value #LRA_HTTP_HEADER}.
      *
      * @return whether a bean method is to be executed within a transaction context.
      */

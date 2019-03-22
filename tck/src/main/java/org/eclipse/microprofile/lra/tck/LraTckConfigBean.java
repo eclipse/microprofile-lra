@@ -24,7 +24,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.eclipse.microprofile.lra.client.LRAClient;
 
 @ApplicationScoped
 public class LraTckConfigBean {
@@ -53,14 +52,14 @@ public class LraTckConfigBean {
      * Host name where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
      * The port is specifed by {@link #recoveryPort}.
      */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_HOST_KEY, defaultValue = "localhost")
+    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_HOST_KEY, defaultValue = "localhost")
     private String recoveryHostName;
 
     /**
      * Port where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
      * The hostname is specifed by {@link #recoveryHostName}.
      */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_PORT_KEY, defaultValue = "8080")
+    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_PORT_KEY, defaultValue = "8080")
     private int recoveryPort;
 
     /**
@@ -68,7 +67,7 @@ public class LraTckConfigBean {
      * The hostname of LRA recovery is specifed by {@link #recoveryHostName},
      * the port of LRA recovery is defined by {@link #recoveryPort}.
      */
-    @Inject @ConfigProperty(name = LRAClient.LRA_RECOVERY_PATH_KEY, defaultValue = "lra-recovery-coordinator")
+    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_PATH_KEY, defaultValue = "lra-recovery-coordinator")
     private String recoveryPath;
 
     /**

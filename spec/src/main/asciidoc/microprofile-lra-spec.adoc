@@ -597,6 +597,11 @@ then an arbitrary one is chosen. If the annotation is not accompanied by
 a JAX-RS `@PUT` annotation the error SHOULD be reported using a JAX-RS
 exception mapper that maps to a `412 Precondition Failed` HTTP status code.
 
+footnote:[issue #15 (Provide an annotation to supply opaque data during
+participant registration) allows participants to register opaque data when
+joining with an LRA. This data is made available to the completion and
+compensation callbacks]
+
 [[nesting-lras]]
 ==== Nesting LRAs
 

@@ -35,6 +35,13 @@ import java.lang.annotation.Target;
  * must be a standard JAX-RS endpoint annotated with the JAX-RS
  * <em>@DELETE</em> annotation.
  *
+ * The id of the currently running LRA can be obtained by inspecting the
+ * incoming JAX-RS headers.
+ *
+ * Since the participant generally needs to know the id of the LRA in order
+ * to clean up there is generally no benefit to combining this annotation
+ * with the `@LRA` annotation (though it is not prohibited).
+ *
  * Related information is provided in the javadoc for the {@link Status}
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -49,9 +49,9 @@ import java.lang.annotation.Target;
  *   <li>SUPPORTS if there is an LRA present a new LRA is nested under otherwise
  *   a new top level LRA is begun
  *   <li>NOT_SUPPORTED nested does not make sense and operations on this resource
- *   that contain a LRA context will immediately return with a
+ *   that contain an LRA context will immediately return with a
  *   <code>412 Precondition Failed</code> HTTP status code
- *   <li>NEVER nested does not make sense and requests that carry a LRA context
+ *   <li>NEVER nested does not make sense and requests that carry an LRA context
  *   will immediately return with a <code>412 Precondition Failed</code> HTTP
  *   status code
  * </ul>

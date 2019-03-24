@@ -27,12 +27,23 @@ import java.lang.annotation.Target;
 import java.time.temporal.ChronoUnit;
 
 /**
- * When a bean method executes in the context of an LRA any methods in the bean
- * class that are annotated with @Complete will be used as a participant for
- * that LRA. If it is applied to multiple methods an arbitrary one is chosen.
+ * When a resource method executes in the context of an LRA and if the containing
+ * class contains a method annotated with `@Complete` then the resource will
+ * be used as a participant for the LRA. If this associated LRA is subsequently
+ * closed then the method that this annotation is applied to will be invoked
+ * (if the annotation is present on more than one method then an arbitrary one
+ * will be chosen).
  *
- * If the associated LRA is subsequently closed the method on which this
- * annotation is present will be invoked.
+ * The id of the currently running LRA can be obtained by inspecting the incoming
+ * JAX-RS headers.
+ *
+ * Note that, according to the state model {@link LRAStatus} once an LRA has been
+ * asked to close it is no longer possible to join with it as a participant.
+ * Therefore combining this annotation with an `@LRA` annotation that does not
+ * start a new LRA will result in a `412 PreCondition Failed` status code and is
+ * not advised. On the other hand, combining it with an `@LRA` annotation that
+ * begins a new LRA can in certain use case make sense, but in this case the LRA
+ * that this method is being asked to complete for will be unavailable.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

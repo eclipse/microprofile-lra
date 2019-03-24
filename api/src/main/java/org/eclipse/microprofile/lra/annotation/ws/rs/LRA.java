@@ -64,7 +64,8 @@ import java.time.temporal.ChronoUnit;
  *
  * <p>
  * If an LRA is propagated to a resource that is not annotated with any
- * particular LRA behaviour then the LRA will be suspended. But if this resource
+ * particular LRA behaviour then the LRA will be suspended (ie the context
+ * will not be available to the resource). But if this resource
  * then performs an outgoing JAX-RS request then the suspended LRA must be propagated
  * on this second outgoing request. For example, suppose resource <code>A</code> starts an LRA
  * and then performs a JAX-RS request to resource <code>B</code> which does not contain any LRA
@@ -75,8 +76,9 @@ import java.time.temporal.ChronoUnit;
  * </p>
  *
  * <p>
- * Resource methods can access the LRA context id, if required, by injecting it via
- * the JAX-RS {@link HeaderParam} annotation. This may be useful, for example, for
+ * Resource methods can access the LRA context id, if required, by inspecting the request headers
+ * using standard JAX-RS mechanisms, ie `@Context` or by injecting it via the JAX-RS {@link HeaderParam}
+ * annotation with value {@value #LRA_HTTP_HEADER}. This may be useful, for example, for
  * associating business work with an LRA.
  * </p>
  */
@@ -100,7 +102,7 @@ public @interface LRA {
     /**
      * <p>
      * The Type element of the LRA annotation indicates whether a bean method
-     * is to be executed within the context of a LRA.
+     * is to be executed within the context of an LRA.
      *
      * <p>
      * If the method is to run in the context of an LRA and the annotated class
@@ -136,13 +138,13 @@ public @interface LRA {
     enum Type {
         /**
          * <p>
-         * If called outside a LRA context a new LRA will be created for the
+         * If called outside an LRA context a new LRA will be created for the
          * the duration of the method call and when the call completes it will
          * be closed.
          * </p>
          *
          * <p>
-         * If called inside a LRA context the invoked method will run with the
+         * If called inside an LRA context the invoked method will run with the
          * same context and the context will remain active after the method
          * completes.
          * </p>
@@ -151,13 +153,13 @@ public @interface LRA {
 
         /**
          * <p>
-         * If called outside a LRA context a new LRA will be created for the
+         * If called outside an LRA context a new LRA will be created for the
          * the duration of the method call and when the call completes it will
          * be terminated (closed or cancelled).
          * </p>
          *
          * <p>
-         * If called inside a LRA context it will be suspended and a new LRA
+         * If called inside an LRA context it will be suspended and a new LRA
          * context will be created for the duration of the call. When the method
          * finishes this new LRA will be terminated (closed or cancelled) and
          * the original context will be resumed.
@@ -187,19 +189,19 @@ public @interface LRA {
 
         /**
          *  <p>
-         *  If called outside a LRA context the bean method execution
-         *  must then continue outside a LRA context.
+         *  If called outside an LRA context the bean method execution
+         *  must then continue outside an LRA context.
          *  </p>
          *
          *  <p>
-         *  If called inside a LRA context the managed bean method execution
+         *  If called inside an LRA context the managed bean method execution
          *  must then continue inside this LRA context.
          *  </p>
          */
         SUPPORTS,
 
         /**
-         * The bean method is executed without a LRA context. If a context is
+         * The bean method is executed without an LRA context. If a context is
          * present on entry then it is suspended and then resumed after the
          * execution has completed.
          */
@@ -207,12 +209,12 @@ public @interface LRA {
 
         /**
          * <p>
-         * If called outside a LRA context the managed bean method execution
-         * must then continue outside a LRA context.
+         * If called outside an LRA context the managed bean method execution
+         * must then continue outside an LRA context.
          * </p>
          *
          * <p>
-         * If called inside a LRA context the method is not executed and a
+         * If called inside an LRA context the method is not executed and a
          * <code>412 Precondition Failed</code> HTTP status code is returned
          * to the caller.
          * </p>

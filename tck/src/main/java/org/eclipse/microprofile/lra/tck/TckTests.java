@@ -22,6 +22,11 @@ package org.eclipse.microprofile.lra.tck;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.TRANSACTIONAL_WORK_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.COMPENSATED_CNT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.COMPLETED_CNT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH2;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.TCK_PARTICIPANT_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -187,7 +192,7 @@ public class TckTests {
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath.request().put(Entity.text(""));
 
-        String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
+        String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // validate that the LRA coordinator no longer knows about lraId
         assertTrue("LRA work was processed and the annotated method finished but the LRA id '" + lraId + "'"
@@ -258,7 +263,7 @@ public class TckTests {
         Response response = resourcePath
                 .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // validate that the LRA coordinator still knows about lraId
         assertFalse("LRA '" + lra + "' should be active as it is not closed yet.",
@@ -283,7 +288,7 @@ public class TckTests {
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
                 .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
         assertTrue("LRA '" + lra + "' should be active as it is not closed yet.",
                 lraClient.isLRAFinished(lra));
@@ -296,17 +301,17 @@ public class TckTests {
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // call a method annotated with @Leave (should remove the participant from the LRA)
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("leave");
         response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         lraClient.closeLRA(lra);
 
@@ -326,7 +331,7 @@ public class TckTests {
         // check that the method started an LRA
         Object lraHeader = response.getHeaders().getFirst(LRA.LRA_HTTP_HEADER);
 
-        String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
+        String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // the value returned via the header and body should be equal
 
@@ -392,7 +397,7 @@ public class TckTests {
         Response response = resourcePath
                 .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
 
-        checkStatusAndClose(Response.Status.OK, response, resourcePath);
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         if (close) {
             lraClient.closeLRA(lra);
@@ -409,7 +414,7 @@ public class TckTests {
             Response response2 = recoveryPath
                     .request().get();
 
-            checkStatusAndClose(Response.Status.OK, response2, recoveryPath);
+            checkStatusAndCloseResponse(Response.Status.OK, response2, recoveryPath);
         }
 
         int completionCount = getCompletedCount() - beforeCompletionCount;
@@ -442,7 +447,7 @@ public class TckTests {
         Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra)
                 .put(Entity.text(""));
 
-        String lraId = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
+        String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         assertEquals("While calling non-LRA method the controller returns not expected LRA id",
                 lraId, lra.toString());
@@ -462,7 +467,138 @@ public class TckTests {
                 + "The test call went to " + resourcePath.getUri(), beforeCompensatedCount + 1, compensatedCount);
     }
 
-    private void checkStatusAndClose(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
+    /**
+     * client invokes the same participant method twice in the same LRA context
+     * cancel the LRA
+     * check that the participant was asked to compensate only once
+     */
+    @Test
+    public void joinWithOneResourceSameMethodTwiceWithCancel() throws WebApplicationException {
+        joinWithOneResource("joinWithOneResourceSameMethodTwiceWithCancel",
+                false, JOIN_WITH_EXISTNG_LRA_PATH, JOIN_WITH_EXISTNG_LRA_PATH);
+    }
+
+    /**
+     * client invokes the same participant twice but using different methods in the same LRA context
+     * cancel the LRA
+     * check that the participant was asked to compensate only once
+     */
+    @Test
+    public void joinWithOneResourceDifferentMethodTwiceWithCancel() throws WebApplicationException {
+        joinWithOneResource("joinWithOneResourceDifferentMethodTwiceWithCancel",
+                false, JOIN_WITH_EXISTNG_LRA_PATH, JOIN_WITH_EXISTNG_LRA_PATH2);
+    }
+
+    /**
+     * client invokes the same participant method twice in the same LRA context
+     * close the LRA
+     * check that the participant was asked to complete only once
+     */
+    @Test
+    public void joinWithOneResourceSameMethodTwiceWithClose() throws WebApplicationException {
+        joinWithOneResource("joinWithOneResourceSameMethodTwiceWithClose",
+                true, JOIN_WITH_EXISTNG_LRA_PATH, JOIN_WITH_EXISTNG_LRA_PATH);
+    }
+
+    /**
+     * client invokes the same participant twice but using different methods in the same LRA context
+     * close the LRA
+     * check that the participant was asked to complete only once
+     */
+    @Test
+    public void joinWithOneResourceDifferentMethodTwiceWithClose() throws WebApplicationException {
+        joinWithOneResource("joinWithOneResourceDifferentMethodTwiceWithClose",
+                true, JOIN_WITH_EXISTNG_LRA_PATH, JOIN_WITH_EXISTNG_LRA_PATH2);
+    }
+
+    /**
+     * client invokes different participant in the same LRA context
+     * close the LRA
+     * check that both participants were asked to complete
+     */
+    @Test
+    public void joinWithTwoResourcesWithClose() throws WebApplicationException {
+        joinWithTwoResources(true);
+    }
+
+    /**
+     * client invokes different participants in the same LRA context
+     * cancel the LRA
+     * check that both participants were asked to compensate
+     */
+    @Test
+    public void joinWithTwoResourcesWithCancel() throws WebApplicationException {
+        joinWithTwoResources(false);
+    }
+
+    private void joinWithOneResource(String methodName, boolean close, String resouce1Method, String resouce2Method)
+            throws WebApplicationException {
+        // get the initial values for the number of completions and compensations
+        int completedCount = getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH);
+        int compensatedCount = getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPENSATED_CNT_PATH);
+
+        // set up the web target for the test
+        WebTarget resource1Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(resouce1Method);
+        WebTarget resource2Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(resouce2Method);
+
+        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+
+        // invoke the same JAX-RS resources twicein the context of the lra which should enlist the resource only once:
+        Response response1 = resource1Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response1, resource1Path);
+        Response response2 = resource2Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response2, resource2Path);
+
+        if (close) {
+            lraClient.closeLRA(lra);
+
+            assertTrue(methodName + ": resource should have completed once with no compensations",
+                    completedCount + 1 == getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH)
+                            && compensatedCount == getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPENSATED_CNT_PATH));
+        } else {
+            lraClient.cancelLRA(lra);
+
+            assertTrue(methodName + ":: resource should have compensated once with no completions",
+                    completedCount == getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH)
+                            && compensatedCount + 1 == getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPENSATED_CNT_PATH));
+        }
+    }
+
+    private void joinWithTwoResources(boolean close) throws WebApplicationException {
+        // get the initial values for the number of completions and compensations
+        int completedCount1 = getActivityCount(LRA_CONTROLLER_PATH, "completedactivitycount");
+        int compensatedCount1 = getActivityCount(LRA_CONTROLLER_PATH, "compensatedactivitycount");
+        int completedCount2 = getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH);
+        int compensatedCount2 = getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPENSATED_CNT_PATH);
+
+        // set up the web target for the test
+        WebTarget resource1Path = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
+        WebTarget resource2Path = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(JOIN_WITH_EXISTNG_LRA_PATH);
+
+        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+
+        // invoke two JAX-RS resources in the context of the lra which should enlist them both:
+        Response response1 = resource1Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response1, resource1Path);
+        Response response2 = resource2Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response2, resource2Path);
+
+        if (close) {
+            lraClient.closeLRA(lra);
+
+            assertTrue("joinWithTwoResourcesWithClose: both resources should have completed",
+                    getActivityCount(LRA_CONTROLLER_PATH, "completedactivitycount") == completedCount1 + 1
+                            && getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH) == completedCount2 + 1);
+        } else {
+            lraClient.cancelLRA(lra);
+
+            assertTrue("joinWithTwoResourcesWithCancel: both resources should have compensated",
+                    getActivityCount(LRA_CONTROLLER_PATH, "compensatedactivitycount") == compensatedCount1 +1
+                            && getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH) == compensatedCount2 + 1);
+        }
+    }
+
+    private void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
         try {
             assertEquals("Not expected status at call '" + resourcePath.getUri() + "'",
                     expectedStatus.getStatusCode(), response.getStatus());
@@ -471,7 +607,7 @@ public class TckTests {
         }
     }
 
-    private String checkStatusReadAndClose(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
+    private String checkStatusReadAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
         try {
             assertEquals("Response status on call to '" + resourcePath.getUri() + "' failed to match.",
                     expectedStatus.getStatusCode(), response.getStatus());
@@ -490,11 +626,15 @@ public class TckTests {
     }
 
     private int getActivityCount(String activityCountTargetPath) {
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH)
+        return getActivityCount(LRA_CONTROLLER_PATH, activityCountTargetPath);
+    }
+
+    private int getActivityCount(String basePath, String activityCountTargetPath) {
+        WebTarget resourcePath = tckSuiteTarget.path(basePath)
                 .path(activityCountTargetPath);
 
         Response response = resourcePath.request().get();
-        String count = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
+        String count = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
         return Integer.parseInt(count);
     }
 
@@ -517,7 +657,7 @@ public class TckTests {
                 .header(LRA.LRA_HTTP_HEADER, lra)
                 .put(Entity.text(""));
 
-        String lraStr = checkStatusReadAndClose(Response.Status.OK, response, resourcePath);
+        String lraStr = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
         assertNotNull("expecting a LRA string returned from " + resourcePath.getUri(), lraStr);
         String[] lraArray = lraStr.split(",");
         URI[] uris = new URI[lraArray.length];

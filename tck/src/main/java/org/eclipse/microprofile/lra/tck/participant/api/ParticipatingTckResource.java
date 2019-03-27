@@ -25,6 +25,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
@@ -44,6 +45,7 @@ public class ParticipatingTckResource {
 
     public static final String TCK_PARTICIPANT_RESOURCE_PATH = "participating-tck-resource";
     public static final String JOIN_WITH_EXISTNG_LRA_PATH = "/join-with-existing-lra";
+    public static final String JOIN_WITH_EXISTNG_LRA_PATH2 = "/join-with-existing-lra2";
     public static final String JOIN_WITH_NEW_LRA_PATH = "/join-with-new-LRA";
     public static final String COMPLETED_CNT_PATH = "/completed-count";
     public static final String COMPENSATED_CNT_PATH = "/compensated-count";
@@ -92,7 +94,7 @@ public class ParticipatingTckResource {
         return Response.ok().build();
     }
 
-    @PUT
+    @GET
     @Path(COMPLETED_CNT_PATH)
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(LRA.Type.NOT_SUPPORTED)
@@ -100,7 +102,7 @@ public class ParticipatingTckResource {
         return Response.ok(COMPLETED_COUNT.get()).build();
     }
 
-    @PUT
+    @GET
     @Path(COMPENSATED_CNT_PATH)
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(LRA.Type.NOT_SUPPORTED)
@@ -114,6 +116,13 @@ public class ParticipatingTckResource {
     @Path(ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response joinWithExistingLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path(ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH2)
+    @LRA(value = LRA.Type.MANDATORY, end = false)
+    public Response joinWithExistingLRA2(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok().build();
     }
 

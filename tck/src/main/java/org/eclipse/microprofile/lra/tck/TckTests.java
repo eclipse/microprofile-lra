@@ -537,12 +537,6 @@ public class TckTests {
         assertEquals("multiLevelNestedActivity: step 2 (the test call went to " + resourcePath.getUri() + ")",
                 lraId, lraArray[0]);
 
-        // check that the coordinator knows about the two nested LRAs started by the multiLevelNestedActivity method
-        // NB even though they should have completed they are held in memory pending the enclosing LRA finishing
-        IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertFalse(
-                "multiLevelNestedActivity: nested LRA should be active: step 2b (path called " + resourcePath + ")",
-                lraClient.isLRAFinished(lraArray[i])));
-
         // and the mandatory lra seen by the multiLevelNestedActivity method
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
                 lraClient.isLRAFinished(lraArray[0]));

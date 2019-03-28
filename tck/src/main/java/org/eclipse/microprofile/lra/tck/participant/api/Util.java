@@ -163,6 +163,8 @@ public class Util {
 
     /**
      * see {@link Util#adjust(int, double)}
+     *
+     * @return adjusted value by factor
      */
     public static long adjust(long value, double factor) {
         if(value < 0){

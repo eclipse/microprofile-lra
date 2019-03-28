@@ -163,6 +163,11 @@ public class LRAClientOps {
         invokeRestEndpointAndReturnLRA(lraId.toASCIIString(), TCK_NON_PARTICIPANT_RESOURCE_PATH, END_PATH, 200);
     }
 
+
+    public void closeLRA(String lraId) {
+        invokeRestEndpointAndReturnLRA(lraId, TCK_NON_PARTICIPANT_RESOURCE_PATH, END_PATH, 200);
+    }
+
     void leaveLRA(URI lra, String basePath, String resourcePath) throws GenericLRAException {
         invokeRestEndpoint(lra, basePath, resourcePath, 200);
     }

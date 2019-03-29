@@ -41,12 +41,12 @@ public class LRATypeTckResource {
     public static final String MANDATORY_PATH = "/mandatory";
     public static final String NEVER_PATH = "/never";
 
-    public static final String REQUIRED_WITH_END_PATH = "/end-required";
-    public static final String REQUIRES_NEW_WITH_END_PATH = "/end-requires-new";
-    public static final String SUPPORTS_WITH_END_PATH = "/end-supports";
-    public static final String NOT_SUPPORTED_WITH_END_PATH = "/end-not-supported";
-    public static final String MANDATORY_WITH_END_PATH = "/end-mandatory";
-    public static final String NEVER_WITH_END_PATH = "/end-never";
+    public static final String REQUIRED_WITH_END_FALSE_PATH = "/end-required";
+    public static final String REQUIRES_NEW_WITH_END_FALSE_PATH = "/end-requires-new";
+    public static final String SUPPORTS_WITH_END_FALSE_PATH = "/end-supports";
+    public static final String NOT_SUPPORTED_WITH_END_FALSE_PATH = "/end-not-supported";
+    public static final String MANDATORY_WITH_END_FALSE_PATH = "/end-mandatory";
+    public static final String NEVER_WITH_END_FALSE_PATH = "/end-never";
 
     // resource methods for each LRA.Type attribute
     @GET
@@ -88,37 +88,37 @@ public class LRATypeTckResource {
 
     // similar set of resources methods but with the LRA.end attribute set to false
     @GET
-    @Path(REQUIRED_WITH_END_PATH)
+    @Path(REQUIRED_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response requiredEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
     @GET
-    @Path(REQUIRES_NEW_WITH_END_PATH)
+    @Path(REQUIRES_NEW_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW, end = false)
     public Response requiresNewEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
     @GET
-    @Path(MANDATORY_WITH_END_PATH)
+    @Path(MANDATORY_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response mandatoryEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
     @GET
-    @Path(SUPPORTS_WITH_END_PATH)
+    @Path(SUPPORTS_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.SUPPORTS, end = false)
     public Response supportsEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
     @GET
-    @Path(NOT_SUPPORTED_WITH_END_PATH)
+    @Path(NOT_SUPPORTED_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NOT_SUPPORTED, end = false)
     public Response notSupportedEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
     @GET
-    @Path(NEVER_WITH_END_PATH)
+    @Path(NEVER_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NEVER, end = false)
     public Response neverEndLRA(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
         return Response.ok(lraId).build();

@@ -26,6 +26,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,17 +46,17 @@ import java.net.URL;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_WITH_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_WITH_END_FALSE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.TCK_LRA_TYPE_RESOURCE_PATH;
 
@@ -102,7 +103,7 @@ public class TckLRATypeTests {
 
     private WebTarget tckSuiteTarget;
 
-    @Deployment(name = "lra-type-tck-tests", managed = true, testable = true)
+    @Deployment(name = "lra-type-tck-tests")
     public static WebArchive deploy() {
         String archiveName = TckLRATypeTests.class.getSimpleName().toLowerCase();
         return ShrinkWrap
@@ -129,6 +130,11 @@ public class TckLRATypeTests {
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
+    }
+
+    @After
+    public void after() {
+        lraClient.cleanUp(LOGGER, testName.getMethodName());
     }
 
     private void setUpTestCase() {
@@ -200,66 +206,66 @@ public class TckLRATypeTests {
         resourceRequest(NEVER_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
-    // same set of tests except that the invoked method end = true set on the LRA annotation
+    // same set of tests except that the invoked method has end = false set on the LRA annotation
 
     @Test
     public void requiredEndWithLRA() {
-        resourceRequest(REQUIRED_WITH_END_PATH, true, 200, MethodLRACheck.EQUALS, true);
+        resourceRequest(REQUIRED_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
     }
 
     @Test
     public void requiredEndWithoutLRA() {
-        resourceRequest(REQUIRED_WITH_END_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
+        resourceRequest(REQUIRED_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
     }
 
     @Test
     public void requiresEndNewWithLRA() {
-        resourceRequest(REQUIRES_NEW_WITH_END_PATH, true, 200, MethodLRACheck.NOT_EQUALS, true);
+        resourceRequest(REQUIRES_NEW_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.NOT_EQUALS, true);
     }
 
     @Test
     public void requiresEndNewWithoutLRA() {
-        resourceRequest(REQUIRES_NEW_WITH_END_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
+        resourceRequest(REQUIRES_NEW_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
     }
 
     @Test
     public void mandatoryEndWithLRA() {
-        resourceRequest(MANDATORY_WITH_END_PATH, true, 200, MethodLRACheck.EQUALS, true);
+        resourceRequest(MANDATORY_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
     }
 
     @Test
     public void mandatoryEndWithoutLRA() {
-        resourceRequest(MANDATORY_WITH_END_PATH, false, 412, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(MANDATORY_WITH_END_FALSE_PATH, false, 412, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void supportsEndWithLRA() {
-        resourceRequest(SUPPORTS_WITH_END_PATH, true, 200, MethodLRACheck.EQUALS, true);
+        resourceRequest(SUPPORTS_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
     }
 
     @Test
     public void supportsEndWithoutLRA() {
-        resourceRequest(SUPPORTS_WITH_END_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(SUPPORTS_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void notSupportedEndWithRA() {
-        resourceRequest(NOT_SUPPORTED_WITH_END_PATH, true, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(NOT_SUPPORTED_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void notSupportedEndWithoutLRA() {
-        resourceRequest(NOT_SUPPORTED_WITH_END_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(NOT_SUPPORTED_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void neverWithEndRA() {
-        resourceRequest(NEVER_WITH_END_PATH, true, 412, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(NEVER_WITH_END_FALSE_PATH, true, 412, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void neverWithoutEndLRA() {
-        resourceRequest(NEVER_WITH_END_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(NEVER_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     /**
@@ -280,7 +286,11 @@ public class TckLRATypeTests {
                 .path(path).request();
         URI lra = startLRA ? lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS) : null;
 
-        Response response = lra == null ? target.get() : target.header(LRA.LRA_HTTP_HEADER, lra).get();
+        if (lra != null) {
+            target = target.header(LRA.LRA_HTTP_HEADER, lra);
+        }
+
+        Response response = target.get();
 
         try {
             String methodLRA = response.readEntity(String.class);

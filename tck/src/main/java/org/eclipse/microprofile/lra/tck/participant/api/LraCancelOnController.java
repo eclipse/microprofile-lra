@@ -66,6 +66,7 @@ public class LraCancelOnController {
     public static final String CANCEL_ON_FAMILY_DEFAULT_4XX = "cancelOnFamilyDefault4xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
+     * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_4XX)
@@ -77,6 +78,7 @@ public class LraCancelOnController {
     public static final String CANCEL_ON_FAMILY_DEFAULT_5XX = "cancelOnFamilyDefault5xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
+     * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_5XX)
@@ -89,6 +91,7 @@ public class LraCancelOnController {
     /**
      * Cancel on family is set to <code>3xx</code>. The <code>3xx</code> return code
      * has to cancel the LRA.
+     * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_3XX)
@@ -102,6 +105,7 @@ public class LraCancelOnController {
     /**
      * Cancel on is set to <code>301</code>. The <code>301</code> return code
      * has to cancel the LRA.
+     * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_301)
@@ -116,6 +120,7 @@ public class LraCancelOnController {
      * Cancel on family is set to <code>4xx</code>,
      * the code from other families (e.g. for <code>5xx</code>
      * should not cancel but should go with close the LRA.
+     * @return JAX-RS response
      */
     @GET
     @Path(NOT_CANCEL_ON_FAMILY_5XX)
@@ -141,6 +146,7 @@ public class LraCancelOnController {
      * the {@link Compensate} method {@link #compensateWork(String, String)}
      * will be called only once for the test invocation.
      * </p>
+     * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_FROM_REMOTE_CALL)

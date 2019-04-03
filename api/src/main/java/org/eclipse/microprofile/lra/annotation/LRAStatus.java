@@ -24,7 +24,7 @@ package org.eclipse.microprofile.lra.annotation;
  * A representation of the status of a Long Running Action according to a
  * LRA state model:
  *
- * The initial state Active is entered when a LRA is created.
+ * The initial state Active is entered when an LRA is created.
  *
  * The state Cancelling is entered when a request to cancel
  * an LRA is received. The transition to end state Cancelled

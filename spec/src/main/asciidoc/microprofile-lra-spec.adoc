@@ -304,6 +304,43 @@ that it could not until explicitly told that it can clean up by providing a meth
 
 If multiple methods are annotated with the same annotation an arbitrary one will be chosen.
 
+[[lra-context]]
+==== The LRA Context
+
+When a method is invoked in the context of an LRA its identifier MUST be made
+available to the business logic. This LRA is referred to as the `active context`.
+For JAX-RS resource methods the identifier is made available via request and
+response headers which the business method can obtain using standard JAX-RS mechanisms,
+ie `@Context` or by injecting a JAX-RS header param with the name specified by
+the Java constant `LRA_HTTP_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
+This header is referred to as the `context header`.
+
+The implementation MUST propagate the `active context` on outgoing JAX-RS
+requests.
+footnote:[issue #35 (Do not define JAX-RS annotations on `@Compensate` methods)
+removes the requirement for some methods to be JAX-RS resources. The resolution
+of that issue should ensure the context is still available to business logic.
+
+If an LRA is propagated to a resource that is not annotated with any of the
+annotations defined in this specification then the LRA will not be made
+available to the invoked method. However, any outgoing JAX-RS invocations
+made during the execution of the method will still carry the original context.
+
+The user is allowed to manually assign the `context header` on JAX-RS requests
+and responses:
+
+===== Setting the context on outgoing JAX-RS requests
+
+If the context is set on an outgoing JAX-RS request then it becomes the `active
+context` for that invocation. When the invocation returns the context that
+was active before the invocation once again becomes the active context.
+
+===== Setting the context on JAX-RS responses
+
+A resource is allowed to manually set the `context header` on JAX-RS responses.
+Users should be careful when using this capability since this context will
+overwrite whatever the implementation has set.
+
 [[java-annotations]]
 ==== Starting and Ending LRAs
 
@@ -315,7 +352,7 @@ The annotation SHOULD be applied to JAX-RS annotated methods otherwise
 it MAY have no effect. It determines whether or not the annotated method
 will run in the context of an LRA and controls whether or not:
 
-- any incomming context should be suspended and if so if a new one should be started.
+- any incoming context should be suspended and if so if a new one should be started.
 - to start an new LRA.
 - to end any LRA context when the method ends.
 - to throw an exception if there should be an LRA present on method entry.
@@ -334,11 +371,6 @@ header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` a
 Enlisting in an LRA is explained in more detail
 <<compensating-activities,in a later section>> of this document.
 
-A method which executes with an LRA context
-can obtain the context by injecting a JAX-RS header param with the name
-specified by the Java constant `LRA_HTTP_HEADER` as defined
-<<source-LRA, in the LRA annotation>>
-
 It is the `LRA.Type` element that provides fine grained control over the
 LRA for the duration of the execution of the annotated method:
 
@@ -346,20 +378,20 @@ The possible values of the `LRA.Type` element are defined in the javadoc
 provided in the quick overview links above but are worth repeating here:
 
 `LRA.Type.REQUIRED`::
-    If called outside a LRA context a new LRA will be created for the
+    If called outside an LRA context a new LRA will be created for the
     the duration of the method call and when the call completes it will
     be closed. +
      +
-    If called inside a LRA context the invoked method will run with the
+    If called inside an LRA context the invoked method will run with the
     same context and the context will remain active after the method
     completes.
 
 `LRA.Type.REQUIRES_NEW`::
-    If called outside a LRA context a new LRA will be created for the
+    If called outside an LRA context a new LRA will be created for the
     the duration of the method call and when the call completes it will
     be terminated (closed or cancelled). +
      +
-    If called inside a LRA context it will be suspended and a new LRA
+    If called inside an LRA context it will be suspended and a new LRA
     context will be created for the duration of the call. When the method
     finishes this new LRA will be terminated (closed or cancelled) and
     the original context will be resumed. +
@@ -379,22 +411,22 @@ provided in the quick overview links above but are worth repeating here:
     then continue within that context.
 
 `LRA.Type.SUPPORTS`::
-    If called outside a LRA context the bean method execution
-    must then continue outside a LRA context. +
+    If called outside an LRA context the bean method execution
+    must then continue outside an LRA context. +
      +
-    If called inside a LRA context the managed bean method execution
+    If called inside an LRA context the managed bean method execution
     must then continue inside this LRA context.
 
 `LRA.Type.NOT_SUPPORTED`::
-    The bean method is executed without a LRA context. If a context is
+    The bean method is executed without an LRA context. If a context is
     present on entry then it is suspended and then resumed after the
     execution has completed.
 
 `LRA.Type.NEVER`::
-    If called outside a LRA context the managed bean method execution
-    must then continue outside a LRA context. +
+    If called outside an LRA context the managed bean method execution
+    must then continue outside an LRA context. +
      +
-    If called inside a LRA context the method is not executed and a
+    If called inside an LRA context the method is not executed and a
     <code>412 Precondition Failed</code> HTTP status code is returned
     to the caller.
 
@@ -605,6 +637,12 @@ participant registration) allows participants to register opaque data when
 joining with an LRA. This data is made available to the completion and
 compensation callbacks]
 
+The javadoc for the <<source-Compensate,Compensate annotation>> provides
+more details about this annotation. 
+
+Similarly, the javadoc for the <<source-Complete,Complete annotation>>
+provides details about the `@Complete` annotation. 
+
 [[nesting-lras]]
 ==== Nesting LRAs
 
@@ -683,12 +721,15 @@ automatically cancel the LRA which will result in this method being invoked.
 [[leaving-an-lra]]
 ==== Leaving an LRA
 
-If a resource method annotated with `@Leave` is invoked in the context of
-a LRA and if the bean class has registered a participant with the active LRA
+If a resource method annotated with @Leave is invoked in the context of an
+LRA and if the bean class has registered a participant with the active LRA
 it will be removed from the LRA just before the bean method is entered
-(and will not be asked to complete or compensate when the LRA is subsequently
-ended). Even though the method runs without an LRA context the implementation
-MUST still make the context available via a JAX-RS header.
+(and will not be asked to complete or compensate when the LRA is
+subsequently ended). Even though the method runs without an LRA context
+the implementation MUST still make the context available via a JAX-RS header.
+
+The javadoc for the <<source-Leave,Leave annotation>> provides greater detail
+about this annotation. 
 
 An example of this annotation is shown next:
 
@@ -711,7 +752,7 @@ duplicated etc and the implementation component responsible for invoking
 participant completion/compensation logic may loose track of the status of
 a participant. In this case, ideally it would just resend the
 completion or compensation notification but if the participant does not
-support idempotency then it MUST be able to report its' status by
+support idempotency then it MUST be able to report its status by
 annotating one of the methods with the `@Status` annotation which should
 report the status according to the
 <<participant-state-model,participant state model>> by returning one of the
@@ -848,6 +889,27 @@ Annotations for LRAs>>.
 [[source-LRA]]
 ----
 include::{sourcedir}/org/eclipse/microprofile/lra/annotation/ws/rs/LRA.java[LRA]
+----
+<<<
+
+=== Leave Annotation
+[[source-Leave]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/ws/rs/Leave.java[Leave]
+----
+<<<
+
+=== Compensate Annotation
+[[source-Compensate]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Compensate.java[Compensate]
+----
+<<<
+
+=== Complete Annotation
+[[source-Complete]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Complete.java[Leave]
 ----
 <<<
 

@@ -27,7 +27,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * LRA annoations support distributed communications amongst software
+ * LRA annotations support distributed communications amongst software
  * components and due to the unreliable nature of networks,
  * messages/requests can be lost, delayed or duplicated etc and the
  * implementation component responsible for invoking {@link Compensate}
@@ -53,6 +53,13 @@ import java.lang.annotation.Target;
  * status code (such as
  * {@link org.eclipse.microprofile.lra.client.IllegalLRAStateException}
  * but any exception that maps to 412 will do).
+ *
+ * The id of the currently running LRA can be obtained by inspecting the
+ * incoming JAX-RS headers.
+ *
+ * Since the participant generally needs to know the id of the LRA in order
+ * to report its status there is generally no benefit to combining this
+ * annotation with the `@LRA` annotation (though it is not prohibited).
  */
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)

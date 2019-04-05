@@ -312,7 +312,7 @@ available to the business logic. This LRA is referred to as the `active context`
 For JAX-RS resource methods the identifier is made available via request and
 response headers which the business method can obtain using standard JAX-RS mechanisms,
 ie `@Context` or by injecting a JAX-RS header param with the name specified by
-the Java constant `LRA_HTTP_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
+the Java constant `LRA_HTTP_CONTEXT_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
 This header is referred to as the `context header`.
 
 The implementation MUST propagate the `active context` on outgoing JAX-RS
@@ -465,7 +465,7 @@ the LRA to be finished. If it is closed or cancelled depends on the Response sta
 
 When an LRA is present its identifier MUST be made available to
 the business logic via request and response headers as described earlier
-(using a header name specified in the Java constant `LRA_HTTP_HEADER`).
+(using a header name specified in the Java constant `LRA_HTTP_CONTEXT_HEADER`).
 
 The following is a simple example of how to start an LRA and how to receive
 a notification when the LRA is later cancelled (`@Compensate` is invoked)
@@ -479,7 +479,7 @@ public class SimpleLRAParticipant
 {
     @Path("/cdi")
     @LRA(LRA.Type.REQUIRES_NEW)
-    public void doInTransaction(@HeaderParam(LRA_HTTP_HEADER) String lraId)
+    public void doInTransaction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
     {
         /*
          * Perform business actions in the context of the LRA identified by the
@@ -493,7 +493,7 @@ public class SimpleLRAParticipant
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_HEADER) String lraId,
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                  String userData)
     {
         /*
@@ -509,7 +509,7 @@ public class SimpleLRAParticipant
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_HEADER) String lraId,
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                    String userData)
     {
         /*
@@ -526,7 +526,7 @@ public class SimpleLRAParticipant
     @DELETE
     @Path("/forget")
     @Forget
-    public Response forgetWork(@HeaderParam(LRA_HTTP_HEADER) String lraId)
+    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
     {
         // clean up any resources that were used in the context of lraId
     }
@@ -582,7 +582,7 @@ For example:
   @PUT
   @Path("/compensate")
   @Compensate
-  public Response compensateWork(@HeaderParam(LRA.LRA_HTTP_HEADER) String lraId)
+  public Response compensateWork(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId)
   {
     // compensate for whatever activity the business logic has associated with lraId
     return Response.ok(ParticipantStatus.Compensated.name()).build();
@@ -671,7 +671,7 @@ section for when this feature could be useful.
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(LRA.Type.SUPPORTS)
     @NestedLRA
-    public Booking bookFlight(@HeaderParam(LRA_HTTP_HEADER) String lraId,
+    public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                               @QueryParam("flightNumber") String flightNumber) {
         return service.book(lraId, flightNumber);
     }
@@ -694,7 +694,7 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
   @Produces(MediaType.APPLICATION_JSON)
   @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
   public Response theClockIsTicking(
-      @HeaderParam(LRA.LRA_HTTP_HEADER) String lraId) {...}
+      @HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {...}
 ----
 
 Furthermore, the ability to compensate or complete may be transient capabilities of a
@@ -711,7 +711,7 @@ indicate that its' ability to compensate is limited to 100 milliseconds could be
     @PUT
     @Path("/compensate")
     @Compensate(timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
-    public Response completeWork(@HeaderParam(LRA_HTTP_HEADER) String lraId,
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                  String userData) { ... }
 ----
 
@@ -738,7 +738,7 @@ An example of this annotation is shown next:
     @PUT
     @Path("/leave")
     @Leave
-    public Response leaveWork(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
       // clean up since this participant is no longer associated with the LRA
     }
 ----

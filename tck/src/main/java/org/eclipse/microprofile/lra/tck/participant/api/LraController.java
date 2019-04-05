@@ -66,7 +66,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 @ApplicationScoped
@@ -104,7 +104,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     @LRA(value = LRA.Type.NOT_SUPPORTED)
-    public Response status(@HeaderParam(LRA_HTTP_HEADER) String lraId) throws NotFoundException {
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity.getStatus() == null) {
@@ -126,7 +126,7 @@ public class LraController {
     @Path("/leave")
     @Produces(MediaType.APPLICATION_JSON)
     @Leave
-    public Response leaveWork(@HeaderParam(LRA_HTTP_HEADER) String lraId)
+    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
         throws NotFoundException {
 
         if (lraId != null) {
@@ -144,7 +144,7 @@ public class LraController {
     @Path("/complete")
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_HEADER) String lraId, String userData)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
         throws NotFoundException {
         COMPLETED_COUNT.incrementAndGet();
 
@@ -173,7 +173,7 @@ public class LraController {
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
     @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)
-    public Response compensateWork(@HeaderParam(LRA_HTTP_HEADER) String lraId, String userData)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
         throws NotFoundException {
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensate methods
@@ -203,7 +203,7 @@ public class LraController {
     @Path("/forget")
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
-    public Response forgetWork(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         COMPLETED_COUNT.incrementAndGet();
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
@@ -228,7 +228,7 @@ public class LraController {
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response acceptWork(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-            @HeaderParam(LRA_HTTP_HEADER) String lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
 
         assertHeaderPresent(lraId);
 
@@ -241,7 +241,7 @@ public class LraController {
     @PUT
     @Path("/supports")
     @LRA(value = LRA.Type.SUPPORTS, end = false)
-    public Response supportsLRACall(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+    public Response supportsLRACall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
         storeActivity(lraId, null);
@@ -252,7 +252,7 @@ public class LraController {
     @PUT
     @Path("/startViaApi")
     @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response subActivity(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+    public Response subActivity(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         assertNotHeaderPresent(lraId);
 
         Client client = null;
@@ -288,7 +288,7 @@ public class LraController {
     @Path(TRANSACTIONAL_WORK_PATH)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                    @HeaderParam(LRA_HTTP_HEADER) String lraId) {
+                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
         Activity activity = storeActivity(lraId, recoveryId);
@@ -307,7 +307,7 @@ public class LraController {
                 .path(LRA_CONTROLLER_PATH)
                 .path(path)
                 .request()
-                .header(LRA_HTTP_HEADER, lraURI)
+                .header(LRA_HTTP_CONTEXT_HEADER, lraURI)
                 .put(Entity.text(bodyText));
 
         if (response.hasEntity()) {
@@ -331,7 +331,7 @@ public class LraController {
     @Produces(MediaType.TEXT_PLAIN)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                             @HeaderParam(LRA_HTTP_HEADER) String lraId) {
+                                             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return activityWithLRA(recoveryId, lraId);
     }
 
@@ -340,7 +340,7 @@ public class LraController {
     @LRA(value = LRA.Type.MANDATORY, end = true)
     @NestedLRA
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                   @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId) {
+                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRAId) {
         assertHeaderPresent(nestedLRAId);
 
         storeActivity(nestedLRAId, recoveryId);
@@ -353,7 +353,7 @@ public class LraController {
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response multiLevelNestedActivity(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-            @HeaderParam(LRA_HTTP_HEADER) String nestedLRAId,
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRAId,
             @QueryParam("nestedCnt") @DefaultValue("1") Integer nestedCnt) {
         assertHeaderPresent(nestedLRAId);
 
@@ -414,7 +414,7 @@ public class LraController {
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
-    public Response timeLimit(@HeaderParam(LRA_HTTP_HEADER) String lraId) {
+    public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         assertHeaderPresent(lraId);
 
         activityStore.add(new Activity(lraId));
@@ -515,14 +515,14 @@ public class LraController {
     private void assertHeaderPresent(String lraId) {
         if (lraId == null) {
             throw new InvalidLRAIdException(null,
-                    String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_HEADER));
+                    String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
     }
 
     private void assertNotHeaderPresent(String lraId) {
         if (lraId != null) {
             throw new InvalidLRAIdException(null,
-                    String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_HEADER));
+                    String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
     }
 }

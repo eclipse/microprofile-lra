@@ -19,7 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -174,7 +174,7 @@ public class LraCancelOnController {
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_HEADER) String lraId)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
         throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
@@ -189,7 +189,7 @@ public class LraCancelOnController {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_HEADER) String lraId, String userData)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
         throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");

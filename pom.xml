@@ -207,6 +207,9 @@
                                 <module name="EmptyBlock">
                                     <property name="option" value="text" />
                                 </module>
+                                <module name="WhitespaceAround">
+                                  <property name="tokens" value="LITERAL_ELSE"/>
+                                </module>
                                 <module name="NeedBraces" />
                                 <module name="EmptyStatement" />
                                 <module name="EqualsHashCode" />

@@ -126,7 +126,7 @@ public class LRAClientOps {
         Invocation.Builder builder = resourcePath.request();
 
         if (lra != null) {
-            builder.header(LRA.LRA_HTTP_HEADER, lra);
+            builder.header(LRA.LRA_HTTP_CONTEXT_HEADER, lra);
         }
 
         return builder.put(Entity.text(""));

@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.TRANSACTIONAL_WORK_PATH;
@@ -30,6 +31,7 @@ import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckR
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -49,7 +51,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.tck.participant.api.LraController;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
@@ -209,13 +210,13 @@ public class TckTests {
         try {
             response = resourcePath
                     .request()
-                    .header(LRA.LRA_HTTP_HEADER, lra)
+                    .header(LRA_HTTP_CONTEXT_HEADER, lra)
                     .put(Entity.text(""));
     
             assertEquals("Response status to ' " + resourcePath.getUri() + "' does not match.",
                     Response.Status.OK.getStatusCode(), response.getStatus());
     
-            Object parentId = response.getHeaders().getFirst(LRA.LRA_HTTP_HEADER);
+            Object parentId = response.getHeaders().getFirst(LRA_HTTP_CONTEXT_HEADER);
     
             assertNotNull("Expecting to get parent LRA id as response from " + resourcePath.getUri(), parentId);
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
@@ -261,7 +262,7 @@ public class TckTests {
 
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
-                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
@@ -287,7 +288,7 @@ public class TckTests {
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
         Response response = resourcePath
-                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
         assertTrue("LRA '" + lra + "' should be active as it is not closed yet.",
@@ -299,18 +300,18 @@ public class TckTests {
         int beforeCompletedCount = getCompletedCount();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         // call a method annotated with @Leave (should remove the participant from the LRA)
         resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("leave");
-        response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         lraClient.closeLRA(lra);
@@ -328,21 +329,18 @@ public class TckTests {
         // call a method annotated with NOT_SUPPORTED but one which programatically starts an LRA and returns it via a header
         WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path("startViaApi");
         Response response = resourcePath.request().put(Entity.text(""));
-        // check that the method started an LRA
-        Object lraHeader = response.getHeaders().getFirst(LRA.LRA_HTTP_HEADER);
-
+        Object lraHeader = response.getHeaders().getFirst(LRA_HTTP_CONTEXT_HEADER);
         String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
 
-        // the value returned via the header and body should be equal
-
-        assertNotNull("JAX-RS response to PUT request should have returned the header " + LRA.LRA_HTTP_HEADER
+        // LRAs started within the invoked remote method should not be available to the caller via the context header
+        assertNull("JAX-RS response to PUT request should not have returned the header " + LRA_HTTP_CONTEXT_HEADER
                 + ". The test call went to " + resourcePath.getUri(), lraHeader);
+
+        // check that the remote method returned an active LRA (ie check it's not null and then close it)
         assertNotNull("JAX-RS response to PUT request should have returned content of LRA id. The test call went to "
                 + resourcePath.getUri(), lraId);
-        assertEquals("The dependent LRA has to belong to the same LRA id. The test call went to " + resourcePath.getUri(),
-                lraId, lraHeader.toString());
 
-        lraClient.closeLRA(URI.create(lraHeader.toString()));
+        lraClient.closeLRA(URI.create(lraId));
     }
 
     @Test
@@ -395,7 +393,7 @@ public class TckTests {
         WebTarget resourcePath = tckSuiteTarget.path(path).path(path2);
 
         Response response = resourcePath
-                .request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+                .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
 
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
@@ -444,7 +442,7 @@ public class TckTests {
         int beforeCompensatedCount = getCompensatedCount();
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
-        Response response = resourcePath.request().header(LRA.LRA_HTTP_HEADER, lra)
+        Response response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra)
                 .put(Entity.text(""));
 
         String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
@@ -544,9 +542,9 @@ public class TckTests {
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
         // invoke the same JAX-RS resources twicein the context of the lra which should enlist the resource only once:
-        Response response1 = resource1Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response1 = resource1Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response1, resource1Path);
-        Response response2 = resource2Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response2 = resource2Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response2, resource2Path);
 
         if (close) {
@@ -578,9 +576,9 @@ public class TckTests {
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
         // invoke two JAX-RS resources in the context of the lra which should enlist them both:
-        Response response1 = resource1Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response1 = resource1Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response1, resource1Path);
-        Response response2 = resource2Path.request().header(LRA.LRA_HTTP_HEADER, lra).put(Entity.text(""));
+        Response response2 = resource2Path.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response2, resource2Path);
 
         if (close) {
@@ -654,7 +652,7 @@ public class TckTests {
         Response response = resourcePath
                 .queryParam("nestedCnt", nestedCnt)
                 .request()
-                .header(LRA.LRA_HTTP_HEADER, lra)
+                .header(LRA_HTTP_CONTEXT_HEADER, lra)
                 .put(Entity.text(""));
 
         String lraStr = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);

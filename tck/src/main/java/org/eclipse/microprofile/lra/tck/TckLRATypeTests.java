@@ -287,7 +287,7 @@ public class TckLRATypeTests {
         URI lra = startLRA ? lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS) : null;
 
         if (lra != null) {
-            target = target.header(LRA.LRA_HTTP_HEADER, lra);
+            target = target.header(LRA.LRA_HTTP_CONTEXT_HEADER, lra);
         }
 
         Response response = target.get();

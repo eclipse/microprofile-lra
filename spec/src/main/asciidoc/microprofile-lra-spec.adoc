@@ -280,7 +280,7 @@ Briefly, these annotations are used as follows:
 
 The application annotates some JAX-RS resource method with `@LRA` which determines whether the
 method will run in the context of an LRA. Generally, if a method starts a new LRA it will
-be closed when the method finishes execution (but attributes of the annotation facilitate
+be closed when the method finishes execution (but elements of the annotation facilitate
 full control over the LRA lifecycle).
 
 If execution is to run with an active LRA and the associated class contains other methods
@@ -353,16 +353,18 @@ it MAY have no effect. It determines whether or not the annotated method
 will run in the context of an LRA and controls whether or not:
 
 - any incoming context should be suspended and if so if a new one should be started.
-- to start an new LRA.
+- to start a new LRA.
 - to end any LRA context when the method ends.
 - to throw an exception if there should be an LRA present on method entry.
 - to throw an exception if the method returns particular HTTP status codes.
+- to enlist the class as a participant of the LRA.
 
 If the method is to run in the context of an LRA and the annotated class
-also contains methods annotated with `@Compensate` and `@Complete` then the bean
+also contains a method annotated with `@Compensate` then the class
 (aka participant or compensator) will be enlisted with the LRA. Enlisting with
 an LRA means that the bean will be notified when the current LRA is
-subsequently cancelled or closed. In addition the implementation should generate a
+subsequently cancelled or closed (if the class also contains a method
+annotated with `@Complete`). In addition the implementation should generate a
 URI for this participant that can be used
 for recovery purposes and it should make it available to the participant via a JAX-RS
 header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` as defined
@@ -371,83 +373,11 @@ header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` a
 Enlisting in an LRA is explained in more detail
 <<compensating-activities,in a later section>> of this document.
 
-It is the `LRA.Type` element that provides fine grained control over the
-LRA for the duration of the execution of the annotated method:
+It is the `LRA.Type` element of the LRA annotation that provides fine grained control over the
+LRA for the duration of the execution of the annotated method and the reader
+should consult the javadoc for details.
 
-The possible values of the `LRA.Type` element are defined in the javadoc
-provided in the quick overview links above but are worth repeating here:
-
-`LRA.Type.REQUIRED`::
-    If called outside an LRA context a new LRA will be created for the
-    the duration of the method call and when the call completes it will
-    be closed. +
-     +
-    If called inside an LRA context the invoked method will run with the
-    same context and the context will remain active after the method
-    completes.
-
-`LRA.Type.REQUIRES_NEW`::
-    If called outside an LRA context a new LRA will be created for the
-    the duration of the method call and when the call completes it will
-    be terminated (closed or cancelled). +
-     +
-    If called inside an LRA context it will be suspended and a new LRA
-    context will be created for the duration of the call. When the method
-    finishes this new LRA will be terminated (closed or cancelled) and
-    the original context will be resumed. +
-     +
-    But note that if there was already a context active before the method
-    was invoked and the `LRA#end()` attribute is set to false
-    then the new LRA is left active. In this case the original LRA will
-    remain suspended (until the new LRA finishes) unless the `LRA#end()`
-    attribute was also set to true in which case the original LRA context
-    will be closed/cancelled.
-
-`LRA.Type.MANDATORY`::
-    If called outside a transaction context, the method call will return
-    with a `412 Precondition Failed` HTTP status code +
-     +
-    If called inside a transaction context the bean method execution will
-    then continue within that context.
-
-`LRA.Type.SUPPORTS`::
-    If called outside an LRA context the bean method execution
-    must then continue outside an LRA context. +
-     +
-    If called inside an LRA context the managed bean method execution
-    must then continue inside this LRA context.
-
-`LRA.Type.NOT_SUPPORTED`::
-    The bean method is executed without an LRA context. If a context is
-    present on entry then it is suspended and then resumed after the
-    execution has completed.
-
-`LRA.Type.NEVER`::
-    If called outside an LRA context the managed bean method execution
-    must then continue outside an LRA context. +
-     +
-    If called inside an LRA context the method is not executed and a
-    <code>412 Precondition Failed</code> HTTP status code is returned
-    to the caller.
-
-This default life cycle behaviour is affected by the values of the other
-attributes of the LRA:
-
-`LRA.Type#REQUIRED` and `LRA.Type#REQUIRES_NEW` can start
-new LRAs which by default will be closed when the annotated method
-completes. This default behaviour can be overridden using the
-`LRA#end()` attribute which will leave the new LRA active
-when the method completes.
-
-In normal circumstances the LRA is closed by the end of the method.
-To force the LRA to cancel instead to close
-use the `LRA#cancelOnFamily()` or `LRA#cancelOn()` attributes.
-These attributes defines families or/and sets of status codes
-which when returned as the
-https://javaee.github.io/javaee-spec/javadocs/javax/ws/rs/core/Response.html#status-int-[Response status code]
-cause the LRA to be cancelled.
-
-Bear in mind that the LRA is expected to be used with JAX-RS
+Bear in mind that the LRA annotation is expected to be used with JAX-RS
 which expects the `Response` being the method return type.
 If a `200 OK` response is to be returned then the method can
 return any data type that it desires.
@@ -458,10 +388,13 @@ to the JAX-RS `Response` error status code.
 It's a usual practice the `RuntimeException` to be transformed
 to the `5xx` `Response` status code.
 
-If an LRA was already present before the annotated method is invoked then it
-will remain active after the method completes. This default behaviour
-can be overridden using the `LRA#end()` attribute which will force
-the LRA to be finished. If it is closed or cancelled depends on the Response status return code.
+The LRA annotation can be used to control whether or not the LRA context should
+be closed when the method finishes (see the javadoc for the `LRA#end()`
+element for details.
+
+The LRA annotation can be used to control whether or not the LRA context should
+be cancleed when the method finishes (see the javadoc for the `LRA#cancelOn()`
+and `cancelOnFamily` elements for details).
 
 When an LRA is present its identifier MUST be made available to
 the business logic via request and response headers as described earlier
@@ -522,31 +455,23 @@ public class SimpleLRAParticipant
          */
          return Response.ok(ParticipantStatus.Compensated.name()).build();
     }
-
-    @DELETE
-    @Path("/forget")
-    @Forget
-    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
-    {
-        // clean up any resources that were used in the context of lraId
-    }
 }
 ----
 
 The example also shows that when an LRA is present its identifier can be obtained
-by reading the request and response headers.
+by reading the request headers.
 
 The next example demonstrates how to start an LRA in one method and close
-it in a different method using the `end` attribute.
+it in a different method using the `LRA#end` element.
 It also shows how to configure the LRA to be automatically cancelled if the business method
 returns the particular HTTP status codes identified in the `cancelOn` and
-`cancelOnFamily` attributes:
+`cancelOnFamily` elements:
 
 [source,java]
 ----
   @POST
   @Path("/book")
-  @LRA(value = LRA.Type.REQUIRED,
+  @LRA(value = LRA.Type.REQUIRED, // if there is no incoming context a new one is created
        cancelOn = {
            Response.Status.INTERNAL_SERVER_ERROR // cancel on a 500 code
        },
@@ -558,13 +483,13 @@ returns the particular HTTP status codes identified in the `cancelOn` and
 
   @PUT
   @Path("/confirm")
-  @LRA(LRA.Type.SUPPORTS,
+  @LRA(LRA.Type.SUPPORTS, // if there is an incoming context then it used as the active context
        end = true) // end the LRA started by the bookTrip method
   public Booking confirmTrip(Booking booking) throws BookingException { ... }
 ----
 
-The `end = false` attribute on the bookTrip method forces the LRA to continue running when
-the method finishes and the `end = true` attribute on the confirmTrip method forces the LRA
+The `end = false` element on the bookTrip method forces the LRA to continue running when
+the method finishes and the `end = true` element on the confirmTrip method forces the LRA
 (started by the bookTrip method) to close the LRA.
 
 [[compensating-activities]]
@@ -593,9 +518,12 @@ The resource class MAY also contain a method marked with the `@Complete` and the
 JAX-RS `@PUT` annotations. If such a method is present then the method MUST
 be invoked when the associated LRA is closed.
 Typically the resource would use this call to perform any clean up actions. The
-method is optional since such clean up actions may not be necessary, for example
-consider an online store that takes provisional bookings which are automatically
-timed out if not confirmed within a predefined period.
+method is optional since such clean up actions may not be necessary,
+for example consider a system that just tracks hotel reservations and has operations
+for booking a room or cancelling the reservation (`@Compensate`). Since this system
+is passive, once a room is booked, it does not make any difference if the LRA is
+completed or not: the room will be unavailable for others. If it receives a call
+to `@Compensate` then it will free the room. But it won't do anything on `@complete`.
 
 If the participant successfully compensates or completes then it may forget about
 the LRA. Otherwise it should remember that it is still associated with the LRA and
@@ -684,7 +612,7 @@ Note that the mechanics of cancelling nested and top level LRAs is the same.
 
 The business logic may wish to control how long an LRA should remain active
 for before it becomes eligible for automatic cancellation by providing values
-for the `timeLimit` and `timeUnit` attributes of the `@LRA` annotation. For
+for the `timeLimit` and `timeUnit` element of the `@LRA` annotation. For
 example, to indicate that an LRA should automatically cancel after 100 milliseconds:
 
 [source,java]
@@ -701,7 +629,7 @@ Furthermore, the ability to compensate or complete may be transient capabilities
 service so participants can also be timed out. When the time limit is reached
 the LRA is cancelled and participants will be notified via their compensation
 (i.e. the method annotated with `@Compensate`). To set such a time limit add the
-`timeLimit` and `timeUnit` attributes to the `@Compensate` and `@Complete`
+`timeLimit` and `timeUnit` element to the `@Compensate` and `@Complete`
 annotations. If different time limits are set on these two methods then the
 earliest of the two will take effect. An example of how a participant could
 indicate that its' ability to compensate is limited to 100 milliseconds could be:

@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2019 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -17,15 +17,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package org.eclipse.microprofile.lra.client;
 
+package org.eclipse.microprofile.lra.tck.participant.api;
+
+import javax.ws.rs.WebApplicationException;
 import java.net.URI;
 
-/**
- * An exception type to indicate that a requested operation can never be completed.
- */
-public class UnknowableException extends GenericLRAException {
-    public UnknowableException(URI lraId, int statusCode, String message, Throwable cause) {
-        super(lraId, statusCode, message, cause);
+public class GenericLRAException extends WebApplicationException {
+    private static final long serialVersionUID = 1L;
+
+    private URI lraId;
+    private int statusCode;
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public URI getLraId() {
+        return lraId;
+    }
+
+    public GenericLRAException(URI lraId, int statusCode, String message,
+                               Throwable cause) {
+        super(String.format("%s: %s", lraId, message), cause);
+
+        this.lraId = lraId;
+        this.statusCode = statusCode;
     }
 }

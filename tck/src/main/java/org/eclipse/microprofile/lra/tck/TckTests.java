@@ -51,7 +51,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
-import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.jboss.arquillian.container.test.api.Deployment;

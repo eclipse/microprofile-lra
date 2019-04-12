@@ -46,14 +46,6 @@ import java.lang.annotation.Target;
  * report <em>404 Not Found</em> HTTP status code. This enables the
  * participant to free up resources.
  *
- * If this status method is invoked before either of the <em>@Compensate</em>
- * or <em>@Complete</em> methods have been called then the participant
- * should report that it does not yet have a status using a JAX-RS
- * exception mapper that maps to a <em>412 Precondition Failed</em> HTTP
- * status code (such as
- * {@link org.eclipse.microprofile.lra.client.IllegalLRAStateException}
- * but any exception that maps to 412 will do).
- *
  * The id of the currently running LRA can be obtained by inspecting the
  * incoming JAX-RS headers.
  *

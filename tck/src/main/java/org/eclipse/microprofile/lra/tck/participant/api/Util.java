@@ -39,7 +39,6 @@ import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
 
 
 public class Util {

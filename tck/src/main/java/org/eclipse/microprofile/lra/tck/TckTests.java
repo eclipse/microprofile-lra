@@ -52,7 +52,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.lra.client.GenericLRAException;
-import org.eclipse.microprofile.lra.tck.participant.api.LraController;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -62,7 +61,6 @@ import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -180,24 +178,6 @@ public class TckTests {
 
         assertTrue("LRA '" + lra + "' should not be active anymore",
                 lraClient.isLRAFinished(lra));
-    }
-
-    /**
-     * HTTP request to {@link LraController#activityWithLRA}
-     * which is a method annotated with LRA.Type#REQUIRED}.
-     */
-    @Test
-    @Ignore // TODO why is this ignored
-    public void joinLRAViaBody() throws WebApplicationException {
-
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_CONTROLLER_PATH).path(TRANSACTIONAL_WORK_PATH);
-        Response response = resourcePath.request().put(Entity.text(""));
-
-        String lraId = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
-
-        // validate that the LRA coordinator no longer knows about lraId
-        assertTrue("LRA work was processed and the annotated method finished but the LRA id '" + lraId + "'"
-            + "is still active", lraClient.isLRAFinished(lraId));
     }
 
     @Test

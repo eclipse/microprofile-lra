@@ -763,13 +763,6 @@ If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `404 Not Found`
 HTTP status code. This enables the participant to free up resources.
 
-If this status method is invoked before either of the `@Compensate` or
-`@Complete` methods have been called then the participant should report
-that it does not yet have a status using a JAX-RS exception mapper that
-maps to a `412 Precondition Failed` HTTP status code (such as
-<<source-IllegalLRAStateException,IllegalLRAStateException>>)
-(https://github.com/eclipse/microprofile-lra/blob/master/api/src/main/java/org/eclipse/microprofile/lra/client/IllegalLRAStateException.java[github link]).
-
 [[forgetting-an-lra]]
 ==== Forgetting an LRA
 
@@ -910,13 +903,6 @@ include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Compensate.java[Com
 [[source-Complete]]
 ----
 include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Complete.java[Leave]
-----
-<<<
-
-=== IllegalLRAStateException
-[[source-IllegalLRAStateException]]
-----
-include::{sourcedir}/org/eclipse/microprofile/lra/client/IllegalLRAStateException.java[IllegalLRAStateException]
 ----
 <<<
 

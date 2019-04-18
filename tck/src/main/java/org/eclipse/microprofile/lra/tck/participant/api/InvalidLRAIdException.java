@@ -17,31 +17,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-
-package org.eclipse.microprofile.lra.client;
+package org.eclipse.microprofile.lra.tck.participant.api;
 
 import javax.ws.rs.WebApplicationException;
-import java.net.URI;
 
-public class GenericLRAException extends WebApplicationException {
-    private static final long serialVersionUID = 1L;
+public class InvalidLRAIdException extends WebApplicationException {
+    private static final long serialVersionUID = 1271422145863321852L;
+    private final String lraId;
 
-    private URI lraId;
-    private int statusCode;
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public URI getLraId() {
-        return lraId;
-    }
-
-    public GenericLRAException(URI lraId, int statusCode, String message,
-                               Throwable cause) {
-        super(String.format("%s: %s", lraId, message), cause);
+    /**
+     * Invalid LRA id exception.
+     *
+     * @param lraId  LRA id that is behind this exception
+     * @param message  error message of this exception
+     * @param cause  cause exception
+     */
+    public InvalidLRAIdException(String lraId, String message, Throwable cause) {
+        super(String.format("%s, LRA id: %s", message, lraId), cause);
 
         this.lraId = lraId;
-        this.statusCode = statusCode;
+    }
+
+    /**
+     * Invalid LRA id exception.
+     *
+     * @param lraId  LRA id that is behind this exception
+     * @param message  error message of this exception
+     */
+    public InvalidLRAIdException(String lraId, String message) {
+        super(String.format("%s, LRA id: %s", message, lraId));
+
+        this.lraId = lraId;
+    }
+
+    public String getLraId() {
+        return this.lraId;
     }
 }

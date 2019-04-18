@@ -20,7 +20,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;

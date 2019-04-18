@@ -21,7 +21,6 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.NestedLRA;
-import org.eclipse.microprofile.lra.client.InvalidLRAIdException;
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
 
 import javax.enterprise.context.ApplicationScoped;

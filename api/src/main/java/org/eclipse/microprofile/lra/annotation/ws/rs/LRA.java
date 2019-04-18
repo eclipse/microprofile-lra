@@ -53,7 +53,7 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Newly created LRAs are uniquely identified and the id is referred to as the
  * LRA context. The context is passed around using a JAX-RS request/response header
- * called {@value #LRA_HTTP_HEADER}.
+ * called {@value #LRA_HTTP_CONTEXT_HEADER}.
  * The implementation (of the LRA specification) is expected to manage this context
  * and the application developer is expected to declaratively control the creation,
  * propagation and destruction of LRAs using the {@link LRA} annotation. When a JAX-RS bean
@@ -78,7 +78,7 @@ import java.time.temporal.ChronoUnit;
  * <p>
  * Resource methods can access the LRA context id, if required, by inspecting the request headers
  * using standard JAX-RS mechanisms, ie `@Context` or by injecting it via the JAX-RS {@link HeaderParam}
- * annotation with value {@value #LRA_HTTP_HEADER}. This may be useful, for example, for
+ * annotation with value {@value #LRA_HTTP_CONTEXT_HEADER}. This may be useful, for example, for
  * associating business work with an LRA.
  * </p>
  */
@@ -91,7 +91,7 @@ public @interface LRA {
      * via an HTTP header field with the following name. The value contains
      * the LRA id associated with the HTTP request/response
      */
-    String LRA_HTTP_HEADER = "Long-Running-Action";
+    String LRA_HTTP_CONTEXT_HEADER = "Long-Running-Action";
 
     /**
      * the name of the HTTP header field that contains a recovery URI corresponding
@@ -129,7 +129,7 @@ public @interface LRA {
      * <p>
      * When an LRA is present its identifer <b>MUST</b> be made available to
      * the business logic in the JAX-RS request and response header
-     * {@value #LRA_HTTP_HEADER}.
+     * {@value #LRA_HTTP_CONTEXT_HEADER}.
      *
      * @return whether a bean method is to be executed within a transaction context.
      */

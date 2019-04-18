@@ -46,7 +46,7 @@ import java.lang.annotation.Target;
  * results in the creation of a new LRA then the participant will still be removed
  * from the incoming context and will be enlisted with the new context (and the method
  * will execute with this new context). Note that in this case the context exposed in
- * the `LRA_HTTP_HEADER` JAX-RS header will be set to the new LRA (and not the original
+ * the `LRA_HTTP_CONTEXT_HEADER` JAX-RS header will be set to the new LRA (and not the original
  * one), ie the orignal context will not be available to the business logic.
  * </p>
  *

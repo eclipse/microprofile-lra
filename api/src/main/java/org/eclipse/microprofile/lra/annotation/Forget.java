@@ -20,6 +20,8 @@
 
 package org.eclipse.microprofile.lra.annotation;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -35,8 +37,16 @@ import java.lang.annotation.Target;
  * must be a standard JAX-RS endpoint annotated with the JAX-RS
  * <em>@DELETE</em> annotation.
  *
+ * A similar remark applies if the participant was enlisted in a
+ * nested LRA {@link LRA#value()}. Actions performed in the context
+ * of a nested LRA must remain compensatable until the participant
+ * is explicitly told it can clean up using this <em>@Forget</em>
+ * annotation.
+ *
  * The id of the currently running LRA can be obtained by inspecting the
- * incoming JAX-RS headers.
+ * incoming JAX-RS headers. If this LRA is nested then the parent LRA
+ * MUST be present in the header with the name
+ * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}.
  *
  * Since the participant generally needs to know the id of the LRA in order
  * to clean up there is generally no benefit to combining this annotation

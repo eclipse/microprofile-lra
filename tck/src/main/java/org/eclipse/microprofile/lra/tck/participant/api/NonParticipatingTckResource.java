@@ -20,7 +20,6 @@
 package org.eclipse.microprofile.lra.tck.participant.api;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.annotation.ws.rs.NestedLRA;
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -116,18 +115,16 @@ public class NonParticipatingTckResource {
 
     @PUT
     @Path(NonParticipatingTckResource.START_AND_END_NESTED_PATH)
-    @LRA(value = LRA.Type.MANDATORY,
+    @LRA(value = LRA.Type.NESTED,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR) // default is to end the LRA
-    @NestedLRA
     public Response startAndEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }
 
     @PUT
     @Path(NonParticipatingTckResource.START_BUT_DONT_END_NESTED_PATH)
-    @LRA(value = LRA.Type.MANDATORY, end = false,
+    @LRA(value = LRA.Type.NESTED, end = false,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR)
-    @NestedLRA
     public Response startAndDontEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return Response.ok(lraId).build();
     }

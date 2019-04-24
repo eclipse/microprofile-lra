@@ -49,26 +49,29 @@ public class LraTckConfigBean {
     private double timeoutFactor;
 
     /**
-     * Host name where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
-     * The port is specifed by {@link #recoveryPort}.
+     * <p>
+     *     the maximum number of seconds to wait for recovery
+     * </p>
      */
-    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_HOST_KEY, defaultValue = "localhost")
-    private String recoveryHostName;
+    @Inject @ConfigProperty(name = "lra.tck.recovery.timeout", defaultValue = "200")
+    private long recoveryTimeout;
 
     /**
-     * Port where LRA recovery is expected to be launch and TCK suite tries to connect to it at.
-     * The hostname is specifed by {@link #recoveryHostName}.
+     * If true then the TCK should use the recovery header to give a hint to the implementation
+     * under test that it should replay the LRA protocol termination phase ie to call the
+     * compensate/complete callback on target resource (if the resource is also an LRA participant
+     * and is in need of recovery).
+     *
+     * See the method {@link TckTestBase#replayEndPhase} for how/where it is used. The replayEndPhase
+     * method will keep waiting for recovery until either recovery has been triggered or until
+     * {@link #recoveryTimeout} seconds have elapsed.
+     *
+     * Implementations that do not support triggering recovery should ensure that the
+     * {@link #recoveryTimeout} value is set to a value that is longer than the implementations
+     * typical recovery period.
      */
-    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_PORT_KEY, defaultValue = "8080")
-    private int recoveryPort;
-
-    /**
-     * Path where recovery is available to accept requests.
-     * The hostname of LRA recovery is specifed by {@link #recoveryHostName},
-     * the port of LRA recovery is defined by {@link #recoveryPort}.
-     */
-    @Inject @ConfigProperty(name = LRAClientOps.LRA_RECOVERY_PATH_KEY, defaultValue = "lra-recovery-coordinator")
-    private String recoveryPath;
+    @Inject @ConfigProperty(name = "lra.tck.recovery.trigger", defaultValue = "true")
+    private boolean useRecoveryHeader;
 
     /**
      * Base URL where the LRA suite is started at. It's URL where container exposes the test suite deployment.
@@ -84,16 +87,12 @@ public class LraTckConfigBean {
         return timeoutFactor;
     }
 
-    public String recoveryHostName() {
-        return recoveryHostName;
+    public Long recoveryTimeout() {
+        return recoveryTimeout;
     }
 
-    public int recoveryPort() {
-        return recoveryPort;
-    }
-
-    public String recoveryPath() {
-        return recoveryPath;
+    public boolean isUseRecoveryHeader() {
+        return useRecoveryHeader;
     }
 
     public String tckSuiteBaseUrl() {

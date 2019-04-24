@@ -25,12 +25,14 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,9 +52,14 @@ public class ParticipatingTckResource {
     public static final String COMPLETED_CNT_PATH = "/completed-count";
     public static final String COMPENSATED_CNT_PATH = "/compensated-count";
     public static final String LEAVE_PATH = "/leave";
+    public static final String ACCEPT_PATH = "/accept";
+
+    public static final String RECOVERY_PARAM = "recoveryCount";
 
     private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
     private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
+
+    private int recoveryPasses = 0;
 
     @PUT
     @Path("/compensate")
@@ -63,11 +70,9 @@ public class ParticipatingTckResource {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        COMPENSATED_COUNT.incrementAndGet();
+        LOGGER.info(String.format("LRA id '%s' was told to compensate", lraId));
 
-        LOGGER.info(String.format("LRA id '%s' was compensated", lraId));
-
-        return Response.ok().build();
+        return getEndPhaseResponse(false);
     }
 
     @PUT
@@ -79,11 +84,40 @@ public class ParticipatingTckResource {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        COMPLETED_COUNT.incrementAndGet();
+        LOGGER.info(String.format("LRA id '%s' was told to complete", lraId));
 
-        LOGGER.info(String.format("LRA id '%s' was completed", lraId));
+        return getEndPhaseResponse(true);
+    }
+
+    private Response getEndPhaseResponse(boolean complete) {
+        if (recoveryPasses > 0) {
+            recoveryPasses -= 1;
+
+            return Response.accepted().build();
+        }
+
+        if (complete) {
+            COMPLETED_COUNT.incrementAndGet();
+        } else {
+            COMPENSATED_COUNT.incrementAndGet();
+        }
 
         return Response.ok().build();
+    }
+
+    @PUT
+    @Path(ACCEPT_PATH)
+    @LRA(value = LRA.Type.REQUIRES_NEW)
+    public Response acceptLRA(@QueryParam(RECOVERY_PARAM) @DefaultValue("0") Integer recoveryPasses) {
+        this.recoveryPasses = recoveryPasses;
+
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path(ACCEPT_PATH)
+    public Response getAcceptLRA() {
+        return Response.ok(this.recoveryPasses).build();
     }
 
     @PUT

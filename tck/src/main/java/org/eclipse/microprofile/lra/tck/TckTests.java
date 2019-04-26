@@ -38,7 +38,6 @@ import static org.junit.Assert.fail;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.temporal.ChronoUnit;
-import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 import javax.ws.rs.WebApplicationException;

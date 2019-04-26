@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -99,6 +100,14 @@ public @interface LRA {
      * the LRA id associated with the HTTP request/response
      */
     String LRA_HTTP_CONTEXT_HEADER = "Long-Running-Action";
+
+    /**
+     * When a JAX-RS invocation is made with an active LRA which is nested,
+     * the parent LRA is made available via an HTTP header field with the
+     * following name. The value contains the parent LRA id associated with
+     * the HTTP request/response.
+     */
+    String LRA_HTTP_PARENT_CONTEXT_HEADER = "Long-Running-Action-Parent";
 
     /**
      * the name of the HTTP header field that contains a recovery URI corresponding
@@ -215,12 +224,98 @@ public @interface LRA {
          *     to the caller.
          * </p>
          */
-        NEVER
+        NEVER,
+
+        /**
+         * <p>
+         *     An LRA (called the child) can be scoped within an existing LRA
+         *     (called the parent) using the NESTED element value. A new LRA will be
+         *     created even if there is already one present when the method is invoked,
+         *     i.e. these LRAs will then either be top-level or nested automatically
+         *     depending upon the context within which they are created. If invoked
+         *     without a context the new LRA will be top level. If invoked with an
+         *     LRA present a new nested LRA is started whose outcome depends upon
+         *     whether or not the enclosing LRA is closed or cancelled.
+         *     The id of the parent LRA MUST be present in the header with the name
+         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER}.
+         * </p>
+         *
+         * <p>
+         *     A nested LRA is treated just like any other LRA with respect to participant
+         *     enlistment. When an invocation results in the creation of a nested LRA that
+         *     LRA becomes the "current context" and any further operations performed by
+         *     the method will be executed with that context. The semantics of nested LRAs
+         *     follows previous transactions models:
+         * </p>
+         * <ol>
+         *     <li>A nested LRA can close or cancel independently of its parent.
+         *     <li>A nested LRA which has closed must retain the ability to cancel the
+         *     effects if the the parent cancels. This requirement must be enforced
+         *     by participants.
+         *     <li>If a nested LRA cancels then all of its children must cancel (even if
+         *     they closed - see 2).
+         *     <li>If a nested LRA closes then it, and all of its children, must close
+         *     (but retain the ability to later compensate - see 2).
+         * </ol>
+         * <p>
+         *     Downstream LRAs will only be part of this nesting hierarchy if the
+         *     downstream methods carry the NESTED element, otherwise they are
+         *     independent of the current nested LRA.
+         * </p>
+         *
+         * <p>
+         *     The reason why the model does not allow a cancelled nested LRA to be closed
+         *     is because the business activity has already been compensated for which means
+         *     there is no longer any outstanding work in need of completion.
+         * </p>
+         * <p>
+         *     On the other hand it does make sense to cancel a closed nested LRA since
+         *     the work has been done so there is something that can be compensated for.
+         * </p>
+         * <p>
+         *     Therefore, as a consequence of requirement 2, any activities performed in
+         *     the context of a closed nested LRA must remain compensatable until the
+         *     top level parent LRA finishes. So if the nested LRA is closed the
+         *     participants registered with it will be asked to complete, but if
+         *     the top level parent LRA is then told to cancel the nested participants
+         *     will be told to compensate. This implies that the nested participants
+         *     must be aware that they are nested and the JAX-RS header with the
+         *     name {@value #LRA_HTTP_PARENT_CONTEXT_HEADER} is guaranteed to hold
+         *     the parent context whenever a nested LRA is active.
+         * </p>
+         *
+         * <p>
+         *     A participant which has closed can determine when the top level
+         *     parent has closed by providing a {@link Forget} callback handler.
+         * </p>
+         *
+         * <p>
+         *     Note that it is possible for the same resource to be registered with
+         *     both the parent and the child LRAs and in this case it will be asked
+         *     to complete or compensate twice, once with the nested context and a
+         *     second time with the parent context. The order in which the two callbacks
+         *     are invoked is undefined.
+         * </p>
+         * <p>
+         *     Note also that it is not possible to require an LRA to be present
+         *     (cf.` MANDATORY`) or to require an LRA to be not present (cf. `NEVER`)
+         *     on a method marked with the `NESTED` element.
+         * </p>
+         *
+         * <p>
+         *     Note that the elements of the LRA annotation always apply to the
+         *     LRA context used to execute the annotated method. Thus elements
+         *     such as {@link #timeLimit()}, {@link #timeUnit()}, {@link #cancelOn()},
+         *     {@link #cancelOnFamily()} and {@link #end()} will always be applied to
+         *     the nested or top level LRA.
+         */
+        NESTED
     }
 
     /**
      * <p>
-     * The period for which the LRA will remain valid. When this period has
+     * If the annotated method runs with an LRA context then this element determines
+     * the period for which the LRA will remain valid. When this period has
      * elapsed the LRA becomes eligible for cancellation. The units are
      * specified in the {@link LRA#timeUnit()} element.
      * A value of zero indicates that the LRA will always remain valid.

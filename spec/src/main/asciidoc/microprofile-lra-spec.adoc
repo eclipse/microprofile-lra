@@ -262,8 +262,6 @@ package:
 
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java#L30[@LRA]
   | Controls the life cycle of an LRA.
-| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/NestedLRA.java#L30[@NestedLRA]
-  | Controls the life cycle of a nested LRA.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Compensate.java#L29[@Compensate]
   | Indicates that the method should be invoked if the LRA is cancelled.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Complete.java#L29[@Complete]
@@ -574,21 +572,28 @@ provides details about the `@Complete` annotation.
 [[nesting-lras]]
 ==== Nesting LRAs
 
-An activity can be scoped within an existing LRA using the `@NestedLRA`
-annotation. Invoking a method marked with this annotation will start a
-new LRA whose outcome depends upon whether the enclosing LRA is closed
-or cancelled.
+An activity can be scoped within an existing LRA using the `@LRA.Type.NESTED`
+annotation element value. Invoking a method marked with this annotation
+will start a new LRA whose behaviour is as follows:
 
-* If the nested LRA is closed but the outer LRA is cancelled then the
-participants registered with the nested LRA will be told to compensate.
-* If the nested LRA is cancelled the outer LRA can be still closed.
+1. A nested LRA can close or cancel independently of its parent.
+2. A nested LRA which has closed must retain the ability to cancel the
+   effects if the the parent cancels. This requirement must be enforced
+   by participants.
+3. If a nested LRA cancels then all of its children must cancel (even if
+   they closed - see 2).
+4. If a nested LRA closes then it, and all of its children, must close
+   (but retain the ability to later compensate - see 2).
+
+The javadoc for the <<source-LRA,LRA annotation>> discusses this element
+in much more detail (look for the javadoc for the `NESTED` enum value
+of the LRA.Type element).
 
 In the following example the bookFlight method supports the presence of
 an LRA context and if there is one present then it books a flight inside a
 nested LRA which means that it can be cancelled independently of the parent
 LRA. But if there is no LRA present then a new top level LRA is started
-for the duration of the bookFlight method. See the <<use-cases,use cases>>
-section for when this feature could be useful.
+for the duration of the bookFlight method.
 
 [source,java]
 ----
@@ -597,8 +602,7 @@ section for when this feature could be useful.
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.SUPPORTS)
-    @NestedLRA
+    @LRA(LRA.Type.NESTED)
     public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                               @QueryParam("flightNumber") String flightNumber) {
         return service.book(lraId, flightNumber);

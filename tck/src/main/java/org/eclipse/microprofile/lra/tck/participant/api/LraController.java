@@ -27,7 +27,6 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
-import org.eclipse.microprofile.lra.annotation.ws.rs.NestedLRA;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
@@ -334,8 +333,7 @@ public class LraController {
 
     @PUT
     @Path("/nestedActivity")
-    @LRA(value = LRA.Type.MANDATORY, end = true)
-    @NestedLRA
+    @LRA(value = LRA.Type.NESTED, end = true)
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRAId) {
         assertHeaderPresent(nestedLRAId);

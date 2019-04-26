@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -31,6 +32,8 @@ import org.junit.rules.TestName;
 import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
@@ -38,10 +41,14 @@ import java.net.URI;
 import java.net.URL;
 import java.util.logging.Logger;
 
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.TCK_PARTICIPANT_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
 
 public class TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckTestBase.class.getName());
+    private static final Long RECOVERY_CHECK_INTERVAL = 10L; // check for recovery every 10 seconds
 
     @Rule public TestName testName = new TestName();
 
@@ -50,12 +57,9 @@ public class TckTestBase {
 
     LRAClientOps lraClient;
 
-    private static URL recoveryCoordinatorBaseUrl;
     private static Client tckSuiteClient;
-    private static Client recoveryCoordinatorClient;
 
     WebTarget tckSuiteTarget;
-    private WebTarget recoveryTarget;
 
     static WebArchive deploy(String archiveName) {
         return ShrinkWrap
@@ -68,9 +72,6 @@ public class TckTestBase {
     public static void afterClass() {
         if(tckSuiteClient != null) {
             tckSuiteClient.close();
-        }
-        if(recoveryCoordinatorClient != null) {
-            recoveryCoordinatorClient.close();
         }
     }
 
@@ -85,31 +86,16 @@ public class TckTestBase {
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
-        recoveryTarget = recoveryCoordinatorClient.target(URI.create(recoveryCoordinatorBaseUrl.toExternalForm()));
     }
 
     /**
      * Checking if coordinator is running, set ups the client to contact the recovery manager and the TCK suite itself.
      */
     private void setUpTestCase() {
-        if(recoveryCoordinatorBaseUrl != null) {
-            // we've already set up the recovery urls and REST clients for the tests
-            return;
-        }
-
-        try {
-            // see https://github.com/eclipse/microprofile-lra/issues/116
-            recoveryCoordinatorBaseUrl = new URL(String.format("http://%s:%d/%s",
-                    config.recoveryHostName(), config.recoveryPort(), config.recoveryPath()));
-
-            tckSuiteClient = ClientBuilder.newClient();
-            recoveryCoordinatorClient = ClientBuilder.newClient();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Cannot properly setup the TCK tests (coordinator endpoint, testsuite endpoints...)", e);
-        }
+        tckSuiteClient = ClientBuilder.newClient();
     }
 
-    private void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
+    void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
         try {
             assertEquals("Not expected status at call '" + resourcePath.getUri() + "'",
                     expectedStatus.getStatusCode(), response.getStatus());
@@ -131,7 +117,7 @@ public class TckTestBase {
     /**
      * The started LRA will be named based on the class name and the running test name.
      */
-    protected String lraClientId() {
+    String lraClientId() {
         return this.getClass().getSimpleName() + "#" + testName.getMethodName();
     }
 
@@ -139,18 +125,64 @@ public class TckTestBase {
      * Adjusting the default timeout by the specified timeout factor
      * which can be defined by user.
      */
-    protected long lraTimeout() {
+    long lraTimeout() {
         return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
     }
 
-
-    void replayEndPhase(String resource) {
-        // trigger a recovery scan which trigger a replay attempt on any participants
+    /**
+     * Trigger or wait for a recovery scan to replay the protocol termination phase (complete or compenstate)
+     * on a participant that is in need of recovery.
+     *
+     * @param resource the resource on which recovery should be replayed. If null then recovery
+     *                should be attempted on all eligible participants
+     */
+    void replayEndPhase(String resource) throws InterruptedException {
+        // trigger a replay attempt on any participants
         // that have responded to complete/compensate requests with Response.Status.ACCEPTED
-        WebTarget recoveryPath = recoveryTarget.path("recovery");
-        Response response2 = recoveryPath
-                .request().get();
 
-        checkStatusAndCloseResponse(Response.Status.OK, response2, recoveryPath);
+        /*
+         * The following variable is for keeping track of the number of completion calls made
+         * on the resource (TCK_PARTICIPANT_RESOURCE_PATH). It is initialised with the value 2
+         * and then passed to the resource. We then loop asking the resource to report its
+         * current value. The resouce will decrement the value each time it is asked to complete.
+         * When the return value hits zero we will know that recovery has happened.
+         */
+        int recoveryPasses = 2; // 1 for the normal end call and 2 for the recovery pass call
+        long maxWait = config.recoveryTimeout(); // how long to wait before giving up on recovery
+        WebTarget resourcePath = tckSuiteTarget.path(TCK_PARTICIPANT_RESOURCE_PATH).path(ACCEPT_PATH)
+                .queryParam(RECOVERY_PARAM, recoveryPasses);
+        Response response = resourcePath.request().put(Entity.text(""));
+
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
+
+        do {
+            Invocation.Builder builder = resourcePath.request();
+
+            if (config.isUseRecoveryHeader()) {
+                builder.header(LRA.LRA_HTTP_RECOVERY_HEADER, resource);
+            }
+
+            response = resourcePath.request().get();
+
+            // the resource will tell us how many more times it is expected to be asked to complete
+            recoveryPasses = Integer.valueOf(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
+
+            if (recoveryPasses == 0) {
+                // success, recovery has happened
+                if (resource == null) {
+                    // recovery may still be running for other resources so linger a little longer
+                    Thread.sleep(1000L);
+                }
+
+                return; // recovered successfully
+            }
+
+            LOGGER.info("replayEndPhase: recoveryPasses=" + recoveryPasses);
+
+            Thread.sleep(RECOVERY_CHECK_INTERVAL * 1000); // delay before rechecking for recovery
+            maxWait -= RECOVERY_CHECK_INTERVAL;
+        } while (maxWait > 0L);
+
+        throw new RuntimeException("TckTestBase: recovery was not triggered for resource " + resource);
     }
 }

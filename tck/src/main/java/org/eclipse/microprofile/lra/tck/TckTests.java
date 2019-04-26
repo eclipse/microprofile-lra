@@ -35,112 +35,40 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAController;
-import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
-public class TckTests {
-    private static final Logger LOGGER = Logger.getLogger(TckTests.class.getName());
-
-
-    @Rule public TestName testName = new TestName();
-
-    @Inject
-    private LraTckConfigBean config;
-
-    private LRAClientOps lraClient;
-
-    private static URL recoveryCoordinatorBaseUrl;
-    private static Client tckSuiteClient;
-    private static Client recoveryCoordinatorClient;
-
-    private WebTarget tckSuiteTarget;
-    private WebTarget recoveryTarget;
-
+public class TckTests extends TckTestBase {
     private enum CompletionType {
         complete, compensate, mixed
     }
 
-    @Deployment(name = "tcktests", managed = true, testable = true)
+    @Deployment(name = "tcktests")
     public static WebArchive deploy() {
-        String archiveName = TckTests.class.getSimpleName().toLowerCase();
-        return ShrinkWrap
-            .create(WebArchive.class, archiveName + ".war")
-            .addPackages(true, "org.eclipse.microprofile.lra.tck")
-            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
-    }
-    
-    @AfterClass
-    public static void afterClass() {
-        if(tckSuiteClient != null) {
-            tckSuiteClient.close();
-        }
-        if(recoveryCoordinatorClient != null) {
-            recoveryCoordinatorClient.close();
-        }
+        return TckTestBase.deploy(TckTests.class.getSimpleName().toLowerCase());
     }
 
     @Before
     public void before() {
-        LOGGER.info("Running test: " + testName.getMethodName());
-        setUpTestCase();
-
-        try {
-            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
-            lraClient = new LRAClientOps(tckSuiteTarget);
-        } catch (MalformedURLException mfe) {
-            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
-        }
-        recoveryTarget = recoveryCoordinatorClient.target(URI.create(recoveryCoordinatorBaseUrl.toExternalForm()));
-    }
-
-    /**
-     * Checking if coordinator is running, set ups the client to contact the recovery manager and the TCK suite itself.
-     */
-    private void setUpTestCase() {
-        if(recoveryCoordinatorBaseUrl != null) {
-            // we've already set up the recovery urls and REST clients for the tests
-            return;
-        }
-
-        try {
-            // TODO: what to do with this? recovery tests are valid?
-            recoveryCoordinatorBaseUrl = new URL(String.format("http://%s:%d/%s",
-                    config.recoveryHostName(), config.recoveryPort(), config.recoveryPath()));
-
-            tckSuiteClient = ClientBuilder.newClient();
-            recoveryCoordinatorClient = ClientBuilder.newClient();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Cannot properly setup the TCK tests (coordinator endpoint, testsuite endpoints...)", e);
-        }
+        super.before();
     }
 
     /**
@@ -357,16 +285,17 @@ public class TckTests {
     }
 
     @Test
-    public void acceptCloseTest() throws WebApplicationException {
+    public void acceptCloseTest() throws WebApplicationException, InterruptedException {
         joinAndEnd(true, true, LRA_CONTROLLER_PATH, ACCEPT_WORK);
     }
 
     @Test
-    public void acceptCancelTest() throws WebApplicationException {
+    public void acceptCancelTest() throws WebApplicationException, InterruptedException {
         joinAndEnd(true, false, LRA_CONTROLLER_PATH, ACCEPT_WORK);
     }
 
-    private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2) throws WebApplicationException {
+    private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2)
+            throws WebApplicationException, InterruptedException {
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         int beforeCompletionCount = getCompletedCount();
         int beforeCompensationCount = getCompensatedCount();
@@ -384,15 +313,7 @@ public class TckTests {
         }
 
         if (waitForRecovery) {
-            // TODO the spec does not specifiy recovery semantics
-
-            // trigger a recovery scan which trigger a replay attempt on any participants
-            // that have responded to complete/compensate requests with Response.Status.ACCEPTED
-            WebTarget recoveryPath = recoveryTarget.path("recovery");
-            Response response2 = recoveryPath
-                    .request().get();
-
-            checkStatusAndCloseResponse(Response.Status.OK, response2, recoveryPath);
+            replayEndPhase(null);
         }
 
         int completionCount = getCompletedCount() - beforeCompletionCount;
@@ -572,26 +493,7 @@ public class TckTests {
 
             assertTrue("joinWithTwoResourcesWithCancel: both resources should have compensated",
                     getActivityCount(LRA_CONTROLLER_PATH, "compensatedactivitycount") == compensatedCount1 +1
-                            && getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPLETED_CNT_PATH) == compensatedCount2 + 1);
-        }
-    }
-
-    private void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
-        try {
-            assertEquals("Not expected status at call '" + resourcePath.getUri() + "'",
-                    expectedStatus.getStatusCode(), response.getStatus());
-        } finally {
-            response.close();
-        }
-    }
-
-    private String checkStatusReadAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
-        try {
-            assertEquals("Response status on call to '" + resourcePath.getUri() + "' failed to match.",
-                    expectedStatus.getStatusCode(), response.getStatus());
-            return response.readEntity(String.class);
-        } finally {
-            response.close();
+                            && getActivityCount(TCK_PARTICIPANT_RESOURCE_PATH, COMPENSATED_CNT_PATH) == compensatedCount2 + 1);
         }
     }
 
@@ -741,20 +643,5 @@ public class TckTests {
             assertEquals("multiLevelNestedActivity: step 10 (called test path " + resourcePath.getUri() + ")",
                     nestedCnt + 1, afterCompletedCount - beforeCompletedCount);
         }
-    }
-
-    /**
-     * The started LRA will be named based on the class name and the running test name.
-     */
-    private String lraClientId() {
-        return this.getClass().getSimpleName() + "#" + testName.getMethodName();
-    }
-
-    /**
-     * Adjusting the default timeout by the specified timeout factor
-     * which can be defined by user.
-     */
-    private long lraTimeout() {
-        return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
     }
 }

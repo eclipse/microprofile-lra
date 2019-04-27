@@ -44,39 +44,12 @@ import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingT
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.START_BUT_DONT_END_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.STATUS_CODE_QUERY_NAME;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.LEAVE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.TCK_PARTICIPANT_RESOURCE_PATH;
 
 public class LRAClientOps {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
-
-    /**
-     * TODO recovery needs to be properly speced: see the proposal
-     * on issue https://github.com/eclipse/microprofile-lra/issues/116
-     * It is used in the two tests for participants that return 202:
-     * {@link TckTests#acceptCancelTest()}  and {@link TckTests#acceptCloseTest()}
-     * to connect to an endpoint that will trigger recovery (the alternative would
-     * be to wait)
-     */
-
-    /**
-     * Key for looking up the config property that specifies which host a
-     * recovery coordinator is running on
-     */
-    static final String LRA_RECOVERY_HOST_KEY = "lra.http.recovery.host";
-
-    /**
-     * Key for looking up the config property that specifies which port a
-     * recovery coordinator is listening on
-     */
-    static final String LRA_RECOVERY_PORT_KEY = "lra.http.recovery.port";
-
-    /**
-     * Key for looking up the config property that specifies which JAX-RS path a
-     * recovery coordinator is running on
-     */
-    static final String LRA_RECOVERY_PATH_KEY = "lra.http.recovery.path";
 
     private final WebTarget target;
     private final ScheduledExecutorService executor;
@@ -90,8 +63,8 @@ public class LRAClientOps {
 
     // see if it is possible to join with an LRA - if it is possible to do that then the LRA is still active
     private int tryToEnlistWithAnLRA(String lra) {
-        // call a JAX-RS endpint that should result in the enlistment of a resource into the LRA
-        int status = invokeRestEndpointAndReturnStatus(lra, TCK_PARTICIPANT_RESOURCE_PATH, JOIN_WITH_EXISTNG_LRA_PATH, 200);
+        // call a JAX-RS endpoint that should result in the enlistment of a resource into the LRA
+        int status = invokeRestEndpointAndReturnStatus(lra, TCK_PARTICIPANT_RESOURCE_PATH, JOIN_WITH_EXISTING_LRA_PATH, 200);
 
         if (status == 200) {
             // leave the LRA otherwise any tests checking completion/compensation counts would fail

@@ -210,6 +210,11 @@ enter the state model until it receives a complete or compensate message:
 .Participant State Model
 image::participant-state-model.png[align="center" link="participant-state-model"]
 
+Note that when the LRA has been asked to cancel it enters the state `Cancelling`
+and will eventually ask all registered participants to enter the state
+`Compensating`. A similar remark applies to the LRA state `Closing` and participant state
+`Completing`.
+
 The participant can be enlisted only once per LRA instance. When participant
 is about to be enlisted multiple times (e.g. client calls the same `@LRA` method
 several times) the follow-up enlistments of such participant MUST be ignored.
@@ -359,16 +364,20 @@ will run in the context of an LRA and controls whether or not:
 
 If the method is to run in the context of an LRA and the annotated class
 also contains a method annotated with `@Compensate` then the class
-(aka participant or compensator) will be enlisted with the LRA. Enlisting with
-an LRA means that the bean will be notified when the current LRA is
+(aka participant or compensator) will be enlisted with the LRA.
+This means that before starting the method the implementation must be able
+to guarantee that participant has been or will eventually be registered
+with the LRA. The practical consequence of this requirement is that the
+implementation must durably record that the participant is enlisted before
+letting the business invocation proceed.
+Enlisting with an LRA means that the bean will be notified when the current LRA is
 subsequently cancelled or closed (if the class also contains a method
 annotated with `@Complete`). In addition the implementation should generate a
-URI for this participant that can be used
-for recovery purposes and it should make it available to the participant via a JAX-RS
+URI for this participant and make it available to the business logic via a JAX-RS
 header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` as defined
 <<source-LRA, in the LRA annotation>>
 (https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java[github link]).
-This recovery header should be made available to the application whenever any
+The header should also be made available to the application whenever any
 of the participant callbacks are invoked. The application is free to ignore
 this header.
 Enlisting in an LRA is explained in more detail
@@ -501,7 +510,13 @@ activity by annotating it with both the `@Compensate` and the JAX-RS `@PUT` anno
 Whenever the associated resource is invoked in the context of
 an LRA the endpoint corresponding to the `@Compensate` method MUST be enlisted with
 the LRA. If the LRA is subsequently cancelled then the compensation method MUST be invoked.
-For example:
+
+The specification does not mandate when this method is invoked
+but it does guarantee that it will eventually be called. Under failure
+conditions the system will keep retrying until it is certain that the
+participant has been successfully notified.
+
+An example of how to use this annoation is:
 
 [source,java]
 ----
@@ -517,7 +532,8 @@ For example:
 
 The resource class MAY also contain a method marked with the `@Complete` and the
 JAX-RS `@PUT` annotations. If such a method is present then the method MUST
-be invoked when the associated LRA is closed.
+be invoked when the associated LRA is closed. Again, the specification does
+not MANDATE when the method is called, just that it will eventually be invoked.
 Typically the resource would use this call to perform any clean up actions. The
 method is optional since such clean up actions may not be necessary,
 for example consider a system that just tracks hotel reservations and has operations
@@ -798,7 +814,7 @@ The framework must guarantee that participants will still be triggered (the LRA 
 nothing" guarantees that traditional transactions give).
 This means that an implementation for all JAX-RS resources which implement the _LRAParticipant_ interface directly
 or indirectly, MUST create some proxy which can be called by the spec implementation. +
-This to ensure that after this class has joined an LRA (through the _lraManagement.joinLRA()_ ) the _complete_ or
+This is to ensure that after this class has joined an LRA (through the _lraManagement.joinLRA()_ ) the _complete_ or
 _compensate_ methods can be called by the spec implementation in case the microservice crashed before this notification could
 be delivered.
 

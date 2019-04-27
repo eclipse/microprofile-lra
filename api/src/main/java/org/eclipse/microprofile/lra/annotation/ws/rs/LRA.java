@@ -125,9 +125,13 @@ public @interface LRA {
      *     If the method is to run in the context of an LRA and the annotated class
      *     also contains a method annotated with {@link Compensate}
      *     then the resource will be enlisted with the LRA. Enlisting with an LRA
-     *     means that the resource will be notified when the current LRA is later
+     *     means that the resource MUST be notified when the current LRA is later
      *     cancelled. The resource can also receive notifications when the LRA is
      *     closed if it additionally defines a method annotated with {@link Complete}.
+     *     The specification does not mandate when these notifications are issued
+     *     but it does guarantee that they will eventually be sent. Under failure
+     *     conditions the system will keep retrying until it is certain that all
+     *     participants have been successfully notified.
      * </p>
      *
      * <p>
@@ -321,6 +325,10 @@ public @interface LRA {
      * A value of zero indicates that the LRA will always remain valid.
      * </p>
      *
+     * <p>
+     *     Methods running with an active LRA context must be resilient to it being
+     *     cancelled while the method is still executing.
+     * </p>
      * @return the period for which the LRA is guaranteed to run for before
      * becoming eligible for cancellation.
      */
@@ -336,8 +344,10 @@ public @interface LRA {
      * <p>
      * If the annotated method runs with an LRA context then this element determines
      * whether or not it is closed when the method returns. If the element has the
-     * value {@literal true} then the LRA will be ended and if it has the value
-     * {@literal false} then the LRA will not be ended.
+     * value {@literal true} then the LRA will be ended and all participants that
+     * have the @Complete annotation MUST eventually be asked to complete.
+     * If the element has the value {@literal false} then the LRA will not be ended
+     * when the method finishes.
      * </p>
      *
      * <p>
@@ -359,7 +369,9 @@ public @interface LRA {
      * The cancelOnFamily element can be set to indicate which families of
      * HTTP response codes will cause the current LRA to cancel. If the LRA
      * has already been closed when the annotated method returns then this
-     * element is silently ignored,
+     * element is silently ignored, Cancelling an LRA means that all
+     * participants will eventually be asked to compensate (by having
+     * their @Compensate annotated method invoked).
      * </p>
      *
      * <p>
@@ -381,7 +393,9 @@ public @interface LRA {
      * The cancelOn element can be set to indicate which  HTTP response
      * codes will cause the current LRA to cancel. If the LRA
      * has already been closed when the annotated method returns then this
-     * element is silently ignored,
+     * element is silently ignored, Cancelling an LRA means that all
+     * participants will eventually be asked to compensate (by having
+     * their @Compensate annotated method invoked).
      * </p>
      *
      * <p>

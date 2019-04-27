@@ -32,8 +32,8 @@ import java.lang.annotation.Target;
  * messages/requests can be lost, delayed or duplicated etc and the
  * implementation component responsible for invoking {@link Compensate}
  * and {@link Complete} annotated methods may loose track of the status of
- * a particpant. In this case, ideally it would just resend the completion
- * or compensation notication but if the participant (the class that
+ * a participant. In this case, ideally it would just resend the completion
+ * or compensation notification but if the participant (the class that
  * contains the Compensate and Complete annotations) does not
  * support idempotency then it must be able to report its' status by
  * by annotating one of the methods with this <em>@Status</em> annotation

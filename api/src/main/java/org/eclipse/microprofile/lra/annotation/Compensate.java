@@ -32,7 +32,8 @@ import java.time.temporal.ChronoUnit;
  * be used as a participant for the LRA. If this associated LRA is subsequently
  * cancelled then the method that this annotation is applied to will be invoked
  * (if the annotation is present on more than one method then an arbitrary one
- * will be chosen).
+ * will be chosen). The spec makes no guarantees about when it will be invoked,
+ * just that is will eventually be called.
  *
  * The id of the currently running LRA can be obtained by inspecting the incoming
  * JAX-RS headers. If this LRA is nested then the parent LRA MUST be present

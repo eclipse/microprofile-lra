@@ -24,6 +24,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 @ApplicationScoped
 public class LraTckConfigBean {
@@ -47,6 +49,33 @@ public class LraTckConfigBean {
      */
     @Inject @ConfigProperty(name = "lra.tck.timeout.factor", defaultValue = "1.0")
     private double timeoutFactor;
+
+    /**
+     * <p>
+     *     The LRA model guarantees eventual consistency but does not say when
+     *     participants will be brought into a consistent state, for example an
+     *     implementation may not notify participants immediately when an LRA
+     *     is closed or cancelled.
+     *
+     *     To support implementations that do not immediately attempt to notify
+     *     participants the TCK needs to know how long to delay before checking whether
+     *     or not the implementation called them.
+     *     This delay will depend on the particular implementation so it is
+     *     configurable, i.e, use this property to configure the number of
+     *     milliseconds that a test will wait for before it checks if a complete
+     *     or compensate method has been called.
+     *
+     *     The default is set to zero which implies that the implementation will
+     *     notify participants as soon as the LRA enters the
+     *     {@link LRAStatus#Closing} or {@link LRAStatus#Cancelling}
+     *     states. Note that this does not imply that the participant will
+     *     complete or compensate immediately since it may enter the
+     *     {@link ParticipantStatus#Completing} or {@link ParticipantStatus#Compensating}
+     *     states first if a participant cannot clean up or compensate immediately.
+     * </p>
+     */
+    @Inject @ConfigProperty(name = "lra.tck.consistency.delay", defaultValue = "0")
+    long consistencyDelay;
 
     /**
      * <p>
@@ -85,6 +114,10 @@ public class LraTckConfigBean {
 
     public double timeoutFactor() {
         return timeoutFactor;
+    }
+
+    long getConsistencyDelay() {
+        return consistencyDelay;
     }
 
     public Long recoveryTimeout() {

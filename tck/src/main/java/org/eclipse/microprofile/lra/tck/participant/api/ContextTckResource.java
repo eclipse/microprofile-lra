@@ -316,7 +316,7 @@ public class ContextTckResource {
         return Response.ok().entity(status.name()).build();
     }
 
-    // modify participant responses based on injected behavour specified by the test
+    // modify participant responses based on injected behaviour specified by the test
     private Response getEndPhaseResponse(boolean completing) {
         switch (endPhase) {
             case ACCEPTED:

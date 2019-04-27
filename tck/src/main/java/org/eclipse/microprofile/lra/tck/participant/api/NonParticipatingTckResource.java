@@ -67,7 +67,7 @@ public class NonParticipatingTckResource {
     private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
     private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
     public static final String STATUS_CODE_QUERY_NAME = "Coerce-Status";
-    public static final String START_LRA_VIA_REMOTE_INVOCATIOM = "/start-via-remote-invocation";
+    public static final String START_LRA_VIA_REMOTE_INVOCATION = "/start-via-remote-invocation";
 
     @Context
     private UriInfo context;
@@ -130,7 +130,7 @@ public class NonParticipatingTckResource {
     }
 
     @PUT
-    @Path(NonParticipatingTckResource.START_LRA_VIA_REMOTE_INVOCATIOM)
+    @Path(NonParticipatingTckResource.START_LRA_VIA_REMOTE_INVOCATION)
     @LRA(value = LRA.Type.SUPPORTS, end = false,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR)
     public Response notSupportedButCallServiceWhichStartsButDoesntEndAnLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {

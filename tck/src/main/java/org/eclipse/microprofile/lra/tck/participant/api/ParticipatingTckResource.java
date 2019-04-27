@@ -46,8 +46,8 @@ public class ParticipatingTckResource {
     private static final Logger LOGGER = Logger.getLogger(ParticipatingTckResource.class.getName());
 
     public static final String TCK_PARTICIPANT_RESOURCE_PATH = "participating-tck-resource";
-    public static final String JOIN_WITH_EXISTNG_LRA_PATH = "/join-with-existing-lra";
-    public static final String JOIN_WITH_EXISTNG_LRA_PATH2 = "/join-with-existing-lra2";
+    public static final String JOIN_WITH_EXISTING_LRA_PATH = "/join-with-existing-lra";
+    public static final String JOIN_WITH_EXISTING_LRA_PATH2 = "/join-with-existing-lra2";
     public static final String JOIN_WITH_NEW_LRA_PATH = "/join-with-new-LRA";
     public static final String COMPLETED_CNT_PATH = "/completed-count";
     public static final String COMPENSATED_CNT_PATH = "/compensated-count";
@@ -147,14 +147,14 @@ public class ParticipatingTckResource {
     // if this resource path is invoked outside of a LRA then, since this JAX-RS resoruce is annotated
     // as a participant, the implementation MUST report a PRECONDITION_FAILED status
     @PUT
-    @Path(ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH)
+    @Path(ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response joinWithExistingLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return Response.ok().build();
     }
 
     @PUT
-    @Path(ParticipatingTckResource.JOIN_WITH_EXISTNG_LRA_PATH2)
+    @Path(ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH2)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response joinWithExistingLRA2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return Response.ok().build();

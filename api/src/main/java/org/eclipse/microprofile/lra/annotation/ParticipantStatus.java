@@ -27,7 +27,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
  * participant state model:
  *
  * The initial state Active is entered when a participant is first
- * associated with a Long Runing Action.
+ * associated with a Long Running Action.
  *
  * The state Compensating is entered when a compensate
  * notification is received (which indicates that the associated

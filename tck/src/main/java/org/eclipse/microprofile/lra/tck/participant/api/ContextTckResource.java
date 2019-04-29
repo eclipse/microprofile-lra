@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.SUPPORTS_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
@@ -62,6 +63,7 @@ public class ContextTckResource {
 
     public static final String NEW_LRA_PATH = "/new-lra";
     public static final String REQUIRED_LRA_PATH = "/required-lra";
+    public static final String NESTED_LRA_PATH = "/nested-lra";
     // resource path for testing that context on outbound and inbound calls made from an
     // method annotated with @LRA are spec compliant
     public static final String CONTEXT_CHECK_LRA_PATH = "/context-check-lra";
@@ -93,6 +95,7 @@ public class ContextTckResource {
     private static class LRAMetric {
         String lraId;
         Map<String, AtomicInteger> metrics = Stream.of(
+                new AbstractMap.SimpleEntry<>(LRA.Type.NESTED.name(), new AtomicInteger(0)),
                 new AbstractMap.SimpleEntry<>(Complete.class.getName(), new AtomicInteger(0)),
                 new AbstractMap.SimpleEntry<>(Compensate.class.getName(), new AtomicInteger(0)),
                 new AbstractMap.SimpleEntry<>(Status.class.getName(), new AtomicInteger(0)),
@@ -203,6 +206,14 @@ public class ContextTckResource {
         return Response.ok().entity(lraId).build();
     }
 
+    @LRA(value = LRA.Type.NESTED, end = false)
+    @PUT
+    @Path(NESTED_LRA_PATH)
+    public Response nestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRA,
+                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parentLRA) {
+        return Response.ok().entity(nestedLRA + "," + parentLRA).build();
+    }
+
     // test that outgoing calls do not affect the calling context
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
@@ -259,9 +270,13 @@ public class ContextTckResource {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent)
             throws NotFoundException {
         incrementMetric(Compensate.class.getName(), lraId);
+        if (parent != null) {
+            incrementMetric(LRA.Type.NESTED.name(), parent);
+        }
 
         return getEndPhaseResponse(false);
     }
@@ -269,9 +284,13 @@ public class ContextTckResource {
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent)
             throws NotFoundException {
         incrementMetric(Complete.class.getName(), lraId);
+        if (parent != null) {
+            incrementMetric(LRA.Type.NESTED.name(), parent);
+        }
 
         return getEndPhaseResponse(true);
     }
@@ -279,8 +298,12 @@ public class ContextTckResource {
     @Status
     @GET
     @Path(STATUS_PATH)
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent) {
         incrementMetric(Status.class.getName(), lraId);
+        if (parent != null) {
+            incrementMetric(LRA.Type.NESTED.name(), parent);
+        }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();
     }
@@ -288,8 +311,12 @@ public class ContextTckResource {
     @Forget
     @DELETE
     @Path("/forget")
-    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent) {
         incrementMetric(Forget.class.getName(), lraId);
+        if (parent != null) {
+            incrementMetric(LRA.Type.NESTED.name(), parent);
+        }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();
     }

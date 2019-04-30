@@ -505,10 +505,10 @@ the method finishes and the `end = true` element on the confirmTrip method force
 [[compensating-activities]]
 ==== Compensating Activities
 
-The application developer indicates which JAX-RS method to use for a compensating
-activity by annotating it with both the `@Compensate` and the JAX-RS `@PUT` annotations.
+The application developer indicates which method to use for a compensating
+activity by annotating it with the `@Compensate` annotation.
 Whenever the associated resource is invoked in the context of
-an LRA the endpoint corresponding to the `@Compensate` method MUST be enlisted with
+an LRA the method corresponding to the `@Compensate` method MUST be enlisted with
 the LRA. If the LRA is subsequently cancelled then the compensation method MUST be invoked.
 
 The specification does not mandate when this method is invoked
@@ -530,17 +530,17 @@ An example of how to use this annoation is:
   }
 ----
 
-The resource class MAY also contain a method marked with the `@Complete` and the
-JAX-RS `@PUT` annotations. If such a method is present then the method MUST
-be invoked when the associated LRA is closed. Again, the specification does
-not MANDATE when the method is called, just that it will eventually be invoked.
-Typically the resource would use this call to perform any clean up actions. The
-method is optional since such clean up actions may not be necessary,
-for example consider a system that just tracks hotel reservations and has operations
-for booking a room or cancelling the reservation (`@Compensate`). Since this system
-is passive, once a room is booked, it does not make any difference if the LRA is
-completed or not: the room will be unavailable for others. If it receives a call
-to `@Compensate` then it will free the room. But it won't do anything on `@complete`.
+The resource class MAY also contain a method marked with the `@Complete` annotation. 
+If such a method is present then the method MUST be invoked when the associated LRA 
+is closed. Again, the specification does not MANDATE when the method is called, 
+just that it will eventually be invoked. Typically the resource would use this call 
+to perform any clean up actions. The method is optional since such clean up actions 
+may not be necessary, for example consider a system that just tracks hotel reservations 
+and has operations for booking a room or cancelling the reservation (`@Compensate`). 
+Since this system is passive, once a room is booked, it does not make any difference 
+if the LRA is completed or not: the room will be unavailable for others. If it receives 
+a call to `@Compensate` then it will free the room. But it won't do anything on 
+`@Complete`.
 
 If the participant successfully compensates or completes then it may forget about
 the LRA. Otherwise it should remember that it is still associated with the LRA and
@@ -555,10 +555,143 @@ of these methods. If it knows it will never be able to compensate or complete th
 it MUST remember the fact until explicitly told that it can clean up by providing
 a method annotated with `@Forget` (the requirement is marked MUST because message
 delivery is not guaranteed in a distributed system).
-The forget method MUST be annotated with the JAX-RS `@DELETE` annotation.
 
 If there is no `@Status` then the `@Compensate` or `@Complete` methods will continue
 to be invoked until the implementation knows it has the final status.
+
+If the `@Compensate` or `@Complete` annotation is present on multiple methods
+then an arbitrary one is chosen. 
+
+The javadoc for the <<source-Compensate,Compensate annotation>> provides
+more details about this annotation. 
+
+Similarly, the javadoc for the <<source-Complete,Complete annotation>>
+provides details about the `@Complete` annotation. 
+
+==== Participant marker annotations method signatures
+
+The participant marker annotations are annotations that allow users to mark a method 
+for the execution by the LRA implementation according to the <<participant-state-model,
+the participant state model>>. These annotations are: 
+
+* `@Compensate` -- a method to be executed when the LRA is cancelled
+* `@Complete` -- a method to be executed when the LRA is closed
+* `@Status` -- a method that allow user to state status of the participant with regards 
+to a paricular LRA
+* `@Forget` -- a method to be executed when the LRA allows participant to 
+clear all associated information
+
+This specification differentiates two types of participant method definitions -- 
+methods associated with the JAX-RS resource method or the methods which are not 
+bound to JAX-RS. 
+
+[[jaxrs-participant-methods]]
+===== JAX-RS participant methods
+
+The following table presents expectations that are placed on individual participant 
+annotations when associated with JAX-RS resource methods:
+
+[[jaxrs-response-table]]
+|===
+| Annotation | HTTP method | Expected status codes | Response
+
+| `@Compensate`
+| PUT
+| 200, 202, 404, 412
+| <<source-ParticipantStatus,ParticipantStatus>>
+
+| `@Complete`
+| PUT
+| 200, 202, 404, 412
+| <<source-ParticipantStatus,ParticipantStatus>>
+
+| `@Status`
+| GET
+| 200, 202, 404, 412
+| <<source-ParticipantStatus,ParticipantStatus>>
+
+| `@Forget`
+| DELETE
+| 200, 404, 412
+| no expectations
+
+|=== 
+
+If the participant annotation is not accompanied by an associated JAX-RS HTTP method 
+annotation according to the <<jaxrs-response-table,table above>>, the error SHOULD be reported using a JAX-RS 
+exception mapper that maps to a `412 Precondition Failed` HTTP status code.
+
+[[non-jaxrs-participant-methods]]
+===== Non-JAX-RS participant methods
+
+When the participant annotations are applied to the non-JAX-RS resource methods they 
+MUST adhere to these predefined signatures:
+
+* *Return type*: 
+** `void`: successfull execution is mapped to `Compensated` or `Completed` participant statuses, 
+ error execution is handled by <<non-jax-rs-exceptions, exceptions>> thrown in the participant method
+*** not applicable for `@Status` participant methods
+** <<source-ParticipantStatus,ParticipantStatus>>
+** `javax.ws.rs.core.Response`: handled similarly as for 
+<<jaxrs-participant-methods, JAX-RS participant methods>>
+** `java.util.concurrent.CompletionStage`: with the parameter of any of the previously 
+defined types
+* *Arguments*: up to 2 arguments of types in this order:
+** `java.net.URI`: representing current LRA context identification
+** `java.net.URI`: representing potentional parent LRA context identification
+
+Declaring more than two arguments, different types of arguments or different return type 
+for any non-JAX-RS method annotatated with the participant marker annotation MUST result 
+in the deployment time `InvalidLRAParticipantDefinitionException`. 
+Please note that both arguments are optional but the order is required. This means that 
+if only one argument is provided this argument will contain the value of the current 
+active LRA context (not the parent LRA context in case of nested LRA).
+
+Examples of valid signatures:
+
+[source,java]
+----
+@Compensate
+public void compensate(URI lraId, URI parentId)
+
+@Complete
+public Response complete(URI lraId)
+
+@Status
+public CompletionStage<ParticipantStatus> status(URI lraId)
+----
+
+Examples of invalid signatures:
+
+[source,java]
+----
+@Compensate
+public void compensate(String lraId, String parentId) // invalid types of arguments
+
+@Compensate
+public String compensate(URI lraId) // invalid return type
+
+@Forget
+public void forget(URI lraId, URI parentId, String additional) // too many arguments
+----
+
+[[non-jax-rs-exceptions]]
+If any of the described methods throws an exception, we distinguish two cases depending 
+on the exception type:
+
+* `WebApplicationException` -- the exception is mapped to the HTTP response it carries 
+and then handled as defined in the section 
+<<jaxrs-participant-methods, JAX-RS participant methods>>
+* any other exception 
+** @Compensate and @Complete - results into `FailedToCompensate` or `FailedToComplete`  
+participant states
+** @Status and @Forget - as the participant may have already compensated (or completed) 
+or may in the process of compensation (completion) the exception in these methods should 
+result into failure condition (in JAX-RS this condition is represented by 
+500 return HTTP status code) which individual interpretation is left further unspecified.
+
+[[eventual-compensations]]
+==== Eventual compensations
 
 [[async-compensators]]
 If the resource cannot perform a compensation activity
@@ -573,21 +706,6 @@ The `@Status` method, if present, MUST report the progress of the compensation.
 
 Similarly if it cannot perform a completion activity immediately.
 
-If the `@Compensate` or `@Complete` annotation is present on multiple methods
-then an arbitrary one is chosen. If the annotation is not accompanied by
-a JAX-RS `@PUT` annotation the error SHOULD be reported using a JAX-RS
-exception mapper that maps to a `412 Precondition Failed` HTTP status code.
-
-footnote:[issue #15 (Provide an annotation to supply opaque data during
-participant registration) allows participants to register opaque data when
-joining with an LRA. This data is made available to the completion and
-compensation callbacks]
-
-The javadoc for the <<source-Compensate,Compensate annotation>> provides
-more details about this annotation. 
-
-Similarly, the javadoc for the <<source-Complete,Complete annotation>>
-provides details about the `@Complete` annotation. 
 
 [[nesting-lras]]
 ==== Nesting LRAs
@@ -713,7 +831,9 @@ report the status according to the
 
 If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `404 Not Found`
-HTTP status code. This enables the participant to free up resources.
+HTTP status code or in the case of non-JAX-RS method returning 
+<<source-ParticipantStatus,ParticipantStatus>> `null`. 
+This enables the participant to free up resources.
 
 [[forgetting-an-lra]]
 ==== Forgetting an LRA
@@ -723,8 +843,7 @@ If a participant is unable to complete or compensate immediately
 in progress) or because of a failure (i.e. will never be able to finish)
 then it must remember the fact (by reporting its' status via the
 `@Status` method) until explicitly told that it can clean up
-using this `@Forget` annotation. The forget annotation must be a
-standard JAX-RS endpoint annotated with the JAX-RS `@DELETE` annotation.
+using this `@Forget` annotation.
 
 This requirement ensures that the implementation will be able to guarantee
 the expectations of the LRA protocol under various failure conditions.

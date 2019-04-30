@@ -20,29 +20,16 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 
@@ -89,56 +76,17 @@ import static org.junit.Assert.assertTrue;
  * </ul>
  */
 @RunWith(Arquillian.class)
-public class TckLRATypeTests {
+public class TckLRATypeTests extends TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
-
-    @Rule public TestName testName = new TestName();
-
-    @Inject
-    private LraTckConfigBean config;
-
-    private LRAClientOps lraClient;
-
-    private static Client tckSuiteClient;
-
-    private WebTarget tckSuiteTarget;
-
+    
     @Deployment(name = "lra-type-tck-tests")
     public static WebArchive deploy() {
-        String archiveName = TckLRATypeTests.class.getSimpleName().toLowerCase();
-        return ShrinkWrap
-            .create(WebArchive.class, archiveName + ".war")
-            .addPackages(true, "org.eclipse.microprofile.lra.tck")
-            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
-    }
-    
-    @AfterClass
-    public static void afterClass() {
-        if(tckSuiteClient != null) {
-            tckSuiteClient.close();
-        }
-    }
-
-    @Before
-    public void before() {
-        LOGGER.info("Running test: " + testName.getMethodName());
-        setUpTestCase();
-
-        try {
-            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
-            lraClient = new LRAClientOps(tckSuiteTarget);
-        } catch (MalformedURLException mfe) {
-            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
-        }
+        return deploy(TckLRATypeTests.class.getSimpleName().toLowerCase());
     }
 
     @After
     public void after() {
         lraClient.cleanUp(LOGGER, testName.getMethodName());
-    }
-
-    private void setUpTestCase() {
-        tckSuiteClient = ClientBuilder.newClient();
     }
 
     // enum to indicate which checks to perform on the expected and actual active LRA after running a resource method
@@ -338,20 +286,5 @@ public class TckLRATypeTests {
         } finally {
             response.close();
         }
-    }
-
-    /**
-     * The started LRA will be named based on the class name and the running test name.
-     */
-    private String lraClientId() {
-        return this.getClass().getSimpleName() + "#" + testName.getMethodName();
-    }
-
-    /**
-     * Adjusting the default timeout by the specified timeout factor
-     * which can be defined by user.
-     */
-    private long lraTimeout() {
-        return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
     }
 }

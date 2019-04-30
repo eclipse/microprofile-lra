@@ -36,18 +36,35 @@ import java.lang.annotation.Target;
  * or compensation notification but if the participant (the class that
  * contains the Compensate and Complete annotations) does not
  * support idempotency then it must be able to report its' status by
- * by annotating one of the methods with this <em>@Status</em> annotation
- * together with the <em>@GET</em> JAX-RS annotation.
+ * by annotating one of the methods with this <em>@Status</em>.
  * The annotated method should report the status according to one of the
  * {@link ParticipantStatus} enum values.
  *
+ * If the annotated method is a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
+ * this LRA is nested then the parent LRA MUST be present in the header with the name
+ * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}.
+ *
+ * If the annotated method is not a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by adhering to a predefined method signature as
+ * defined in the LRA specification document. Similarly the method may determine
+ * whether or not it runs with a nested LRA by providing a parameter to hold the parent id.
+ * For example,
+ * <pre>
+ *     <code>
+ *          &#64;Status
+ *          public void status(URI lraId, URI parentId) { ...}
+ *     </code>
+ * </pre>
+ * would be a valid status method declaration. If an invalid signature is detected 
+ * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
+ * will be thrown during the application startup.
+ *
  * If the participant has already responded successfully to an invocation
  * of the <em>@Compensate</em> or <em>@Complete</em> method then it may
- * report <em>404 Not Found</em> HTTP status code. This enables the
- * participant to free up resources.
- *
- * The id of the currently running LRA can be obtained by inspecting the
- * incoming JAX-RS headers.
+ * report <em>404 Not Found</em> HTTP status code or in case of 
+ * non-JAX-RS method returning {@link ParticipantStatus} to return <em>null</em>. 
+ * This enables the participant to free up resources.
  *
  * Since the participant generally needs to know the id of the LRA in order
  * to report its status there is generally no benefit to combining this

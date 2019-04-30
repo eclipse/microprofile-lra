@@ -37,14 +37,29 @@ import java.time.temporal.ChronoUnit;
  * If the annotation is present on more than one method then an arbitrary one
  * will be chosen.
  *
- * The id of the currently running LRA can be obtained by inspecting the incoming
- * JAX-RS headers. If this LRA is nested then the parent LRA MUST be present
- * in the header with the name
+ * If the annotated method is a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
+ * this LRA is nested then the parent LRA MUST be present in the header with the name
  * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}.
+ *
+ * If the annotated method is not a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by adhering to a predefined method signature as
+ * defined in the LRA specification document. Similarly the method may determine
+ * whether or not it runs with a nested LRA by providing a parameter to hold the parent id.
+ * For example,
+ * <pre>
+ *     <code>
+ *          &#64;Complete
+ *          public void complete(URI lraId, URI parentId) { ...}
+ *     </code>
+ * </pre>
+ * would be a valid completion method declaration. If an invalid signature is detected 
+ * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
+ * will be thrown during the application startup.
  *
  * Note that, according to the state model {@link LRAStatus} once an LRA has been
  * asked to close it is no longer possible to join with it as a participant.
- * Therefore combining this annotation with an `@LRA` annotation that does not
+ * Therefore in JAX-RS, combining this annotation with an `@LRA` annotation that does not
  * start a new LRA will result in a `412 PreCondition Failed` status code and is
  * not advised. On the other hand, combining it with an `@LRA` annotation that
  * begins a new LRA can in certain use case make sense, but in this case the LRA

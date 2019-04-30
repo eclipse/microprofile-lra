@@ -168,9 +168,9 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testParentContextAvailable() {
         // start an LRA
-        String topLevelLRA = invoke(NEW_LRA_PATH, PUT, null);
+        String topLevelLRA = invoke(false, NEW_LRA_PATH, PUT, null);
         // start a nested LRA
-        String result = invoke(NESTED_LRA_PATH, PUT, topLevelLRA);
+        String result = invoke(false, NESTED_LRA_PATH, PUT, topLevelLRA);
         // the resource method should return the nested LRA and the top level LRA separated by a comma
         assertTrue(result.contains(","));
         assertEquals(testName.getMethodName() + ": wrong parent LRA", topLevelLRA, result.split(",")[1]);
@@ -178,21 +178,21 @@ public class TckContextTests extends TckTestBase {
         String nestedLRA = result.split(",")[0];
 
         // end the top level LRA
-        invoke(REQUIRED_LRA_PATH, PUT, topLevelLRA);
+        invoke(false, REQUIRED_LRA_PATH, PUT, topLevelLRA);
 
         // check that the resource was asked to complete twice, one in the context of the nested LRA and a
         // second time in the context of the top level LRA
 
-        String nestedCompletions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, nestedLRA);
+        String nestedCompletions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, nestedLRA);
         assertEquals(testName.getMethodName() + ": resource should have completed for the nested LRA",
                 "1", nestedCompletions);
 
-        String topLevelCompletions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, topLevelLRA);
+        String topLevelCompletions = invoke(false, METRIC_PATH + "/" + Complete.class.getName(), GET, topLevelLRA);
         assertEquals(testName.getMethodName() + ": resource should have completed for the top level LRA",
                 "1", topLevelCompletions);
 
         // and validate that the parent LRA header was present when the nested LRA was asked to complete
-        String endCallsWithParentContextHeaderPresent = invoke(METRIC_PATH + "/" + LRA.Type.NESTED.name(),
+        String endCallsWithParentContextHeaderPresent = invoke(false, METRIC_PATH + "/" + LRA.Type.NESTED.name(),
                 GET, topLevelLRA);
         assertEquals(testName.getMethodName() +
                         ": when the resource was asked to complete a nested LRA the parent context header was missing",

@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -45,12 +46,14 @@ import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResourc
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LRA_TCK_FAULT_TYPE_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LRA_TCK_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.METRIC_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.NESTED_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.NEW_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.REQUIRED_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.RESET_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.STATUS_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.TCK_CONTEXT_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * test that Compensate, Complete, Status, Forget and Leave annotations work without an LRA annotation
@@ -122,7 +125,6 @@ public class TckContextTests extends TckTestBase {
         // verify that the resource was not asked to complete
         String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
 
-
         assertEquals(testName.getMethodName() + ": Resource left but was still asked to complete",
                 "0", completions);
     }
@@ -156,6 +158,45 @@ public class TckContextTests extends TckTestBase {
         // the implementation should call forget since it knows the participant status
         count = invoke(false, METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
         assertEquals(testName.getMethodName() + " resource forget should have been called", "1", count);
+    }
+
+    /*
+     * test that the parent context is available when:
+     * - a method executes with a nested LRA
+     * - when a participant callback is invoked
+     */
+    @Test
+    public void testParentContextAvailable() {
+        // start an LRA
+        String topLevelLRA = invoke(NEW_LRA_PATH, PUT, null);
+        // start a nested LRA
+        String result = invoke(NESTED_LRA_PATH, PUT, topLevelLRA);
+        // the resource method should return the nested LRA and the top level LRA separated by a comma
+        assertTrue(result.contains(","));
+        assertEquals(testName.getMethodName() + ": wrong parent LRA", topLevelLRA, result.split(",")[1]);
+
+        String nestedLRA = result.split(",")[0];
+
+        // end the top level LRA
+        invoke(REQUIRED_LRA_PATH, PUT, topLevelLRA);
+
+        // check that the resource was asked to complete twice, one in the context of the nested LRA and a
+        // second time in the context of the top level LRA
+
+        String nestedCompletions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, nestedLRA);
+        assertEquals(testName.getMethodName() + ": resource should have completed for the nested LRA",
+                "1", nestedCompletions);
+
+        String topLevelCompletions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, topLevelLRA);
+        assertEquals(testName.getMethodName() + ": resource should have completed for the top level LRA",
+                "1", topLevelCompletions);
+
+        // and validate that the parent LRA header was present when the nested LRA was asked to complete
+        String endCallsWithParentContextHeaderPresent = invoke(METRIC_PATH + "/" + LRA.Type.NESTED.name(),
+                GET, topLevelLRA);
+        assertEquals(testName.getMethodName() +
+                        ": when the resource was asked to complete a nested LRA the parent context header was missing",
+                "1", endCallsWithParentContextHeaderPresent);
     }
 
     // invoke a method in an LRA context which performs various outgoing calls checking that the notion of active context

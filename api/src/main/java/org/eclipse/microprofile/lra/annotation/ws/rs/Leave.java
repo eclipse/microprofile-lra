@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  * from the incoming context and will be enlisted with the new context (and the method
  * will execute with this new context). Note that in this case the context exposed in
  * the `LRA_HTTP_CONTEXT_HEADER` JAX-RS header will be set to the new LRA (and not the original
- * one), ie the orignal context will not be available to the business logic.
+ * one), ie the original context will not be available to the business logic.
  * </p>
  *
  * <p>
@@ -60,7 +60,7 @@ import java.lang.annotation.Target;
  * Leaving a particular LRA has no effect on any other LRA - ie the same
  * resource can be enlisted with many different LRAs and leaving one
  * particular LRA will not affect its participation in any of the other
- * LRA's it has joined.
+ * LRAs it has joined.
  * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)

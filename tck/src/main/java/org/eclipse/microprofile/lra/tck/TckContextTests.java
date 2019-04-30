@@ -69,16 +69,16 @@ public class TckContextTests extends TckTestBase {
     @Before
     public void before() {
         super.before();
-        invoke(RESET_PATH, HttpMethod.PUT, null, 200, null, 200);
+        invoke(false, RESET_PATH, HttpMethod.PUT, null, 200, null, 200);
     }
 
     @Test
     public void testBasicContextPropagation() {
-        String lra = invoke(NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
-        invoke(REQUIRED_LRA_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        String lra = invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        invoke(false, REQUIRED_LRA_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         // verify that the resource was asked to complete
-        String completions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
 
         assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
                 Integer.toString(1), completions);
@@ -87,40 +87,40 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testStatus() throws InterruptedException {
         // call a resource that begins and ends an LRA and coerces the resource to return ACCEPTED when asked to complete
-        String lra = invoke(REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202);
+        String lra = invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202);
 
-        // verfiy that the resource was asked to complete and is in the state Completing
-        String status = invoke(STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
+        // verify that the resource was asked to complete and is in the state Completing
+        String status = invoke(true, STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completing", ParticipantStatus.Completing.name(), status);
 
         // clear the EndPhase override data so that the next status request returns completed or compensated
-        invoke(STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        invoke(false, STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         // trigger a replay of the end phase
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
-        // and verify that the resoure was asked to complete
-        status = invoke(STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        // and verify that the resource was asked to complete
+        status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completed", ParticipantStatus.Completed.name(), status);
     }
 
     @Test
     public void testLeave() {
         // call a resource that begins but does not end an LRA
-        String lra = invoke(NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
-        // verfiy that the resource is active
-        String status = invoke(STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        String lra = invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        // verify that the resource is active
+        String status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         assertEquals(testName.getMethodName() + ": participant is not active", ParticipantStatus.Active.name(), status);
 
         // ask the resource to leave the active LRA
-        invoke(LEAVE_PATH, PUT, lra);
+        invoke(false, LEAVE_PATH, PUT, lra);
 
         // end the LRA via a different resource since using the same one will re-enlist it
         lraClient.closeLRA(lra);
 
         // verify that the resource was not asked to complete
-        String completions = invoke(METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
 
 
         assertEquals(testName.getMethodName() + ": Resource left but was still asked to complete",
@@ -131,30 +131,30 @@ public class TckContextTests extends TckTestBase {
     public void testForget() throws InterruptedException {
         String count;
         // call a resource that begins and ends an LRA and coerces the resource to return FAILED when asked to complete
-        String lra = invoke(REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 500);
+        String lra = invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 500);
 
         // trigger a replay attempt
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // the implementation should have called status which will have returned 500
-        count = invoke(METRIC_PATH + "/" + Status.class.getName(), GET, lra);
+        count = invoke(true, METRIC_PATH + "/" + Status.class.getName(), GET, lra);
         assertEquals(testName.getMethodName() + " resource status should have been called", "1", count);
 
-        // the implementation should not call forget until it knows the particpant status
-        count = invoke(METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
+        // the implementation should not call forget until it knows the participant status
+        count = invoke(false, METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
         assertEquals(testName.getMethodName() + " resource forget should not have been called", "0", count);
 
         // clear the fault
-        invoke(STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
+        invoke(false, STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
 
         // trigger a replay of the end phase
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // the implementation should have called status again which will have returned 200
-        count = invoke(METRIC_PATH + "/" + Status.class.getName(), GET, lra);
+        count = invoke(false, METRIC_PATH + "/" + Status.class.getName(), GET, lra);
         assertEquals(testName.getMethodName() + " resource status should have been called again", "2", count);
-        // the implementation should call forget since it knows the particpant status
-        count = invoke(METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
+        // the implementation should call forget since it knows the participant status
+        count = invoke(false, METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
         assertEquals(testName.getMethodName() + " resource forget should have been called", "1", count);
     }
 
@@ -162,14 +162,14 @@ public class TckContextTests extends TckTestBase {
     // conforms with what is written in the specification
     @Test
     public void testContextAfterRemoteCalls() {
-        invoke(CONTEXT_CHECK_LRA_PATH, PUT, null);
+        invoke(false, CONTEXT_CHECK_LRA_PATH, PUT, null);
     }
 
-    private String invoke(String where, HttpMethod method, String lraContext) {
-        return invoke(where, method, lraContext, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+    private String invoke(boolean delay, String where, HttpMethod method, String lraContext) {
+        return invoke(delay, where, method, lraContext, 200, ContextTckResource.EndPhase.SUCCESS, 200);
     }
 
-    private String invoke(String where, HttpMethod method, String lraContext, int expectStatus,
+    private String invoke(boolean delay, String where, HttpMethod method, String lraContext, int expectStatus,
                           ContextTckResource.EndPhase finishWith, int finishStatus) {
         WebTarget resourcePath = tckSuiteTarget.path(TCK_CONTEXT_RESOURCE_PATH).path(where);
         Invocation.Builder builder = resourcePath.request()
@@ -181,6 +181,10 @@ public class TckContextTests extends TckTestBase {
             builder.header(LRA_TCK_HTTP_CONTEXT_HEADER, lraContext);
         } else {
             builder.header(LRA_HTTP_CONTEXT_HEADER, lraContext);
+        }
+
+        if (delay) {
+            applyConsistencyDelay();
         }
 
         switch (method) {

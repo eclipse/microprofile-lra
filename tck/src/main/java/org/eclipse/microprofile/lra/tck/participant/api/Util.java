@@ -94,9 +94,9 @@ public class Util {
 
         if (asyncTermination[0] && !paths.containsKey(STATUS) && !paths.containsKey(FORGET)) {
             LOGGER.log(Level.WARNING, "LRA participant class "
-                    + compensatorClass + " with asynchronous temination but no @Status or @Forget annotations");
+                    + compensatorClass + " with asynchronous termination but no @Status or @Forget annotations");
             throw new GenericLRAException(null, Response.Status.BAD_REQUEST.getStatusCode(),
-                    "LRA participant class with asynchronous temination but no @Status or @Forget annotations", null);
+                    "LRA participant class with asynchronous termination but no @Status or @Forget annotations", null);
         }
 
         StringBuilder linkHeaderValue = new StringBuilder();

@@ -417,9 +417,9 @@ public class LraController {
         try {
             Thread.sleep(300); // sleep for longer than specified in the timeLimit annotation attribute
         } catch (InterruptedException e) {
-            LOGGER.log(Level.FINE, "Interrupted becaused time limit elapsed", e);
+            LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }
-        return Response.status(Response.Status.OK).entity(Entity.text("Simulate buisiness logic timeoout")).build();
+        return Response.status(Response.Status.OK).entity(Entity.text("Simulate business logic timeoout")).build();
     }
 
     /**

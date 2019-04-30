@@ -28,11 +28,14 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * When a resource method executes in the context of an LRA and if the containing
- * class contains a method annotated with `@Complete` then the resource will
- * be used as a participant for the LRA. If this associated LRA is subsequently
- * closed then the method that this annotation is applied to will be invoked
- * (if the annotation is present on more than one method then an arbitrary one
- * will be chosen).
+ * class contains a method annotated with `@Compensate` then the resource will
+ * be used as a participant for the LRA. If, in addition, it also contains a method
+ * annotated with `@Complete` then the method will be invoked when the associated
+ * LRA is later closed. The spec makes no guarantees about when it will be invoked,
+ * just that is will eventually be called.
+ *
+ * If the annotation is present on more than one method then an arbitrary one
+ * will be chosen.
  *
  * The id of the currently running LRA can be obtained by inspecting the incoming
  * JAX-RS headers. If this LRA is nested then the parent LRA MUST be present

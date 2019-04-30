@@ -130,7 +130,20 @@ public class TckTestBase {
     }
 
     /**
-     * Trigger or wait for a recovery scan to replay the protocol termination phase (complete or compenstate)
+     * @see LraTckConfigBean#consistencyDelay
+     */
+    void applyConsistencyDelay() {
+        if (config.getConsistencyDelay() > 0) {
+            try {
+                Thread.sleep(config.getConsistencyDelay());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Trigger or wait for a recovery scan to replay the protocol termination phase (complete or compensate)
      * on a participant that is in need of recovery.
      *
      * @param resource the resource on which recovery should be replayed. If null then recovery
@@ -144,7 +157,7 @@ public class TckTestBase {
          * The following variable is for keeping track of the number of completion calls made
          * on the resource (TCK_PARTICIPANT_RESOURCE_PATH). It is initialised with the value 2
          * and then passed to the resource. We then loop asking the resource to report its
-         * current value. The resouce will decrement the value each time it is asked to complete.
+         * current value. The resource will decrement the value each time it is asked to complete.
          * When the return value hits zero we will know that recovery has happened.
          */
         int recoveryPasses = 2; // 1 for the normal end call and 2 for the recovery pass call

@@ -36,7 +36,7 @@ public interface LRAParticipant extends Serializable {
      * @param lraId the LRA that is closing
      * @return null if the participant completed successfully. If the participant
      *         cannot complete immediately it should return a future that the caller
-     *         can useto monitor progress. If the JVM crashes before the participant
+     *         can used to monitor progress. If the JVM crashes before the participant
      *         can finish it should expect this method to be called again. If the
      *         participant fails to complete it must cancel the future or throw a
      *         TerminationException.

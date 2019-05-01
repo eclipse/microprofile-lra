@@ -39,12 +39,18 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,6 +73,10 @@ public class ContextTckResource {
     // resource path for testing that context on outbound and inbound calls made from an
     // method annotated with @LRA are spec compliant
     public static final String CONTEXT_CHECK_LRA_PATH = "/context-check-lra";
+    public static final String ASYNC_LRA_PATH1 = "async-response-lra";
+    public static final String ASYNC_LRA_PATH2 = "completion-stage-lra";
+    public static final String ASYNC_LRA_PATH3 = "completion-stage-exceptionally-lra";
+
     public static final String LEAVE_PATH = "/leave";
     // resource path for reading and writing the participant status
     public static final String STATUS_PATH = "/status";
@@ -241,6 +251,63 @@ public class ContextTckResource {
         assertEquals("contextCheck4: after calling a remote service the active LRAs is different", active, getActiveLRA());
 
         return Response.ok().entity(lraId).build();
+    }
+
+    @LRA(value = LRA.Type.REQUIRED)
+    @PUT
+    @Path(ASYNC_LRA_PATH1)
+    public void async1LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                         final @Suspended AsyncResponse ar) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
+        try {
+            es.submit(() -> {
+                // excecute long running business activity and resume when done
+                ar.resume(Response.ok().entity(lraId).build());
+            });
+        } finally {
+            es.shutdown();
+        }
+    }
+
+    @LRA(value = LRA.Type.REQUIRED)
+    @PUT
+    @Path(ASYNC_LRA_PATH2)
+    public CompletionStage<Response> async2LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        final CompletableFuture<Response> response = new CompletableFuture<>();
+
+        try {
+            es.submit(() -> {
+                // excecute long running business activity and resume when done
+                response.complete(Response.ok().entity(lraId).build());
+            });
+        } finally {
+            es.shutdown();
+        }
+
+        return response;
+    }
+
+    @LRA(value = LRA.Type.REQUIRED)
+    @PUT
+    @Path(ASYNC_LRA_PATH3)
+    public CompletionStage<Response> async3LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        final CompletableFuture<Response> response = new CompletableFuture<>();
+
+        try {
+            es.submit(() -> {
+                // excecute long running business activity finishing with an error
+                // code of NOT_FOUND which causes the LRA to cancel
+                response.completeExceptionally(
+                        new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
+            });
+        } finally {
+            es.shutdown();
+        }
+
+        return response;
     }
 
     /**

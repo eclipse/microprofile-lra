@@ -29,7 +29,7 @@
     <description>Eclipse MicroProfile LRA Feature - API</description>
 
     <properties>
-        <version.jaxrs-api>2.0</version.jaxrs-api>
+        <version.jaxrs-api>2.1</version.jaxrs-api>
         <version.cdi-api>1.0-SP1</version.cdi-api>
     </properties>
 

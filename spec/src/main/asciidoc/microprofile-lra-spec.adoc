@@ -560,6 +560,7 @@ The forget method MUST be annotated with the JAX-RS `@DELETE` annotation.
 If there is no `@Status` then the `@Compensate` or `@Complete` methods will continue
 to be invoked until the implementation knows it has the final status.
 
+[[async-compensators]]
 If the resource cannot perform a compensation activity
 immediately the `@Compensate` method SHOULD do one or more of the following:
 
@@ -730,6 +731,107 @@ the expectations of the LRA protocol under various failure conditions.
 Only when the implementation is certain that participant has finished
 will it tell it that it is okay to release any resources it associated
 with the LRA.
+
+[[reactive-support]]
+==== Reactive Support
+
+Implementations are expected to operate correctly when services use the
+asychronous and reactive features provided by JAX-RS.
+
+It has already been noted that
+<<async-compensators,participant completion and compensation callbacks>>
+can execute asynchronously but the same must also be true for the business
+methods that execute in the context of an LRA. It is the responsibility
+of the implementation to ensure that JAX-RS asynchronous features
+continue to behave in the presence of these LRAs. The following
+example shows a resource invocation that runs in the context of a
+long running action and uses a Java 8 completion stage to return
+an asynchronous response:
+
+[source,java]
+----
+    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
+         end = true) // the LRA must end when the method completes
+    @Path("completion-stage-lra")
+    public CompletionStage<Response> asyncInvocationWithLRA(
+        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) { // the id of LRA
+
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        final CompletableFuture<Response> response = new CompletableFuture<>();
+
+        try {
+            es.submit(() -> {
+                // excecute a long running business activity and resume when done
+                ...
+                response.complete(Response.ok().entity(lraId).build());
+                // since the response is complete the implemention will
+                // close the LRA thereby invoking any registered participant
+                // completion handlers
+            });
+        } finally {
+            es.shutdown();
+        }
+
+        return response;
+    }
+----
+
+With completion stages it is also possible to complete exceptionally. The
+following example should run business logic asynchronously in the context
+of an LRA but the LRA should be cancelled: forcing any registered
+participant compensation handlers to run:
+
+[source,java]
+----
+    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
+         end = true, // the LRA must end when the method completes
+         cancelOn = {Response.Status.NOT_FOUND}) // cancel on a 404 code
+    @Path("completion-stage-exceptionally-lra")
+    public CompletionStage<Response> asyncInvocationWithException(
+        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        final CompletableFuture<Response> response = new CompletableFuture<>();
+
+        try {
+            es.submit(() -> {
+                // excecute long running business activity finishing with a NOT_FOUND error
+                // which causes the LRA to cancel
+                response.completeExceptionally(
+                        new WebApplicationException(
+                            Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
+            });
+        } finally {
+            es.shutdown();
+        }
+
+        return response;
+    }
+----
+
+In addition to the use of completion stages, a resource method may also produce
+asynchronous responses by injecting a JAX-RS `AsyncResponse` parameter using
+the JAX-RS `@Suspended` annotation:
+
+[source,java]
+----
+    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
+         end = true) // the LRA must end when the method completes
+    @Path("asyncresponse-lra")
+    public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+                         final @Suspended AsyncResponse ar) {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+
+        try {
+            es.submit(() -> {
+                // excecute long running business activity and resume when done
+                ar.resume(Response.ok().entity(lraId).build());
+            });
+        } finally {
+            es.shutdown();
+        }
+    }
+----
 
 [[failure-resilience]]
 ==== Recovery Requirements

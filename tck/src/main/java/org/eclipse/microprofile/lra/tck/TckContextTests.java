@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
@@ -40,6 +41,9 @@ import javax.ws.rs.core.Response;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.TckContextTests.HttpMethod.GET;
 import static org.eclipse.microprofile.lra.tck.TckContextTests.HttpMethod.PUT;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH1;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH2;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH3;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.CONTEXT_CHECK_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LEAVE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LRA_TCK_FAULT_CODE_HEADER;
@@ -204,6 +208,43 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testContextAfterRemoteCalls() {
         invoke(false, CONTEXT_CHECK_LRA_PATH, PUT, null);
+    }
+
+    @Test
+    public void testAsync1Support() {
+        String lra = invoke(false, ASYNC_LRA_PATH1, PUT, null);
+
+        // verify that the resource was asked to complete
+        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+
+        assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
+                Integer.toString(1), completions);
+    }
+
+    @Test
+    public void testAsync2Support() {
+        String lra = invoke(false, ASYNC_LRA_PATH2, PUT, null);
+
+        // verify that the resource was asked to complete
+        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+
+        assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
+                Integer.toString(1), completions);
+    }
+
+    @Test
+    public void testAsync3Support() {
+        // invoke an async resource that throws an exception which cancels the LRA
+        String lra = invoke(true, ASYNC_LRA_PATH3, PUT, null, 404, ContextTckResource.EndPhase.SUCCESS, 200);
+
+        // verify that the resource was asked to compensate
+        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        String compensations = invoke(false, METRIC_PATH + "/" + Compensate.class.getName(), GET, lra);
+
+        assertEquals(testName.getMethodName() + ": Resource was asked to complete",
+                Integer.toString(0), completions);
+        assertEquals(testName.getMethodName() + ": Resource was not asked to compensate",
+                Integer.toString(1), compensations);
     }
 
     private String invoke(boolean delay, String where, HttpMethod method, String lraContext) {

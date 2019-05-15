@@ -33,9 +33,7 @@ import java.lang.annotation.Target;
  * in progress) or because of a failure (ie will never be able to finish)
  * then it must remember the fact (by reporting it when asked for its'
  * {@link Status})) until explicitly told that it can clean
- * up using this <em>@Forget</em> annotation. The annotated method
- * must be a standard JAX-RS endpoint annotated with the JAX-RS
- * <em>@DELETE</em> annotation.
+ * up using this <em>@Forget</em> annotation.
  *
  * A similar remark applies if the participant was enlisted in a
  * nested LRA {@link LRA#value()}. Actions performed in the context
@@ -43,10 +41,26 @@ import java.lang.annotation.Target;
  * is explicitly told it can clean up using this <em>@Forget</em>
  * annotation.
  *
- * The id of the currently running LRA can be obtained by inspecting the
- * incoming JAX-RS headers. If this LRA is nested then the parent LRA
- * MUST be present in the header with the name
+ * If the annotated method is a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
+ * this LRA is nested then the parent LRA MUST be present in the header with the name
  * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}.
+ *
+ * If the annotated method is not a JAX-RS resource method the id of the currently
+ * running LRA can be obtained by adhering to a predefined method signature as
+ * defined in the LRA specification document. Similarly the method may determine
+ * whether or not it runs with a nested LRA by providing a parameter to hold the parent id.
+ * For example,
+ * <pre>
+ *     <code>
+ *          &#64;Forget
+ *          public void forget(URI lraId, URI parentId) { ...}
+ *     </code>
+ * </pre>
+ * would be a valid forget method declaration. If an invalid signature is detected 
+ * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
+ * will be thrown during the application startup.
+ *
  *
  * Since the participant generally needs to know the id of the LRA in order
  * to clean up there is generally no benefit to combining this annotation

@@ -236,14 +236,8 @@ when the right subset of work (LRAs) is arrived at by the application
 will that subset be confirmed; all other LRAs will be told to cancel
 (complete in a failure state).
 
-In the rest of this proposal we specify two different APIs for
-controlling the life cycle of and participation in LRAs and a third API
-for writing participants:
-
-1.  <<java-annotations-for-lras,Java Annotations for LRAs>> for controlling
-the life cycle and membership of LRAs
-2.  <<java-based-lra-participant-registration-api,Java based LRA participant registration API>>
-to support services that do not use JAX-RS
+In the rest of this proposal we specify an API for
+controlling the life cycle of and participation in LRAs:
 
 [[java-annotations-for-lras]]
 === Java Annotations for LRAs
@@ -966,87 +960,6 @@ survive system failures. The specification is not prescriptive about how
 an implementation achieves resiliency provided that it obeys the requirements
 of the specification as laid out in this document.
 
-[[java-based-lra-participant-registration-api]]
-=== Java based LRA participant registration API
-
-If an application does not directly expose JAX-RS endpoints for
-compensation activities then participants can join an LRA directly using an instance of
-<<source-LRAManagement,LRAManagement>>
-(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/participant[github link]).
-This interface requires that a participant be a Java class conforming to the
-<<source-LRAParticipant,LRAParticipant interface>>
-(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/participant[github link]).
-
-When an LRA is closed or cancelled the implementation [of this specification] is responsible
-for invoking LRAParticipant completion or compensation
-callbacks on any participants that were registered via the `LRAManagement#joinLRA` method.
-
-How the application obtains an LRAManagement instance is unspecified
-(but CDI injection could be an obvious choice). For example, the following code listing
-shows how to inject instances of the API and how to perform work in the context of an LRA:
-
-[source,java]
-----
-@Path("/")
-public class UnannotatedParticpant implements LRAParticipant {
-    @Inject
-    private LRAManagement lraManagement;
-
-    public void doInTransaction() throws JoinLRAException
-    {
-        // start a new LRA with an unlimited timeout
-        // by invoking a suitable JAX-RS resource method annotated
-        // with @LRA(value = LRA.Type.REQUIRES_NEW, end = false)
-        ...
-
-        // Join the LRA as a participant.
-        lraManagement.joinLRA(this, lraId, 0L, ChronoUnit.SECONDS);
-
-        // do something interesting
-
-        // close the LRA by invoking a suitable JAX-RS resource method
-        // annotated with, for example,
-        //  @LRA(value = LRA.Type.SUPPORTS, end = true)
-        // This will cause the completion call back to be invoked
-        ...
-
-        // the completeWork method will have been invoked at this point
-    }
-
-    // the callback that will be invoked if the LRA is closed
-    @Override
-    public Future<Void> completeWork(URI lraId)
-        throws NotFoundException, TerminationException
-    {
-        return null;
-    }
-
-    // the callback that will be invoked if the LRA is cancelled
-    @Override
-    public Future<Void> compensateWork(URI lraId)
-        throws NotFoundException, TerminationException
-    {
-        return null;
-    }
-}
-----
-
-The framework must guarantee that participants will still be triggered (the LRA protocol still provides the "all or
-nothing" guarantees that traditional transactions give).
-This means that an implementation for all JAX-RS resources which implement the _LRAParticipant_ interface directly
-or indirectly, MUST create some proxy which can be called by the spec implementation. +
-This is to ensure that after this class has joined an LRA (through the _lraManagement.joinLRA()_ ) the _complete_ or
-_compensate_ methods can be called by the spec implementation in case the microservice crashed before this notification could
-be delivered.
-
-Serializable participants need to know how to contact the original
-business application in order to trigger compensation activities whereas
-a JAX-RS based solution need only persist resource paths which are likely
-to correspond to existing microservice endpoints. In other words, from
-an administrative and manageability point of view, it may be simpler to
-use one of the other APIs such as the <<java-annotations-for-lras,Java
-Annotations for LRAs>>.
-
 [[appendix-1]]
 == Appendix 1: Selected Javadoc API Descriptions
 
@@ -1082,19 +995,5 @@ include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Complete.java[Leave
 [[source-ParticipantStatus]]
 ----
 include::{sourcedir}/org/eclipse/microprofile/lra/annotation/ParticipantStatus.java/[ParticipantStatus]
-----
-<<<
-
-=== LRAManagement
-[[source-LRAManagement]]
-----
-include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAManagement.java[LRAManagement]
-----
-<<<
-
-=== LRAParticipant
-[[source-LRAParticipant]]
-----
-include::{sourcedir}/org/eclipse/microprofile/lra/participant/LRAParticipant.java[LRAParticipant]
 ----
 <<<

@@ -849,7 +849,17 @@ with the LRA.
 ==== Reactive Support
 
 Implementations are expected to operate correctly when services use the
-asychronous and reactive features provided by JAX-RS.
+asynchronous and reactive features provided by JAX-RS. In particular the
+implementation has no control over which thread the service logic uses
+to do its work, therefore asynchronous operations may complete on any of:
+
+- the caller thread;
+- a managed thread;
+- an unmanaged thread.
+
+Furthermore, both the service writer and implementation should be
+aware that the actual thread used to perform the operation may be used
+by several requests running concurrently.
 
 It has already been noted that
 <<async-compensators,participant completion and compensation callbacks>>
@@ -863,29 +873,24 @@ an asynchronous response:
 
 [source,java]
 ----
-    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
-         end = true) // the LRA must end when the method completes
-    @Path("completion-stage-lra")
-    public CompletionStage<Response> asyncInvocationWithLRA(
-        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) { // the id of LRA
-
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        final CompletableFuture<Response> response = new CompletableFuture<>();
-
-        try {
-            es.submit(() -> {
-                // excecute a long running business activity and resume when done
-                ...
-                response.complete(Response.ok().entity(lraId).build());
-                // since the response is complete the implemention will
-                // close the LRA thereby invoking any registered participant
-                // completion handlers
-            });
-        } finally {
-            es.shutdown();
-        }
-
-        return response;
+    @LRA(value = LRA.Type.REQUIRED,  // the method must run with an LRA
+            end = true, // the LRA must end when the method completes
+            cancelOnFamily = Response.Status.Family.SERVER_ERROR, // cancel LRA on any 5xx code
+            cancelOn = NOT_FOUND) // cancel LRA on 404
+    @Path("async-path")
+    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    try {
+                        // a long running operation with lraId
+                        ...
+                        return Response.ok().entity(lraId).build();
+                    } catch (BusinessException ex) {
+                        return Response.status(NOT_FOUND).entity(lraId).build();
+                    }
+                },
+                getExcecutorService()
+        );
     }
 ----
 
@@ -903,20 +908,15 @@ participant compensation handlers to run:
     public CompletionStage<Response> asyncInvocationWithException(
         @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
 
-        ExecutorService es = Executors.newSingleThreadExecutor();
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
-        try {
-            es.submit(() -> {
-                // excecute long running business activity finishing with a NOT_FOUND error
-                // which causes the LRA to cancel
-                response.completeExceptionally(
-                        new WebApplicationException(
-                            Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
-            });
-        } finally {
-            es.shutdown();
-        }
+        excecutorService.submit(() -> {
+            // excecute long running business activity finishing with a NOT_FOUND error
+            // which causes the LRA to cancel
+            response.completeExceptionally(
+                    new WebApplicationException(
+                        Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
+        });
 
         return response;
     }
@@ -933,16 +933,74 @@ the JAX-RS `@Suspended` annotation:
     @Path("asyncresponse-lra")
     public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                          final @Suspended AsyncResponse ar) {
-        ExecutorService es = Executors.newSingleThreadExecutor();
+        excecutorService.submit(() -> {
+            // excecute long running business activity and resume when done
+            ar.resume(Response.ok().entity(lraId).build());
+        });
+    }
+----
 
-        try {
-            es.submit(() -> {
-                // excecute long running business activity and resume when done
-                ar.resume(Response.ok().entity(lraId).build());
-            });
-        } finally {
-            es.shutdown();
-        }
+The previous use cases required a Java executor service, but it is also
+possible to use other asynchronous API's. The next snippet shows
+an LRA consuming an async API using an AWS S3 client:
+
+[source,xml]
+----
+    <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>s3</artifactId>
+        <version>2.0.0-preview-5</version>
+    </dependency>
+----
+
+[source,java]
+----
+    S3AsyncClient client = S3AsyncClient.create();
+
+    @LRA(value = LRA.Type.REQUIRED, end = true)
+    @Path("completion-stage-lra")
+    public CompletionStage<PutObjectResponse> asyncInvocationWithLRA(
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+
+        return client.putObject(
+                PutObjectRequest.builder()
+                        .bucket("aws-bucket")
+                        .key("keyfile.in")
+                        .build(),
+                AsyncRequestProvider.fromFile(Paths.get("myfile.in"))
+        ).whenComplete((r, e) -> {
+            if (e == null) {
+                Response.ok().entity(lraId).build();
+            } else {
+                Response.status(INTERNAL_SERVER_ERROR).entity(lraId).build());
+            }
+        });
+    }
+
+----
+
+And finally, here is an example of how to run a non JAX-RS compensation asynchronously:
+
+[source,java]
+----
+    @Compensate
+    public CompletionStage<ParticipantStatus> compensate(final URI lraId) {
+        // the compensation includes two long running operations:
+        CompletableFuture<Void> memUpdate = CompletableFuture.runAsync((() -> {/* ... */}));
+        CompletableFuture<Void> dbUpdate = CompletableFuture.runAsync((() -> {/* ... */}));
+
+        CompletableFuture<Boolean> stage1 = memUpdate.handle((s, e) -> e == null);
+        CompletableFuture<Boolean> stage2 = dbUpdate.handle((s, e) -> e == null);
+
+        return stage1.thenCombine(stage2, (b1, b2) -> {
+            if (b1 && b2) {
+                // the memory and db updates finished successfully so report success
+                return Compensated;
+            }
+
+            // otherwise report that there was a compensation failure
+            return FailedToCompensate;
+        });
     }
 ----
 

@@ -27,6 +27,8 @@ import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -55,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.SUPPORTS_PATH;
@@ -94,6 +97,8 @@ public class ContextTckResource {
     public static final String LRA_TCK_HTTP_CONTEXT_HEADER = "Lra-Tck-Context";
 
     private static final String REQUIRES_NEW_LRA_PATH = "/requires-new-lra";
+
+    private ExecutorService excecutorService;
 
     /**
      * A class to hold all of the metrics gathered in the context of a single LRA.
@@ -169,6 +174,22 @@ public class ContextTckResource {
             endPhase = EndPhase.valueOf(faultType);
             endPhaseStatus = Response.Status.fromStatusCode(faultCode);
         }
+    }
+
+
+    @PostConstruct
+    private void postConstruct() {
+        excecutorService = Executors.newFixedThreadPool(1);
+
+    }
+
+    @PreDestroy
+    private void preDestroy() {
+        excecutorService.shutdown();
+    }
+
+    private ExecutorService getExcecutorService() {
+        return excecutorService;
     }
 
     // reset any state in preparation for the next test
@@ -258,54 +279,44 @@ public class ContextTckResource {
     @Path(ASYNC_LRA_PATH1)
     public void async1LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                          final @Suspended AsyncResponse ar) {
-        ExecutorService es = Executors.newSingleThreadExecutor();
-
-        try {
-            es.submit(() -> {
-                // excecute long running business activity and resume when done
-                ar.resume(Response.ok().entity(lraId).build());
-            });
-        } finally {
-            es.shutdown();
-        }
+        excecutorService.submit(() -> {
+            // excecute long running business activity and resume when done
+            ar.resume(Response.ok().entity(lraId).build());
+        });
     }
 
-    @LRA(value = LRA.Type.REQUIRED)
+    @LRA(value = LRA.Type.REQUIRED,  // the method must run with an LRA
+            end = true, // the LRA must end when the method completes
+            cancelOnFamily = Response.Status.Family.SERVER_ERROR, // cancel LRA on any 5xx code
+            cancelOn = NOT_FOUND) // cancel LRA on 404
     @PUT
     @Path(ASYNC_LRA_PATH2)
-    public CompletionStage<Response> async2LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        ExecutorService es = Executors.newSingleThreadExecutor();
-        final CompletableFuture<Response> response = new CompletableFuture<>();
-
-        try {
-            es.submit(() -> {
-                // excecute long running business activity and resume when done
-                response.complete(Response.ok().entity(lraId).build());
-            });
-        } finally {
-            es.shutdown();
-        }
-
-        return response;
+    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return CompletableFuture.supplyAsync(
+                () -> {
+                    try {
+                        Thread.sleep(10);
+                        return Response.ok().entity(lraId).build();
+                    } catch (InterruptedException ex) {
+                        return Response.status(NOT_FOUND).entity(lraId).build();
+                    }
+                },
+                getExcecutorService()
+        );
     }
 
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
     @Path(ASYNC_LRA_PATH3)
     public CompletionStage<Response> async3LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        ExecutorService es = Executors.newSingleThreadExecutor();
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
-        try {
-            es.submit(() -> {
-                // excecute long running business activity finishing with an error
-                // code of NOT_FOUND which causes the LRA to cancel
-                response.completeExceptionally(
-                        new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
-            });
-        } finally {
-            es.shutdown();
-        }
+        excecutorService.submit(() -> {
+            // excecute long running business activity finishing with an error
+            // code of NOT_FOUND which causes the LRA to cancel
+            response.completeExceptionally(
+                    new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
+        });
 
         return response;
     }

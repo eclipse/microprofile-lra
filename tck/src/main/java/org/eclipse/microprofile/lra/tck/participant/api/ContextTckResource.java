@@ -33,10 +33,10 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
@@ -280,7 +280,8 @@ public class ContextTckResource {
         return Response.ok().entity(lraId).build();
     }
 
-    @PUT
+    // Compensate methods SHOULD use @PUT but to verify that other HTTP methods are also supported use here HTTP GET
+    @GET
     @Path("/compensate")
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
@@ -294,7 +295,8 @@ public class ContextTckResource {
         return getEndPhaseResponse(false);
     }
 
-    @PUT
+    // Complete methods SHOULD use @PUT but to verify that other HTTP methods are also supported use here HTTP POST
+    @POST
     @Path("/complete")
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
@@ -308,9 +310,10 @@ public class ContextTckResource {
         return getEndPhaseResponse(true);
     }
 
-    @Status
-    @GET
+    // Status methods SHOULD use @GET but to verify that other HTTP methods are also supported use here HTTP PUT
+    @PUT
     @Path(STATUS_PATH)
+    @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
@@ -321,9 +324,10 @@ public class ContextTckResource {
         return Response.status(endPhaseStatus).entity(status.name()).build();
     }
 
-    @Forget
-    @DELETE
+    // Forget methods SHOULD use @DELETE but to verify that other HTTP methods are also supported use here HTTP PUT
+    @PUT
     @Path("/forget")
+    @Forget
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.FORGET, lraId);

@@ -90,9 +90,7 @@ public class ParticipatingTckResource {
     }
 
     private Response getEndPhaseResponse(boolean complete) {
-        if (recoveryPasses > 0) {
-            recoveryPasses -= 1;
-
+        if (--recoveryPasses > 0) {
             return Response.accepted().build();
         }
 

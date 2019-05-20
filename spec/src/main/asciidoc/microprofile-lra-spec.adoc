@@ -615,6 +615,10 @@ If the participant annotation is not accompanied by an associated JAX-RS HTTP me
 annotation according to the <<jaxrs-response-table,table above>>, the error SHOULD be reported using a JAX-RS 
 exception mapper that maps to a `412 Precondition Failed` HTTP status code.
 
+Users are allowed to reuse existing JAX-RS endpoints for participant methods definitions. 
+In this case, LRA implementation MUST ensure that invoking these methods outside of the 
+implementation of the LRA specification will not influence any running LRA.
+
 [[non-jaxrs-participant-methods]]
 ===== Non-JAX-RS participant methods
 

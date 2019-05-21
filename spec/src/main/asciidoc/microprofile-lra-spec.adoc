@@ -684,6 +684,10 @@ or may in the process of compensation (completion) the exception in these method
 result into failure condition (in JAX-RS this condition is represented by 
 500 return HTTP status code) which individual interpretation is left further unspecified.
 
+In case the implementation of this specification exposes non-JAX-RS participant methods 
+to be able to call them externally (e.g. the HTTP proxy) then it MUST protect every 
+exposed method from unauthorized access. The specific security details are not specified.
+
 [[eventual-compensations]]
 ==== Eventual compensations
 

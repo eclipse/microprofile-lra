@@ -109,3 +109,9 @@ Debugging is dependent on the TCK implementor. The implementor configures Arquil
 to deploy the test deployments and run the LRA client side implementation there. In general we can say that
 the runtime needs to define java debug properties `-Xdebug -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y`.
 Then debugger may be connected to port 8787 and to track the test execution.
+
+== Additional notes
+
+* `TckTestBase#replayEndPhase(String)` method, used for instance in `@Status` and 
+`@Forget` call verifications, expects that recovery happens on all active LRAs in 
+a reasonable time frame defined by the configuration property `lra.tck.recovery.timeout`.

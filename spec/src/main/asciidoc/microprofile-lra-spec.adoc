@@ -414,8 +414,9 @@ or closed (`@Complete` is invoked):
 @ApplicationScoped
 public class SimpleLRAParticipant
 {
-    @Path("/cdi")
     @LRA(LRA.Type.REQUIRES_NEW)
+    @Path("/cdi")
+    @PUT
     public void doInTransaction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
     {
         /*
@@ -427,9 +428,9 @@ public class SimpleLRAParticipant
          */
     }
 
-    @PUT
-    @Path("/complete")
     @Complete
+    @Path("/complete")
+    @PUT
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                  String userData)
     {
@@ -443,9 +444,9 @@ public class SimpleLRAParticipant
          return Response.ok(ParticipantStatus.Completed.name()).build();
     }
 
-    @PUT
-    @Path("/compensate")
     @Compensate
+    @Path("/compensate")
+    @PUT
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                    String userData)
     {
@@ -473,8 +474,6 @@ returns the particular HTTP status codes identified in the `cancelOn` and
 
 [source,java]
 ----
-  @POST
-  @Path("/book")
   @LRA(value = LRA.Type.REQUIRED, // if there is no incoming context a new one is created
        cancelOn = {
            Response.Status.INTERNAL_SERVER_ERROR // cancel on a 500 code
@@ -483,12 +482,14 @@ returns the particular HTTP status codes identified in the `cancelOn` and
            Response.Status.Family.CLIENT_ERROR // cancel on any 4xx code
        },
        end = false) // the LRA will continue to run when the method finishes
+  @Path("/book")
+  @POST
   public Response bookTrip(...) { ... }
 
-  @PUT
-  @Path("/confirm")
   @LRA(LRA.Type.SUPPORTS, // if there is an incoming context then it used as the active context
        end = true) // end the LRA started by the bookTrip method
+  @Path("/confirm")
+  @PUT
   public Booking confirmTrip(Booking booking) throws BookingException { ... }
 ----
 
@@ -499,29 +500,138 @@ the method finishes and the `end = true` element on the confirmTrip method force
 [[compensating-activities]]
 ==== Compensating Activities
 
+As remarked elsewhere, the LRA specification attempts to enforce some of the traditional
+guarantees provided by transactional systems such as atomicity (all or nothing)
+whilst relaxing others, such as isolation of work amongst participants. The characteristic
+of strong consistency of data (the system can only be observed to transition between
+consistent states) is also relaxed in favour of what is referred to as `eventual
+consistency`. The LRA specification ensures atomicity and eventual consistency by
+placing certain requirements on the entities that participate in the protocol
+which we now discuss (further details of these responsibilities can be found in
+the javadoc for the participant annotations).
+
 The application developer indicates which method to use for a compensating
-activity by annotating it with the `@Compensate` annotation.
+activity by marking it with the `@Compensate` annotation.
 Whenever the associated resource is invoked in the context of
-an LRA the method corresponding to the `@Compensate` method MUST be enlisted with
-the LRA. If the LRA is subsequently cancelled then the compensation method MUST be invoked.
+an LRA the method corresponding to this `@Compensate` method MUST be enlisted with
+the LRA: enlistment means that if the LRA is subsequently cancelled then the compensation
+method MUST be invoked.
 
 The specification does not mandate when this method is invoked
-but it does guarantee that it will eventually be called. Under failure
-conditions the system will keep retrying until it is certain that the
+but it does guarantee that it will eventually be called (this is the precise
+meaning of the term `eventual consistency` as used in this specification).
+Under failure conditions the system will keep retrying until it is certain that the
 participant has been successfully notified.
 
-An example of how to use this annoation is:
+The LRA model is quite flexible in how business methods perform compensations.
+If a compensating activity is brief then the synchronous model may be appropriate:
 
 [source,java]
 ----
-  @PUT
-  @Path("/compensate")
-  @Compensate
-  public Response compensateWork(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId)
-  {
-    // compensate for whatever activity the business logic has associated with lraId
-    return Response.ok(ParticipantStatus.Compensated.name()).build();
-  }
+    @Compensate
+    @Path("/compensate")
+    @PUT
+    public Response compensatePreviousAction(
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        getActivity(lraId).setCompensated();
+
+        return Response.ok();;
+    }
+----
+
+On the other hand, the compensating logic may involve concerted activities,
+perhaps even compensating in the context of another LRA. In this case the
+protocol accomodates a more decoupled mode of operation - the following example
+shows how a compensating activity can be started in the background:
+
+[source,java]
+----
+    @Compensate
+    @Path("/compensate")
+    @PUT
+    public Response compensatePreviousAction(
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        ActivityClient client = getActivity(lraId).getResourceForCompensation();
+        String backgroundActivity = client.compensate(lraId);
+        ...
+        return Response.accepted().build();
+    }
+----
+
+Here the business logic reports that the compensation is in progress by returning
+the `202 Accepted` HTTP status code. Of course the system must still guarantee
+atomic outcomes so the participant is responsible for reporting when it has
+finished compensating: it may do this by allowing the compensation method
+to be called multiple times in the context of the same LRA until the final state
+is known. But if the method `compensatePreviousAction` should not be called a
+second time (ie it is not idempotent) then the participant has the option of
+reporting its` progress using the `@Status` annotation:
+
+[source,java]
+----
+    @Status
+    @Path("/status")
+    @GET
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        if (isFinished(lraId))
+            return Response.ok().entity(ParticipantStatus.Compensated).build();
+        else
+            return Response.ok().entity(ParticipantStatus.Compensating).build();
+    }
+----
+
+Notice that in this code example the participant is reporting progress using
+the appropriate `ParticipantStatus` enum according to the <<participant-state-model,the
+participant state model>>.
+
+But what if the business logic is unable to compensate for a previous action?
+In this case the participant must remember that it was unable to compensate
+by reporting `FailedToCompensate` either via the compensate method, for example
+
+[source,java]
+----
+    @Compensate
+    @Path("/compensate")
+    @PUT
+    public Response compensatePreviousAction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        if (isFailed(lraId))
+              return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
+        ...
+    }
+----
+
+or it can report the failure via the `@Status` method:
+
+[source,java]
+----
+    @Status
+    @Path("/status")
+    @GET
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        if (isFailed(lraId))
+            return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
+        ...
+    }
+----
+
+In the successful case the participant SHOULD clean up any resources it allocated in the
+context of the LRA. Any requests (including the current one) made in the context of the
+same LRA MAY return a `404 Not Found` status code.
+
+In the failure case the participant is responsible for remembering that it failed until
+it is explicitly told that it can clean up via the `@Forget` method:
+
+[source,java]
+----
+    @Forget
+    @Path("/forget")
+    @DELETE
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        if (isFailed(lraId))
+            cleanupResources(lraId);
+
+        return Response.ok().build();
+    }
 ----
 
 The resource class MAY also contain a method marked with the `@Complete` annotation. 
@@ -539,7 +649,7 @@ a call to `@Compensate` then it will free the room. But it won't do anything on
 If the participant successfully compensates or completes then it may forget about
 the LRA. Otherwise it should remember that it is still associated with the LRA and
 it MUST report the status of the association using one of the values in the
-`ParticipantStatus` enum according to to the <<participant-state-model,the
+`ParticipantStatus` enum according to the <<participant-state-model,the
 participant state model>>. If the compensation and completion methods are not
 idempotent then there MUST be a method annotated with `@Status` which reports the
 status. Otherwise the compensation and completion methods should return the status.
@@ -614,6 +724,8 @@ annotations when associated with JAX-RS resource methods:
 If the participant annotation is not accompanied by an associated JAX-RS HTTP method 
 annotation according to the <<jaxrs-response-table,table above>>, the error SHOULD be reported using a JAX-RS 
 exception mapper that maps to a `412 Precondition Failed` HTTP status code.
+If the annotated method returns an unexpected HTTP status code the implementation MAY
+invoke the same method again.
 
 [[non-jaxrs-participant-methods]]
 ===== Non-JAX-RS participant methods
@@ -732,9 +844,9 @@ for the duration of the bookFlight method.
     @Inject
     private FlightService service;
 
+    @LRA(LRA.Type.NESTED)
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.NESTED)
     public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                               @QueryParam("flightNumber") String flightNumber) {
         return service.book(lraId, flightNumber);
@@ -753,10 +865,10 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
 
 [source,java]
 ----
-  @GET
-  @Path("/doitASAP")
-  @Produces(MediaType.APPLICATION_JSON)
   @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
+  @Path("/doitASAP")
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
   public Response theClockIsTicking(
       @HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {...}
 ----
@@ -772,9 +884,9 @@ indicate that its' ability to compensate is limited to 100 milliseconds could be
 
 [source,java]
 ----
-    @PUT
-    @Path("/compensate")
     @Compensate(timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
+    @Path("/compensate")
+    @PUT
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                                  String userData) { ... }
 ----
@@ -799,9 +911,9 @@ An example of this annotation is shown next:
 
 [source,java]
 ----
-    @PUT
-    @Path("/leave")
     @Leave
+    @Path("/leave")
+    @PUT
     public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
       // clean up since this participant is no longer associated with the LRA
     }
@@ -878,6 +990,7 @@ an asynchronous response:
             cancelOnFamily = Response.Status.Family.SERVER_ERROR, // cancel LRA on any 5xx code
             cancelOn = NOT_FOUND) // cancel LRA on 404
     @Path("async-path")
+    @POST
     public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         return CompletableFuture.supplyAsync(
                 () -> {
@@ -905,6 +1018,7 @@ participant compensation handlers to run:
          end = true, // the LRA must end when the method completes
          cancelOn = {Response.Status.NOT_FOUND}) // cancel on a 404 code
     @Path("completion-stage-exceptionally-lra")
+    @POST
     public CompletionStage<Response> asyncInvocationWithException(
         @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
 
@@ -931,6 +1045,7 @@ the JAX-RS `@Suspended` annotation:
     @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
          end = true) // the LRA must end when the method completes
     @Path("asyncresponse-lra")
+    @POST
     public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
                          final @Suspended AsyncResponse ar) {
         excecutorService.submit(() -> {
@@ -959,6 +1074,7 @@ an LRA consuming an async API using an AWS S3 client:
 
     @LRA(value = LRA.Type.REQUIRED, end = true)
     @Path("completion-stage-lra")
+    @POST
     public CompletionStage<PutObjectResponse> asyncInvocationWithLRA(
             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
 

@@ -29,6 +29,8 @@ import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -53,11 +55,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
@@ -78,14 +78,14 @@ public class LraController {
 
     private static final String MISSING_LRA_DATA = "Missing LRA data";
 
-    private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
-    private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
-
     @Context
     private UriInfo context;
 
     @Inject
     private ActivityStorage activityStore;
+
+    @Inject
+    private LRAMetricService lraMetricService;
 
     /**
      * Performing a GET on the participant URL will return the current status of the
@@ -142,7 +142,7 @@ public class LraController {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
         throws NotFoundException {
-        COMPLETED_COUNT.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, URI.create(lraId), LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Complete methods
 
@@ -174,7 +174,7 @@ public class LraController {
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensate methods
 
-        COMPENSATED_COUNT.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, URI.create(lraId), LraController.class.getName());
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -200,7 +200,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
     public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        COMPLETED_COUNT.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, URI.create(lraId), LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
 
@@ -390,22 +390,6 @@ public class LraController {
     }
 
     @GET
-    @Path("/completedactivitycount")
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response getCompletedCount() {
-        return Response.ok(COMPLETED_COUNT.get()).build();
-    }
-
-    @GET
-    @Path("/compensatedactivitycount")
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response getCompensatedCount() {
-        return Response.ok(COMPENSATED_COUNT.get()).build();
-    }
-
-    @GET
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
@@ -419,7 +403,7 @@ public class LraController {
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }
-        return Response.status(Response.Status.OK).entity(Entity.text("Simulate business logic timeoout")).build();
+        return Response.status(Response.Status.OK).entity(lraId).build();
     }
 
     /**
@@ -495,16 +479,6 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     public String compensatedStatus(@PathParam("LRAId") String lraId) {
         return ParticipantStatus.Compensated.name();
-    }
-
-    private static URI lraToURI(String lraId, String errorMessage) {
-        try {
-            return new URI(lraId);
-        } catch (URISyntaxException e) {
-            LOGGER.log(Level.WARNING, "Can't construct URI from LRA id '" + lraId + "'", e);
-            throw new GenericLRAException(null, Response.Status.BAD_REQUEST.getStatusCode(),
-                    errorMessage + ": LRA id '" + lraId + "'", e);
-        }
     }
 
     private void assertHeaderPresent(String lraId) {

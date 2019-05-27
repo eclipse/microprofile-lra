@@ -19,37 +19,34 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH;
-import static org.junit.Assert.assertEquals;
+import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.net.URI;
+
+import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Arquillian.class)
 public class TckCancelOnTests extends TckTestBase {
-    private int beforeCompletedCount;
-    private int beforeCompensatedCount;
 
+    @Inject
+    private LRAMetricService lraMetricService;
+    
     @Deployment(name = "tcktests-cancelon")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckCancelOnTests.class.getSimpleName().toLowerCase());
-    }
-
-    @Before
-    public void before() {
-        super.before();
-
-        this.beforeCompletedCount = getCompletedCount();
-        this.beforeCompensatedCount = getCompensateCount(false);
     }
 
     private WebTarget getSuiteTarget() {
@@ -57,100 +54,111 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault4xx()}
+     * See {@link LraCancelOnController#cancelOnFamilyDefault4xx(String)}
      */
     @Test
     public void cancelOnFamilyDefault4xx() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_4XX).request().get();
-        assertEquals("The 400 status response is expected", Status.BAD_REQUEST.getStatusCode(), response.getStatus());
-        assertEquals("After 400 compensate should be invoked", beforeCompensatedCount + 1, getCompensateCount(true));
-        assertEquals("After 400 complete can't be invoked", beforeCompletedCount, getCompletedCount());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_4XX);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.BAD_REQUEST, response, resourcePath));
+        applyConsistencyDelay();
+        assertEquals("After 400 compensate should be invoked", 
+            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+        assertEquals("After 400 complete can't be invoked", 
+            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault5xx()}
+     * See {@link LraCancelOnController#cancelOnFamilyDefault5xx(String)}
      */
     @Test
     public void cancelOnFamilyDefault5xx() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_5XX).request().get();
-        assertEquals("The 500 status response is expected", Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
-        assertEquals("After 500 compensate should be invoked", beforeCompensatedCount + 1, getCompensateCount(true));
-        assertEquals("After 500 complete can't be invoked", beforeCompletedCount, getCompletedCount());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_5XX);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+        applyConsistencyDelay();
+        assertEquals("After 500 compensate should be invoked", 
+            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+        assertEquals("After 500 complete can't be invoked", 
+            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamily3xx()}
+     * See {@link LraCancelOnController#cancelOnFamily3xx(String)}
      */
     @Test
     public void cancelOnFamily3xx() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_ON_FAMILY_3XX).request().get();
-        assertEquals("The 303 status response is expected", Status.SEE_OTHER.getStatusCode(), response.getStatus());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CANCEL_ON_FAMILY_3XX);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.SEE_OTHER, response, resourcePath));
+        applyConsistencyDelay();
         assertEquals("After status code 303 is received, compensate should be invoked as set by attribute cancelOnFamily",
-                beforeCompensatedCount + 1, getCompensateCount(true));
+                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("After status code 303 is received, complete can't be invoked as not defined in annotation @LRA",
-                beforeCompletedCount, getCompletedCount());
+                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOn301()}
+     * See {@link LraCancelOnController#cancelOn301(String)}
      */
     @Test
     public void cancelOn301() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_ON_301).request().get();
-        assertEquals("The 301 status response is expected", Status.MOVED_PERMANENTLY.getStatusCode(), response.getStatus());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CANCEL_ON_301);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.MOVED_PERMANENTLY, response, resourcePath));
+        applyConsistencyDelay();
         assertEquals("After status code 301 is received, compensate should be invoked as set by attribute cancelOn",
-                beforeCompensatedCount + 1, getCompensateCount(true));
+                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("After status code 301 is received, complete can't be invoked as not defined in annotation @LRA",
-                beforeCompletedCount, getCompletedCount());
+                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
-     * See {@link LraCancelOnController#notCancelOnFamily5xx()}
+     * See {@link LraCancelOnController#notCancelOnFamily5xx(String)}
      */
     @Test
     public void notCancelOnFamily5xx() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.NOT_CANCEL_ON_FAMILY_5XX).request().get();
-        assertEquals("The 500 status response is expected", Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.NOT_CANCEL_ON_FAMILY_5XX);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+        applyConsistencyDelay();
         assertEquals("After status code 500 is received, compensate can't be invoked as default behaviour was changed",
-                beforeCompensatedCount, getCompensateCount(true));
+                0, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("After status code 500 is received, complete has to be called as default behaviour was changed",
-                beforeCompletedCount + 1, getCompletedCount());
+                1, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
-     * See {@link LraCancelOnController#cancelFromRemoteCall()}
+     * See {@link LraCancelOnController#cancelFromRemoteCall(String)}
      */
     @Test
     public void cancelFromRemoteCall() {
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL).request().get();
-        assertEquals("The 200 status response is expected", Status.OK.getStatusCode(), response.getStatus());
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
+            .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL);
+        
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.OK, response, resourcePath));
+        applyConsistencyDelay();
         // LraCancelOnController enlists twice the same participant, compensate is expected to be called only once
         assertEquals("Status was 200 but compensate should be called as LRA should be cancelled for remotely called participant as well",
-                beforeCompensatedCount + 1, getCompensateCount(true));
+                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("Even the 200 status was received the remotely called participant should cause the LRA being cancelled",
-                beforeCompletedCount, getCompletedCount());
-    }
-
-    private int getCompletedCount() {
-        // no option to delay the check since all tests call getCompensateCount first
-        // which does have the option to delay
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.COMPLETED_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
-    }
-
-    private int getCompensateCount(boolean delay) {
-        if (delay) {
-            applyConsistencyDelay();
-        }
-        Response response = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                .path(LraCancelOnController.COMPENSATED_COUNT_PATH).request().get();
-        return Integer.valueOf(response.readEntity(String.class));
+                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 }

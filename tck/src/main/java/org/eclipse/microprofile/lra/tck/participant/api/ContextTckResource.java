@@ -26,17 +26,19 @@ import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -46,16 +48,11 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
@@ -100,53 +97,8 @@ public class ContextTckResource {
 
     private ExecutorService excecutorService;
 
-    /**
-     * A class to hold all of the metrics gathered in the context of a single LRA.
-     * We need stats per LRA since a misbehaving test may leave an LRA in need of
-     * recovery which means that the compensate/complete call will continue to be
-     * called when subsequent tests run - ie it is not possible to fully tear down
-     * a failing test.
-     */
-    private static class LRAMetric {
-        String lraId;
-        Map<String, AtomicInteger> metrics = Stream.of(
-                new AbstractMap.SimpleEntry<>(LRA.Type.NESTED.name(), new AtomicInteger(0)),
-                new AbstractMap.SimpleEntry<>(Complete.class.getName(), new AtomicInteger(0)),
-                new AbstractMap.SimpleEntry<>(Compensate.class.getName(), new AtomicInteger(0)),
-                new AbstractMap.SimpleEntry<>(Status.class.getName(), new AtomicInteger(0)),
-                new AbstractMap.SimpleEntry<>(Forget.class.getName(), new AtomicInteger(0)))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-        LRAMetric(String lraId) {
-            this.lraId = lraId;
-        }
-
-        void increment(String metric) {
-            if (metrics.containsKey(metric)) {
-                metrics.get(metric).incrementAndGet();
-            }
-        }
-
-        int get(String metric) {
-            if (metrics.containsKey(metric)) {
-                return metrics.get(metric).get();
-            }
-
-            return -1;
-        }
-
-        void clear() {
-            metrics.forEach((k, v) -> v.set(0));
-        }
-    }
-
-    // maintain metrics on a per LRA basis
-    private Map<String, LRAMetric> metrics = new HashMap<>();
-
-    private void incrementMetric(String name, String lraId) {
-        metrics.putIfAbsent(lraId, new LRAMetric(lraId));
-        metrics.get(lraId).increment(name);
-    }
+    @Inject
+    private LRAMetricService lraMetricService;
 
     /**
      * An enum which controls the behaviour of participant when the
@@ -200,7 +152,7 @@ public class ContextTckResource {
         endPhase = EndPhase.SUCCESS;
         endPhaseStatus = Response.Status.OK;
 
-        metrics.clear();
+        lraMetricService.clear();
 
         return Response.ok().build();
     }
@@ -321,23 +273,6 @@ public class ContextTckResource {
         return response;
     }
 
-    /**
-     * Query the current value of a metric in the context of an LRA
-     * @param lraId the LRA that owns the metric
-     * @param metric the name of the metric
-     * @return the current value of the metric
-     */
-    @GET
-    @Path(METRIC_PATH + "/{metric}")
-    public Response count(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) String lraId,
-                          @PathParam("metric") String metric) {
-        if (metrics.containsKey(lraId)) {
-            return Response.ok(metrics.get(lraId).get(metric)).build();
-        } else {
-            return Response.ok(-1).build();
-        }
-    }
-
     @Leave
     @PUT
     @Path(LEAVE_PATH)
@@ -348,12 +283,12 @@ public class ContextTckResource {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
-                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
             throws NotFoundException {
-        incrementMetric(Compensate.class.getName(), lraId);
+        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
         if (parent != null) {
-            incrementMetric(LRA.Type.NESTED.name(), parent);
+            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
         }
 
         return getEndPhaseResponse(false);
@@ -362,12 +297,12 @@ public class ContextTckResource {
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
-                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
             throws NotFoundException {
-        incrementMetric(Complete.class.getName(), lraId);
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
         if (parent != null) {
-            incrementMetric(LRA.Type.NESTED.name(), parent);
+            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
         }
 
         return getEndPhaseResponse(true);
@@ -376,11 +311,11 @@ public class ContextTckResource {
     @Status
     @GET
     @Path(STATUS_PATH)
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
-                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent) {
-        incrementMetric(Status.class.getName(), lraId);
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+        lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
         if (parent != null) {
-            incrementMetric(LRA.Type.NESTED.name(), parent);
+            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();
@@ -389,11 +324,11 @@ public class ContextTckResource {
     @Forget
     @DELETE
     @Path("/forget")
-    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
-                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parent) {
-        incrementMetric(Forget.class.getName(), lraId);
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+        lraMetricService.incrementMetric(LRAMetricType.FORGET, lraId);
         if (parent != null) {
-            incrementMetric(LRA.Type.NESTED.name(), parent);
+            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();

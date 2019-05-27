@@ -24,27 +24,24 @@ import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
-import static org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant.COMPENSATED_COUNT_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant.COMPLETED_COUNT_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant.STATUS_COUNT_PATH;
 
 /**
  * Valid participant resource containing async non-JAX-RS participant methods with 
@@ -57,25 +54,24 @@ public class ValidLRACSParticipant {
     public static final String ROOT_PATH = "valid-cs-participant1";
     public static final String ENLIST_WITH_COMPLETE = "enlist-complete";
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
-
-    private final AtomicInteger completedCount = new AtomicInteger(0);
-    private final AtomicInteger compensatedCount = new AtomicInteger(0);
-    private final AtomicInteger statusCount = new AtomicInteger(0);
     
     private int recoveryPasses;
+
+    @Inject
+    private LRAMetricService lraMetricService;
 
     @GET
     @Path(ENLIST_WITH_COMPLETE)
     @LRA(value = LRA.Type.REQUIRED)
     public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        return Response.ok().build();
+        return Response.ok(lraId).build();
     }
     
     @GET
     @Path(ENLIST_WITH_COMPENSATE)
     @LRA(value = LRA.Type.REQUIRED, cancelOn = Response.Status.INTERNAL_SERVER_ERROR)
     public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
     @Compensate
@@ -83,7 +79,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.runAsync(() -> {
-            compensatedCount.incrementAndGet();
+            lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
             
             simulateLongRunningCompensation();
         });
@@ -94,7 +90,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            completedCount.incrementAndGet();
+            lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
             
             simulateLongRunningCompensation();
             return Response.accepted().build(); // Completing
@@ -106,7 +102,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            statusCount.incrementAndGet();
+            lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
             
             simulateLongRunningCompensation();
             return ParticipantStatus.Completed;
@@ -120,28 +116,7 @@ public class ValidLRACSParticipant {
             e.printStackTrace();
         }
     }
-
-    @GET
-    @Path(COMPLETED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response completed() {
-        return Response.ok(completedCount.toString()).build();
-    }
     
-    @GET
-    @Path(COMPENSATED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response compensated() {
-        return Response.ok(compensatedCount.toString()).build();
-    }
-
-    @GET
-    @Path(STATUS_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response statusCount() {
-        return Response.ok(statusCount.toString()).build();
-    }
-
     @PUT
     @Path(ACCEPT_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW)

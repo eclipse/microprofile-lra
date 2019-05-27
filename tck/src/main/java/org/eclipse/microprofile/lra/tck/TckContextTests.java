@@ -19,13 +19,10 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -33,13 +30,15 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
+
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.tck.TckContextTests.HttpMethod.GET;
 import static org.eclipse.microprofile.lra.tck.TckContextTests.HttpMethod.PUT;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH1;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH2;
@@ -68,6 +67,9 @@ public class TckContextTests extends TckTestBase {
 
     enum HttpMethod {GET, PUT, POST}
 
+    @Inject
+    private LRAMetricService lraMetricService;
+
     @Deployment(name = "TckContextTests")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckContextTests.class.getSimpleName().toLowerCase());
@@ -81,20 +83,20 @@ public class TckContextTests extends TckTestBase {
 
     @Test
     public void testBasicContextPropagation() {
-        String lra = invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        URI lra = URI.create(invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200));
         invoke(false, REQUIRED_LRA_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         // verify that the resource was asked to complete
-        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        int completions = lraMetricService.getMetric(LRAMetricType.COMPLETE, lra);
 
-        assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
-                Integer.toString(1), completions);
+        assertEquals(testName.getMethodName() + ": Resource was not asked to complete", 
+                1, completions);
     }
 
     @Test
     public void testStatus() throws InterruptedException {
         // call a resource that begins and ends an LRA and coerces the resource to return ACCEPTED when asked to complete
-        String lra = invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202);
+        URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202));
 
         // verify that the resource was asked to complete and is in the state Completing
         String status = invoke(true, STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
@@ -114,7 +116,7 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testLeave() {
         // call a resource that begins but does not end an LRA
-        String lra = invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        URI lra = URI.create(invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200));
         // verify that the resource is active
         String status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
@@ -127,28 +129,28 @@ public class TckContextTests extends TckTestBase {
         lraClient.closeLRA(lra);
 
         // verify that the resource was not asked to complete
-        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        int completions = lraMetricService.getMetric(LRAMetricType.COMPLETE, lra);
 
         assertEquals(testName.getMethodName() + ": Resource left but was still asked to complete",
-                "0", completions);
+                0, completions);
     }
 
     @Test
     public void testForget() throws InterruptedException {
-        String count;
+        int count;
         // call a resource that begins and ends an LRA and coerces the resource to return FAILED when asked to complete
-        String lra = invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 500);
+        URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 500));
 
         // trigger a replay attempt
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // the implementation should have called status which will have returned 500
-        count = invoke(true, METRIC_PATH + "/" + Status.class.getName(), GET, lra);
-        assertEquals(testName.getMethodName() + " resource status should have been called", "1", count);
+        count = lraMetricService.getMetric(LRAMetricType.STATUS, lra);
+        assertEquals(testName.getMethodName() + " resource status should have been called", 1, count);
 
         // the implementation should not call forget until it knows the participant status
-        count = invoke(false, METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
-        assertEquals(testName.getMethodName() + " resource forget should not have been called", "0", count);
+        count = lraMetricService.getMetric(LRAMetricType.FORGET, lra);
+        assertEquals(testName.getMethodName() + " resource forget should not have been called", 0, count);
 
         // clear the fault
         invoke(false, STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
@@ -157,11 +159,11 @@ public class TckContextTests extends TckTestBase {
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // the implementation should have called status again which will have returned 200
-        count = invoke(false, METRIC_PATH + "/" + Status.class.getName(), GET, lra);
-        assertEquals(testName.getMethodName() + " resource status should have been called again", "2", count);
+        count = lraMetricService.getMetric(LRAMetricType.STATUS, lra);
+        assertEquals(testName.getMethodName() + " resource status should have been called again", 2, count);
         // the implementation should call forget since it knows the participant status
-        count = invoke(false, METRIC_PATH + "/" + Forget.class.getName(), GET, lra);
-        assertEquals(testName.getMethodName() + " resource forget should have been called", "1", count);
+        count = lraMetricService.getMetric(LRAMetricType.FORGET, lra);
+        assertEquals(testName.getMethodName() + " resource forget should have been called", 1, count);
     }
 
     /*
@@ -172,14 +174,14 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testParentContextAvailable() {
         // start an LRA
-        String topLevelLRA = invoke(false, NEW_LRA_PATH, PUT, null);
+        URI topLevelLRA = URI.create(invoke(false, NEW_LRA_PATH, PUT, null));
         // start a nested LRA
         String result = invoke(false, NESTED_LRA_PATH, PUT, topLevelLRA);
         // the resource method should return the nested LRA and the top level LRA separated by a comma
         assertTrue(result.contains(","));
-        assertEquals(testName.getMethodName() + ": wrong parent LRA", topLevelLRA, result.split(",")[1]);
+        assertEquals(testName.getMethodName() + ": wrong parent LRA", topLevelLRA, URI.create(result.split(",")[1]));
 
-        String nestedLRA = result.split(",")[0];
+        URI nestedLRA = URI.create(result.split(",")[0]);
 
         // end the top level LRA
         invoke(false, REQUIRED_LRA_PATH, PUT, topLevelLRA);
@@ -187,20 +189,19 @@ public class TckContextTests extends TckTestBase {
         // check that the resource was asked to complete twice, one in the context of the nested LRA and a
         // second time in the context of the top level LRA
 
-        String nestedCompletions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, nestedLRA);
+        int nestedCompletions = lraMetricService.getMetric(LRAMetricType.COMPLETE, nestedLRA);
         assertEquals(testName.getMethodName() + ": resource should have completed for the nested LRA",
-                "1", nestedCompletions);
+                1, nestedCompletions);
 
-        String topLevelCompletions = invoke(false, METRIC_PATH + "/" + Complete.class.getName(), GET, topLevelLRA);
+        int topLevelCompletions = lraMetricService.getMetric(LRAMetricType.COMPLETE, topLevelLRA);
         assertEquals(testName.getMethodName() + ": resource should have completed for the top level LRA",
-                "1", topLevelCompletions);
+                1, topLevelCompletions);
 
         // and validate that the parent LRA header was present when the nested LRA was asked to complete
-        String endCallsWithParentContextHeaderPresent = invoke(false, METRIC_PATH + "/" + LRA.Type.NESTED.name(),
-                GET, topLevelLRA);
+        int endCallsWithParentContextHeaderPresent = lraMetricService.getMetric(LRAMetricType.NESTED, topLevelLRA);
         assertEquals(testName.getMethodName() +
                         ": when the resource was asked to complete a nested LRA the parent context header was missing",
-                "1", endCallsWithParentContextHeaderPresent);
+                1, endCallsWithParentContextHeaderPresent);
     }
 
     // invoke a method in an LRA context which performs various outgoing calls checking that the notion of active context
@@ -212,46 +213,47 @@ public class TckContextTests extends TckTestBase {
 
     @Test
     public void testAsync1Support() {
-        String lra = invoke(false, ASYNC_LRA_PATH1, PUT, null);
+        URI lra = URI.create(invoke(false, ASYNC_LRA_PATH1, PUT, null));
 
         // verify that the resource was asked to complete
-        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        int completions = lraMetricService.getMetric(LRAMetricType.COMPLETE, lra);
 
         assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
-                Integer.toString(1), completions);
+                1, completions);
     }
 
     @Test
     public void testAsync2Support() {
-        String lra = invoke(false, ASYNC_LRA_PATH2, PUT, null);
+        URI lra = URI.create(invoke(false, ASYNC_LRA_PATH2, PUT, null));
 
         // verify that the resource was asked to complete
-        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
+        int completions = lraMetricService.getMetric(LRAMetricType.COMPLETE, lra);
 
         assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
-                Integer.toString(1), completions);
+                1, completions);
     }
 
     @Test
     public void testAsync3Support() {
         // invoke an async resource that throws an exception which cancels the LRA
-        String lra = invoke(true, ASYNC_LRA_PATH3, PUT, null, 404, ContextTckResource.EndPhase.SUCCESS, 200);
+        URI lra = URI.create(invoke(true, ASYNC_LRA_PATH3, PUT, null, 404, 
+            ContextTckResource.EndPhase.SUCCESS, 200));
 
         // verify that the resource was asked to compensate
-        String completions = invoke(true, METRIC_PATH + "/" + Complete.class.getName(), GET, lra);
-        String compensations = invoke(false, METRIC_PATH + "/" + Compensate.class.getName(), GET, lra);
+        int completions = lraMetricService.getMetric(LRAMetricType.COMPLETE, lra);
+        int compensations = lraMetricService.getMetric(LRAMetricType.COMPENSATE, lra);
 
         assertEquals(testName.getMethodName() + ": Resource was asked to complete",
-                Integer.toString(0), completions);
+                0, completions);
         assertEquals(testName.getMethodName() + ": Resource was not asked to compensate",
-                Integer.toString(1), compensations);
+                1, compensations);
     }
 
-    private String invoke(boolean delay, String where, HttpMethod method, String lraContext) {
+    private String invoke(boolean delay, String where, HttpMethod method, URI lraContext) {
         return invoke(delay, where, method, lraContext, 200, ContextTckResource.EndPhase.SUCCESS, 200);
     }
 
-    private String invoke(boolean delay, String where, HttpMethod method, String lraContext, int expectStatus,
+    private String invoke(boolean delay, String where, HttpMethod method, URI lraContext, int expectStatus,
                           ContextTckResource.EndPhase finishWith, int finishStatus) {
         WebTarget resourcePath = tckSuiteTarget.path(TCK_CONTEXT_RESOURCE_PATH).path(where);
         Invocation.Builder builder = resourcePath.request()

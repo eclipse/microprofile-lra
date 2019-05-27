@@ -26,19 +26,20 @@ import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
@@ -53,24 +54,18 @@ public class ValidLRAParticipant {
     private static final Logger LOGGER = Logger.getLogger(ValidLRAParticipant.class.getName());
     
     public static final String RESOURCE_PATH = "valid-nonjaxrs";
-    public static final String COMPLETED_COUNT_PATH = "completed";
-    public static final String COMPENSATED_COUNT_PATH = "compensated";
-    public static final String STATUS_COUNT_PATH = "status";
-    public static final String FORGET_COUNT_PATH = "forget";
-
-    private final AtomicInteger completedCount = new AtomicInteger(0);
-    private final AtomicInteger compensatedCount = new AtomicInteger(0);
-    private final AtomicInteger statusCount = new AtomicInteger(0);
-    private final AtomicInteger forgetCount = new AtomicInteger(0);
-
     public static final String ENLIST_WITH_COMPLETE = "nonjaxrs-enlist-complete";
+    
     private int recoveryPasses;
+
+    @Inject
+    private LRAMetricService lraMetricService;
 
     @GET
     @Path(ENLIST_WITH_COMPLETE)
     @LRA(value = Type.REQUIRED)
-    public Response enlistWithComplete() {
-        return Response.ok().build();
+    public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.ok(lraId).build();
     }
 
     public static final String ENLIST_WITH_COMPENSATE = "nonjaxrs-enlist-compensate";
@@ -78,8 +73,8 @@ public class ValidLRAParticipant {
     @GET
     @Path(ENLIST_WITH_COMPENSATE)
     @LRA(value = Type.REQUIRED, cancelOn = Response.Status.INTERNAL_SERVER_ERROR)
-    public Response enlistWithCompensate() {
-        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+    public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
 
@@ -87,7 +82,7 @@ public class ValidLRAParticipant {
     public void completeWithException(URI lraId, URI parentId) {
         verifyLRAId(lraId);
 
-        completedCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
 
         LOGGER.fine(String.format("LRA id '%s' was completed", lraId));
         throw new WebApplicationException(Response.ok().build());
@@ -97,7 +92,7 @@ public class ValidLRAParticipant {
     public ParticipantStatus compensate(URI lraId) {
         verifyLRAId(lraId);
 
-        compensatedCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
 
         LOGGER.fine(String.format("LRA id '%s' was compensated", lraId));
         return ParticipantStatus.Compensating;
@@ -107,7 +102,7 @@ public class ValidLRAParticipant {
     public Response status(URI lraId) {
         verifyLRAId(lraId);
 
-        statusCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
 
         LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called", lraId));
         return Response.ok(ParticipantStatus.FailedToCompensate).build();
@@ -117,7 +112,7 @@ public class ValidLRAParticipant {
     public void forget(URI lraId) {
         verifyLRAId(lraId);
 
-        forgetCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.FORGET, lraId);
 
         LOGGER.fine(String.format("LRA id '%s' forget called", lraId));
     }
@@ -126,34 +121,6 @@ public class ValidLRAParticipant {
         if (lraId == null) {
             throw new NullPointerException("lraId cannot be null");
         }
-    }
-
-    @GET
-    @Path(COMPLETED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response completed() {
-        return Response.ok(completedCount.toString()).build();
-    }
-
-    @GET
-    @Path(COMPENSATED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response compensated() {
-        return Response.ok(compensatedCount.toString()).build();
-    }
-
-    @GET
-    @Path(STATUS_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response statusCount() {
-        return Response.ok(statusCount.toString()).build();
-    }
-
-    @GET
-    @Path(FORGET_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response forgetCount() {
-        return Response.ok(forgetCount.toString()).build();
     }
 
     @PUT

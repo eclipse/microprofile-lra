@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraController;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -57,6 +58,9 @@ public class TckTestBase {
     @Inject
     private LraTckConfigBean config;
 
+    @Inject
+    private LRAMetricService lraMetricService;    
+
     LRAClientOps lraClient;
 
     private static Client tckSuiteClient;
@@ -68,7 +72,8 @@ public class TckTestBase {
             .create(WebArchive.class, archiveName + ".war")
             .addPackages(false, TckTestBase.class.getPackage(),
                 Activity.class.getPackage(),
-                LraController.class.getPackage())
+                LraController.class.getPackage(),
+                LRAMetricService.class.getPackage())
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
     
@@ -82,7 +87,9 @@ public class TckTestBase {
     @Before
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
-        setUpTestCase();
+        
+        tckSuiteClient = ClientBuilder.newClient();
+        lraMetricService.clear();
 
         try {
             tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
@@ -90,13 +97,6 @@ public class TckTestBase {
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
-    }
-
-    /**
-     * Checking if coordinator is running, set ups the client to contact the recovery manager and the TCK suite itself.
-     */
-    private void setUpTestCase() {
-        tckSuiteClient = ClientBuilder.newClient();
     }
 
     void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {

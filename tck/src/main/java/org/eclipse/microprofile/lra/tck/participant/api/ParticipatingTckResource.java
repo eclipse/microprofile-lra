@@ -23,19 +23,20 @@ import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.net.URI;
 import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
@@ -49,17 +50,15 @@ public class ParticipatingTckResource {
     public static final String JOIN_WITH_EXISTING_LRA_PATH = "/join-with-existing-lra";
     public static final String JOIN_WITH_EXISTING_LRA_PATH2 = "/join-with-existing-lra2";
     public static final String JOIN_WITH_NEW_LRA_PATH = "/join-with-new-LRA";
-    public static final String COMPLETED_CNT_PATH = "/completed-count";
-    public static final String COMPENSATED_CNT_PATH = "/compensated-count";
     public static final String LEAVE_PATH = "/leave";
     public static final String ACCEPT_PATH = "/accept";
 
     public static final String RECOVERY_PARAM = "recoveryCount";
 
-    private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
-    private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
-
     private int recoveryPasses = 0;
+
+    @Inject
+    private LRAMetricService lraMetricService;
 
     @PUT
     @Path("/compensate")
@@ -72,7 +71,7 @@ public class ParticipatingTckResource {
 
         LOGGER.info(String.format("LRA id '%s' was told to compensate", lraId));
 
-        return getEndPhaseResponse(false);
+        return getEndPhaseResponse(false, URI.create(lraId));
     }
 
     @PUT
@@ -86,18 +85,18 @@ public class ParticipatingTckResource {
 
         LOGGER.info(String.format("LRA id '%s' was told to complete", lraId));
 
-        return getEndPhaseResponse(true);
+        return getEndPhaseResponse(true, URI.create(lraId));
     }
 
-    private Response getEndPhaseResponse(boolean complete) {
+    private Response getEndPhaseResponse(boolean complete, URI lraId) {
         if (--recoveryPasses > 0) {
             return Response.accepted().build();
         }
 
         if (complete) {
-            COMPLETED_COUNT.incrementAndGet();
+            lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId, ParticipatingTckResource.class.getName());
         } else {
-            COMPENSATED_COUNT.incrementAndGet();
+            lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId, ParticipatingTckResource.class.getName());
         }
 
         return Response.ok().build();
@@ -124,22 +123,6 @@ public class ParticipatingTckResource {
     @Leave
     public Response leaveLRA() {
         return Response.ok().build();
-    }
-
-    @GET
-    @Path(COMPLETED_CNT_PATH)
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response getCompletedCount() {
-        return Response.ok(COMPLETED_COUNT.get()).build();
-    }
-
-    @GET
-    @Path(COMPENSATED_CNT_PATH)
-    @Produces(MediaType.APPLICATION_JSON)
-    @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response getCompensatedCount() {
-        return Response.ok(COMPENSATED_COUNT.get()).build();
     }
 
     // if this resource path is invoked outside of a LRA then, since this JAX-RS resoruce is annotated

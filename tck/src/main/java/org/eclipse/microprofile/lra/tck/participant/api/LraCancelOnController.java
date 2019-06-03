@@ -24,7 +24,6 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,10 +34,8 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
@@ -48,20 +45,20 @@ import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
 import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 @ApplicationScoped
 @Path(LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH)
 public class LraCancelOnController {
     private static final Logger LOGGER = Logger.getLogger(LraCancelOnController.class.getName());
     public static final String LRA_CANCEL_ON_CONTROLLER_PATH = "lracontroller-cancelon";
-    public static final String COMPLETED_COUNT_PATH = "completed";
-    public static final String COMPENSATED_COUNT_PATH = "compensated";
-
-    private final AtomicInteger completedCount = new AtomicInteger(0);
-    private final AtomicInteger compensatedCount = new AtomicInteger(0);
 
     @Inject
     private LraTckConfigBean config;
+
+    @Inject
+    private LRAMetricService lraMetricService;
 
     public static final String CANCEL_ON_FAMILY_DEFAULT_4XX = "cancelOnFamilyDefault4xx";
     /**
@@ -71,8 +68,8 @@ public class LraCancelOnController {
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_4XX)
     @LRA(value = Type.REQUIRED)
-    public Response cancelOnFamilyDefault4xx() {
-        return Response.status(Status.BAD_REQUEST).build();
+    public Response cancelOnFamilyDefault4xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Status.BAD_REQUEST).entity(lraId).build();
     }
 
     public static final String CANCEL_ON_FAMILY_DEFAULT_5XX = "cancelOnFamilyDefault5xx";
@@ -83,8 +80,8 @@ public class LraCancelOnController {
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_5XX)
     @LRA(value = Type.REQUIRED)
-    public Response cancelOnFamilyDefault5xx() {
-        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+    public Response cancelOnFamilyDefault5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
     public static final String CANCEL_ON_FAMILY_3XX = "cancelOnFamily3xx";
@@ -97,8 +94,8 @@ public class LraCancelOnController {
     @Path(CANCEL_ON_FAMILY_3XX)
     @LRA(value = Type.REQUIRES_NEW,
             cancelOnFamily = Family.REDIRECTION)
-    public Response cancelOnFamily3xx() {
-        return Response.status(Status.SEE_OTHER).build();
+    public Response cancelOnFamily3xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Status.SEE_OTHER).entity(lraId).build();
     }
 
     public static final String CANCEL_ON_301 = "cancelOn301";
@@ -111,8 +108,8 @@ public class LraCancelOnController {
     @Path(CANCEL_ON_301)
     @LRA(value = Type.REQUIRES_NEW,
         cancelOn = {Status.MOVED_PERMANENTLY})
-    public Response cancelOn301() {
-        return Response.status(Status.MOVED_PERMANENTLY).build();
+    public Response cancelOn301(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Status.MOVED_PERMANENTLY).entity(lraId).build();
     }
 
     public static final String NOT_CANCEL_ON_FAMILY_5XX = "notCancelOnFamily5xx";
@@ -126,8 +123,8 @@ public class LraCancelOnController {
     @Path(NOT_CANCEL_ON_FAMILY_5XX)
     @LRA(value = Type.REQUIRES_NEW,
             cancelOnFamily = {Family.CLIENT_ERROR})
-    public Response notCancelOnFamily5xx() {
-        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+    public Response notCancelOnFamily5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
     public static final String CANCEL_FROM_REMOTE_CALL = "cancelFromRemoteCall";
@@ -140,10 +137,10 @@ public class LraCancelOnController {
      * <p>
      * The remote REST call invokes the same controller class {@link LraCancelOnController}
      * That assumes the call to the representative of the same LRA participant
-     * as it's already enlisted by the method {@link #cancelFromRemoteCall()} invoked by the test.
+     * as it's already enlisted by the method {@link #cancelFromRemoteCall(String)} invoked by the test.
      * Because the specification mandates that the same participant can be enlisted
      * only once per LRA instance then
-     * the {@link Compensate} method {@link #compensateWork(String, String)}
+     * the {@link Compensate} method {@link #compensateWork(URI, String)}
      * will be called only once for the test invocation.
      * </p>
      * @return JAX-RS response
@@ -151,7 +148,7 @@ public class LraCancelOnController {
     @GET
     @Path(CANCEL_FROM_REMOTE_CALL)
     @LRA(value = Type.REQUIRES_NEW)
-    public Response cancelFromRemoteCall() {
+    public Response cancelFromRemoteCall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
         Client client = ClientBuilder.newClient();
         try {
             Response response = client
@@ -163,24 +160,24 @@ public class LraCancelOnController {
         } catch (MalformedURLException murle) {
             LOGGER.log(Level.SEVERE, "Cannot create url from string '"
                     + config.tckSuiteBaseUrl() + "'", murle);
-            return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
         } finally {
             client.close();
         }
-        return Response.ok().build();
+        return Response.ok(lraId).build();
     }
 
 
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
         throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        completedCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
 
         LOGGER.info(String.format("LRA id '%s' was completed", lraId));
         return Response.ok().build();
@@ -189,29 +186,15 @@ public class LraCancelOnController {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        compensatedCount.incrementAndGet();
+        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
 
         LOGGER.info(String.format("LRA id '%s' was compensated", lraId));
         return Response.ok().build();
-    }
-
-    @GET
-    @Path(COMPLETED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response completed() {
-        return Response.ok(completedCount.toString()).build();
-    }
-
-    @GET
-    @Path(COMPENSATED_COUNT_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
-    public Response compensated() {
-        return Response.ok(compensatedCount.toString()).build();
     }
 }

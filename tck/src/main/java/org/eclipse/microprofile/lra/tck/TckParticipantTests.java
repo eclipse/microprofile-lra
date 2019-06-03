@@ -21,14 +21,19 @@ package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.inject.Inject;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+
+import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 
@@ -40,27 +45,15 @@ public class TckParticipantTests extends TckTestBase {
     
     private static final String VALID_DEPLOYMENT = "valid-deploy";
 
-    private int beforeCompletedCount;
-    private int beforeCompensatedCount;
-    private int beforeStatusCount;
-    private int beforeForgetCount;
-    
+    @Inject
+    private LRAMetricService lraMetricService;
+
     @Deployment(name = VALID_DEPLOYMENT)
     public static WebArchive deployValidParticipant() {
         return TckTestBase.deploy(VALID_DEPLOYMENT)
             .addPackage(ValidLRAParticipant.class.getPackage());
     }
     
-    @Before
-    public void before() {
-        super.before();
-
-        beforeCompensatedCount = getCompensateCount();
-        beforeCompletedCount = getCompleteCount();
-        beforeStatusCount = getStatusCount();
-        beforeForgetCount = getForgetCount();
-    }
-
     /**
      * Test verifies that non-JAX-RS @Complete method is invoked according to the 
      * LRA protocol and that if {@link javax.ws.rs.WebApplicationException} is 
@@ -69,17 +62,16 @@ public class TckParticipantTests extends TckTestBase {
      */
     @Test
     public void validWebApplicationExceptionReturnedTest() {
-        Response response = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
-            .path(ValidLRAParticipant.ENLIST_WITH_COMPLETE)
-            .request()
-            .get();
+        WebTarget resourcePath = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
+            .path(ValidLRAParticipant.ENLIST_WITH_COMPLETE);
+        
+        Response response = resourcePath.request().get();
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
-        assertEquals("The 200 status response is expected", 
-            Response.Status.OK.getStatusCode(), response.getStatus());
         assertEquals("Non JAX-RS @Complete method throwing WebApplicationException shoud have been called", 
-            beforeCompletedCount + 1, getCompleteCount());
+            1, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
         assertEquals("@Compensate method should not have been called as LRA completed succesfully",
-            beforeCompensatedCount, getCompensateCount());
+            0, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
 
     }
 
@@ -95,24 +87,24 @@ public class TckParticipantTests extends TckTestBase {
      */
     @Test
     public void validSignaturesChainTest() throws InterruptedException {
-        Response response = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
-            .path(ValidLRAParticipant.ENLIST_WITH_COMPENSATE)
-            .request()
-            .get();
+        WebTarget resourcePath = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
+            .path(ValidLRAParticipant.ENLIST_WITH_COMPENSATE);
+        
+        Response response = resourcePath.request().get();
 
-        assertEquals("The 500 status response is expected", 
-            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+        
         assertEquals("Non JAX-RS @Compensate method should have been called",
-            beforeCompensatedCount + 1, getCompensateCount());
+            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("@Complete method should not have been called as LRA compensated",
-            beforeCompletedCount, getCompleteCount());
-        
+            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+
         replayEndPhase(ValidLRAParticipant.RESOURCE_PATH);
-        
+
         assertEquals("Non JAX-RS @Status method should have been called", 
-            beforeStatusCount + 1, getStatusCount());
+            1, lraMetricService.getMetric(LRAMetricType.STATUS, lraId));
         assertEquals("Non JAX-RS @Forget method should have been called",
-            beforeForgetCount + 1, getForgetCount());
+            1, lraMetricService.getMetric(LRAMetricType.FORGET, lraId));
 
     }
 
@@ -122,20 +114,17 @@ public class TckParticipantTests extends TckTestBase {
      */
     @Test
     public void testNonJaxRsCompletionStageVoid() {
-        int beforeCompletedCount = getCompleteCount(ValidLRACSParticipant.ROOT_PATH);
-        int beforeCompensateCount = getCompensateCount(ValidLRACSParticipant.ROOT_PATH);
-        
-        Response response = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-            .path(ValidLRACSParticipant.ENLIST_WITH_COMPENSATE)
-            .request()
-            .get();
+        WebTarget resourcePath = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
+            .path(ValidLRACSParticipant.ENLIST_WITH_COMPENSATE);
 
-        assertEquals("The 500 status response is expected",
-            Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+        Response response = resourcePath.request().get();
+
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+
         assertEquals("Non JAX-RS @Compensate method with CompletionStage<Void> should have been called",
-            beforeCompensateCount + 1, getCompensateCount(ValidLRACSParticipant.ROOT_PATH));
+            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
         assertEquals("Non JAX-RS @Complete method should have not been called",
-            beforeCompletedCount, getCompleteCount(ValidLRACSParticipant.ROOT_PATH));
+            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
     }
 
     /**
@@ -145,61 +134,21 @@ public class TckParticipantTests extends TckTestBase {
      */
     @Test
     public void testNonJaxRsCompletionStageResponseAndParticipantStatus() throws InterruptedException {
-        int beforeCompletedCount = getCompleteCount(ValidLRACSParticipant.ROOT_PATH);
-        int beforeCompensateCount = getCompensateCount(ValidLRACSParticipant.ROOT_PATH);
-        int beforeStatusCount = getStatusCount(ValidLRACSParticipant.ROOT_PATH);
+        WebTarget resourcePath = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
+            .path(ValidLRACSParticipant.ENLIST_WITH_COMPLETE);
 
-        Response response = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-            .path(ValidLRACSParticipant.ENLIST_WITH_COMPLETE)
-            .request()
-            .get();
+        Response response = resourcePath.request().get();
 
-        assertEquals("The 200 status response is expected",
-            Response.Status.OK.getStatusCode(), response.getStatus());
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
+
         assertEquals("Non JAX-RS @Complete method with CompletionStage<Response> should have been called",
-            beforeCompletedCount + 1, getCompleteCount(ValidLRACSParticipant.ROOT_PATH));
+            1, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
         assertEquals("Non JAX-RS @Compensate method should have not been called",
-            beforeCompensateCount, getCompensateCount(ValidLRACSParticipant.ROOT_PATH));
-        
+            0, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+
         replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
-        
+
         assertEquals("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
-            beforeStatusCount + 1, getStatusCount(ValidLRACSParticipant.ROOT_PATH));
-    }
-
-    private int getCompleteCount() {
-        return getCompleteCount(ValidLRAParticipant.RESOURCE_PATH);
-    }
-
-    private int getCompensateCount() {
-        return getCompensateCount(ValidLRAParticipant.RESOURCE_PATH);
-    }
-
-    private int getStatusCount() {
-        return getStatusCount(ValidLRAParticipant.RESOURCE_PATH);
-    }
-
-    private int getForgetCount() {
-        Response response = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
-            .path(ValidLRAParticipant.FORGET_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
-    }
-
-    private int getCompleteCount(String path) {
-        Response response = tckSuiteTarget.path(path)
-            .path(ValidLRAParticipant.COMPLETED_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
-    }
-
-    private int getCompensateCount(String path) {
-        Response response = tckSuiteTarget.path(path)
-            .path(ValidLRAParticipant.COMPENSATED_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
-    }
-
-    private int getStatusCount(String path) {
-        Response response = tckSuiteTarget.path(path)
-            .path(ValidLRAParticipant.STATUS_COUNT_PATH).request().get();
-        return response.readEntity(Integer.class);
+            1, lraMetricService.getMetric(LRAMetricType.STATUS, lraId));
     }
 }

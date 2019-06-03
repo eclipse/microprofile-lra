@@ -159,6 +159,10 @@ attempted again (possibly after a period of time) or alternatively a
 compensation violation has occurred and must be logged. Each service is
 required to log sufficient information in order to ensure (with best
 effort) that compensation is possible even in the event of failures.
+Note that compensation violations include the case where a participant
+completes when asked to compensate.
+
+Similar remarks apply to completion violations.
 
 Interposition (nesting) and reliably storing the state of participants
 allows the system to drive a consistent view of the outcome and to take

@@ -731,6 +731,10 @@ exception mapper that maps to a `412 Precondition Failed` HTTP status code.
 If the annotated method returns an unexpected HTTP status code the implementation MAY
 invoke the same method again.
 
+Users are allowed to reuse existing JAX-RS endpoints for participant methods definitions. 
+In this case, LRA implementation MUST ensure that invoking these methods outside of the 
+implementation of the LRA specification will not influence any running LRA.
+
 [[non-jaxrs-participant-methods]]
 ===== Non-JAX-RS participant methods
 

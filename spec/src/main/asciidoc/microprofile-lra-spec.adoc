@@ -750,9 +750,9 @@ MUST adhere to these predefined signatures:
 <<jaxrs-participant-methods, JAX-RS participant methods>>
 ** `java.util.concurrent.CompletionStage`: with the parameter of any of the previously 
 defined types
-* *Arguments*: up to 2 arguments of types in this order:
-** `java.net.URI`: representing current LRA context identification
-** `java.net.URI`: representing potentional parent LRA context identification
+* *Arguments*: up to 2 arguments in this order:
+** `java.net.URI` or `java.lang.String`: representing current LRA context identification
+** `java.net.URI` or `java.lang.String`: representing potential parent LRA context identification
 
 Declaring more than two arguments, different types of arguments or different return type 
 for any non-JAX-RS method annotatated with the participant marker annotation MUST result 
@@ -768,20 +768,26 @@ Examples of valid signatures:
 @Compensate
 public void compensate(URI lraId, URI parentId)
 
+@Compensate
+public void compensate(String lraId, URI parentId)
+
 @Complete
 public Response complete(URI lraId)
 
+@Complete
+public Response complete(String lraId)
+
 @Status
 public CompletionStage<ParticipantStatus> status(URI lraId)
+
+@Status
+public CompletionStage<ParticipantStatus> status(String lraId)
 ----
 
 Examples of invalid signatures:
 
 [source,java]
 ----
-@Compensate
-public void compensate(String lraId, String parentId) // invalid types of arguments
-
 @Compensate
 public String compensate(URI lraId) // invalid return type
 

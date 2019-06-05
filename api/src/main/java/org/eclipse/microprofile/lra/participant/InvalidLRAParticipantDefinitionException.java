@@ -32,9 +32,9 @@ package org.eclipse.microprofile.lra.participant;
  *  - java.util.concurrent.CompletionStage: with the parameter of any of the previously 
  *    defined types
  * 
- * Arguments: up to 2 arguments of types in this order:
- *  - {@link java.net.URI}: representing current LRA context identification
- *  - {@link java.net.URI}: representing potentional parent LRA context identification
+ * Arguments: up to 2 arguments in this order:
+ *  - {@link java.net.URI} or {@link java.lang.String}: representing current LRA context identification
+ *  - {@link java.net.URI} or {@link java.lang.String}: representing potential parent LRA context identification
  *  
  * Any other signature will result in deployment / start time of this type.
  */

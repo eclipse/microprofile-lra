@@ -725,9 +725,9 @@ annotations when associated with JAX-RS resource methods:
 
 |=== 
 
-If the participant annotation is not accompanied by an associated JAX-RS HTTP method 
-annotation according to the <<jaxrs-response-table,table above>>, the error SHOULD be reported using a JAX-RS 
-exception mapper that maps to a `412 Precondition Failed` HTTP status code.
+The presented HTTP methods SHOULD be applied at individual JAX-RS participant methods 
+but they are not enforced by the specification. 
+
 If the annotated method returns an unexpected HTTP status code the implementation MAY
 invoke the same method again.
 

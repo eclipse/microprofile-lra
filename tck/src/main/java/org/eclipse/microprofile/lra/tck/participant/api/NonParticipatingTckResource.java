@@ -34,6 +34,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -75,14 +76,14 @@ public class NonParticipatingTckResource {
     @PUT
     @Path(NonParticipatingTckResource.NEVER_PATH)
     @LRA(value = LRA.Type.NEVER)
-    public Response neverRunWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response neverRunWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
     @PUT
     @Path(SUPPORTS_PATH)
     @LRA(value = LRA.Type.SUPPORTS)
-    public Response supports(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response supports(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
@@ -90,7 +91,7 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.START_AND_END_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR) // default is to end the LRA
-    public Response startAndEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response startAndEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                    @DefaultValue("200") @QueryParam(STATUS_CODE_QUERY_NAME) int coerceStatus) {
         return Response.status(coerceStatus).entity(checkLRANotNull(lraId)).build();
     }
@@ -99,7 +100,7 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.START_BUT_DONT_END_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW, end = false,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR)
-    public Response startDontEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response startDontEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                     @DefaultValue("200") @QueryParam(STATUS_CODE_QUERY_NAME) int coerceStatus) {
         return Response.status(coerceStatus).entity(checkLRANotNull(lraId)).build();
     }
@@ -108,7 +109,7 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.END_PATH)
     @LRA(value = LRA.Type.MANDATORY,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR) // default is to end the LRA
-    public Response endLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response endLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @DefaultValue("200") @QueryParam(STATUS_CODE_QUERY_NAME) int coerceStatus) {
         return Response.status(coerceStatus).entity(checkLRANotNull(lraId)).build();
     }
@@ -117,7 +118,7 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.START_AND_END_NESTED_PATH)
     @LRA(value = LRA.Type.NESTED,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR) // default is to end the LRA
-    public Response startAndEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response startAndEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
@@ -125,7 +126,7 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.START_BUT_DONT_END_NESTED_PATH)
     @LRA(value = LRA.Type.NESTED, end = false,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR)
-    public Response startAndDontEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response startAndDontEndNestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
@@ -133,12 +134,12 @@ public class NonParticipatingTckResource {
     @Path(NonParticipatingTckResource.START_LRA_VIA_REMOTE_INVOCATION)
     @LRA(value = LRA.Type.SUPPORTS, end = false,
             cancelOnFamily = Response.Status.Family.SERVER_ERROR)
-    public Response notSupportedButCallServiceWhichStartsButDoesntEndAnLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response notSupportedButCallServiceWhichStartsButDoesntEndAnLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(invokeRestEndpoint(lraId, TCK_NON_PARTICIPANT_RESOURCE_PATH, START_BUT_DONT_END_PATH,
                 200)).build();
     }
 
-    private String invokeRestEndpoint(String lra, String basePath, String path, int coerceResponse) {
+    private String invokeRestEndpoint(URI lra, String basePath, String path, int coerceResponse) {
         Client client = ClientBuilder.newClient();
 
         try {
@@ -149,10 +150,9 @@ public class NonParticipatingTckResource {
         }
     }
 
-    private String checkLRANotNull(String lraId) {
+    private URI checkLRANotNull(URI lraId) {
         if (lraId == null) {
-            throw new InvalidLRAIdException(null,
-                    String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
+            throw new WrongHeaderException(String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
 
         return lraId;

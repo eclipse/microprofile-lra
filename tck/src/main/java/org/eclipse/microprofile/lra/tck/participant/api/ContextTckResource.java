@@ -147,7 +147,7 @@ public class ContextTckResource {
     // reset any state in preparation for the next test
     @PUT
     @Path(RESET_PATH)
-    public Response reset(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response reset(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) URI lraId) {
         status = ParticipantStatus.Active;
         endPhase = EndPhase.SUCCESS;
         endPhaseStatus = Response.Status.OK;
@@ -161,7 +161,7 @@ public class ContextTckResource {
     @LRA(value = LRA.Type.REQUIRES_NEW, end = false)
     @PUT
     @Path(NEW_LRA_PATH)
-    public Response newLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response newLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
                            @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
         // check for a requests to inject particular behaviour
@@ -174,7 +174,7 @@ public class ContextTckResource {
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
     @Path(REQUIRED_LRA_PATH)
-    public Response requiredLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response requiredLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                 @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
                                 @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
         setEndPhase(tckFaultType, tckFaultCode);
@@ -185,26 +185,26 @@ public class ContextTckResource {
     @LRA(value = LRA.Type.REQUIRES_NEW)
     @PUT
     @Path(REQUIRES_NEW_LRA_PATH)
-    public Response requiresNew(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response requiresNew(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().entity(lraId).build();
     }
 
     @LRA(value = LRA.Type.NESTED, end = false)
     @PUT
     @Path(NESTED_LRA_PATH)
-    public Response nestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRA,
-                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) String parentLRA) {
-        return Response.ok().entity(nestedLRA + "," + parentLRA).build();
+    public Response nestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRA,
+                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        return Response.ok().entity(nestedLRA.toASCIIString() + "," + parentLRA.toASCIIString()).build();
     }
 
     // test that outgoing calls do not affect the calling context
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
     @Path(CONTEXT_CHECK_LRA_PATH)
-    public Response contextCheck(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response contextCheck(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         String remote;
         String active = getActiveLRA();
-        assertEquals("contextCheck1: incoming and active LRAs are different", lraId, active);
+        assertEquals("contextCheck1: incoming and active LRAs are different", lraId.toASCIIString(), active);
 
         // invoke a remote service which runs in its own context. Do not set the context header
         remote = restPutInvocation(null, REQUIRES_NEW_LRA_PATH, "");
@@ -229,7 +229,7 @@ public class ContextTckResource {
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
     @Path(ASYNC_LRA_PATH1)
-    public void async1LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public void async1LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                          final @Suspended AsyncResponse ar) {
         excecutorService.submit(() -> {
             // excecute long running business activity and resume when done
@@ -243,7 +243,7 @@ public class ContextTckResource {
             cancelOn = NOT_FOUND) // cancel LRA on 404
     @PUT
     @Path(ASYNC_LRA_PATH2)
-    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     try {
@@ -260,7 +260,7 @@ public class ContextTckResource {
     @LRA(value = LRA.Type.REQUIRED)
     @PUT
     @Path(ASYNC_LRA_PATH3)
-    public CompletionStage<Response> async3LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public CompletionStage<Response> async3LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
         excecutorService.submit(() -> {
@@ -276,7 +276,7 @@ public class ContextTckResource {
     @Leave
     @PUT
     @Path(LEAVE_PATH)
-    public Response leave(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response leave(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().entity(lraId).build();
     }
 
@@ -341,7 +341,7 @@ public class ContextTckResource {
     // clear any injected participant behaviour
     @PUT
     @Path(STATUS_PATH)
-    public Response clearStatus(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) String lraId,
+    public Response clearStatus(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType) {
         switch (status) {
             case Compensating:

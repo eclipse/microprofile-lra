@@ -54,7 +54,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault4xx(String)}
+     * See {@link LraCancelOnController#cancelOnFamilyDefault4xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamilyDefault4xx() {
@@ -72,7 +72,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault5xx(String)}
+     * See {@link LraCancelOnController#cancelOnFamilyDefault5xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamilyDefault5xx() {
@@ -90,7 +90,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamily3xx(String)}
+     * See {@link LraCancelOnController#cancelOnFamily3xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamily3xx() {
@@ -108,7 +108,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOn301(String)}
+     * See {@link LraCancelOnController#cancelOn301(java.net.URI)}
      */
     @Test
     public void cancelOn301() {
@@ -126,7 +126,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#notCancelOnFamily5xx(String)}
+     * See {@link LraCancelOnController#notCancelOnFamily5xx(java.net.URI)}
      */
     @Test
     public void notCancelOnFamily5xx() {
@@ -144,7 +144,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelFromRemoteCall(String)}
+     * See {@link LraCancelOnController#cancelFromRemoteCall(java.net.URI)}
      */
     @Test
     public void cancelFromRemoteCall() {

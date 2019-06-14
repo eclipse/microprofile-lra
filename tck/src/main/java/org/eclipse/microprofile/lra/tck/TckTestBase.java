@@ -152,6 +152,7 @@ public class TckTestBase {
      *
      * @param resource the resource on which recovery should be replayed. If null then recovery
      *                should be attempted on all eligible participants
+     * @throws InterruptedException When Thread is interrupted during sleep.
      */
     void replayEndPhase(String resource) throws InterruptedException {
         // trigger a replay attempt on any participants

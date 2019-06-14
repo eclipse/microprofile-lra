@@ -43,7 +43,8 @@ import java.lang.annotation.Target;
  * If the annotated method is a JAX-RS resource method the id of the currently
  * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
  * this LRA is nested then the parent LRA MUST be present in the header with the name
- * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}.
+ * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+ * and value is of type java.net.URI.
  *
  * If the annotated method is not a JAX-RS resource method the id of the currently
  * running LRA can be obtained by adhering to a predefined method signature as

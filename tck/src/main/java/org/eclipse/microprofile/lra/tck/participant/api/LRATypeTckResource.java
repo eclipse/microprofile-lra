@@ -27,6 +27,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import java.net.URI;
+
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
 @ApplicationScoped
@@ -52,37 +54,37 @@ public class LRATypeTckResource {
     @GET
     @Path(REQUIRED_PATH)
     @LRA(value = LRA.Type.REQUIRED)
-    public Response requiredLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response requiredLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(REQUIRES_NEW_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW)
-    public Response requiresNewLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response requiresNewLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(MANDATORY_PATH)
     @LRA(value = LRA.Type.MANDATORY)
-    public Response mandatoryLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response mandatoryLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(SUPPORTS_PATH)
     @LRA(value = LRA.Type.SUPPORTS)
-    public Response supportsLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response supportsLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(NOT_SUPPORTED_PATH)
     @LRA(value = LRA.Type.NOT_SUPPORTED)
-    public Response notSupportedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response notSupportedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(NEVER_PATH)
     @LRA(value = LRA.Type.NEVER)
-    public Response neverLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response neverLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
@@ -90,37 +92,37 @@ public class LRATypeTckResource {
     @GET
     @Path(REQUIRED_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.REQUIRED, end = false)
-    public Response requiredEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response requiredEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(REQUIRES_NEW_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW, end = false)
-    public Response requiresNewEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response requiresNewEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(MANDATORY_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.MANDATORY, end = false)
-    public Response mandatoryEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response mandatoryEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(SUPPORTS_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.SUPPORTS, end = false)
-    public Response supportsEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response supportsEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(NOT_SUPPORTED_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NOT_SUPPORTED, end = false)
-    public Response notSupportedEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response notSupportedEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     @GET
     @Path(NEVER_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NEVER, end = false)
-    public Response neverEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response neverEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 }

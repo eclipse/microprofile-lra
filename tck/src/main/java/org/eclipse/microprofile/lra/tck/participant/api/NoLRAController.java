@@ -32,6 +32,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import java.net.URI;
+
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
 
@@ -46,7 +48,7 @@ public class NoLRAController {
 
     @PUT
     @Path(NON_TRANSACTIONAL_WORK_PATH)
-    public Response work2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) throws NotFoundException {
+    public Response work2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) throws NotFoundException {
 
         if (lraId != null) {
             return Response.status(Response.Status.PRECONDITION_FAILED).entity("Unexpected LRA context").build();

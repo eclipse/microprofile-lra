@@ -84,6 +84,8 @@ public class TckParticipantTests extends TckTestBase {
      * called. This method finishes compensation with return of the {@link Response} object 
      * indicating failure and so the test then verifies that non-JAX-RS @Forget method has 
      * also been called.
+     *
+     * @throws InterruptedException When Test is interrupted during sleep.
      */
     @Test
     public void validSignaturesChainTest() throws InterruptedException {
@@ -131,6 +133,8 @@ public class TckParticipantTests extends TckTestBase {
      * Test verifyies {@link java.util.concurrent.CompletionStage} parametrized by 
      * {@link Response} and {@link org.eclipse.microprofile.lra.annotation.ParticipantStatus} as valid
      * non-JAX-RS participant methods return types
+     *
+     * @throws InterruptedException When Test is interrupted during sleep.
      */
     @Test
     public void testNonJaxRsCompletionStageResponseAndParticipantStatus() throws InterruptedException {

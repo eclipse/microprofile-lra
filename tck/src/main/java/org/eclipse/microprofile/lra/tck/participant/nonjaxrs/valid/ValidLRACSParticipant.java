@@ -63,14 +63,14 @@ public class ValidLRACSParticipant {
     @GET
     @Path(ENLIST_WITH_COMPLETE)
     @LRA(value = LRA.Type.REQUIRED)
-    public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
     
     @GET
     @Path(ENLIST_WITH_COMPENSATE)
     @LRA(value = LRA.Type.REQUIRED, cancelOn = Response.Status.INTERNAL_SERVER_ERROR)
-    public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 

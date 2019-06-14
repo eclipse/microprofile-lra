@@ -53,9 +53,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.logging.Level;
@@ -100,7 +98,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     @LRA(value = LRA.Type.NOT_SUPPORTED)
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) throws NotFoundException {
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity.getStatus() == null) {
@@ -122,7 +120,7 @@ public class LraController {
     @Path("/leave")
     @Produces(MediaType.APPLICATION_JSON)
     @Leave
-    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
+    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
         throws NotFoundException {
 
         if (lraId != null) {
@@ -140,9 +138,9 @@ public class LraController {
     @Path("/complete")
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
-        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, URI.create(lraId), LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId, LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Complete methods
 
@@ -159,22 +157,22 @@ public class LraController {
         }
 
         activity.setStatus(ParticipantStatus.Completed);
-        activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId));
+        activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId.toASCIIString()));
 
-        LOGGER.info(String.format("LRA id '%s' was completed", lraId));
+        LOGGER.info(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
         return Response.ok(activity.getStatusUrl()).build();
     }
 
     @PUT
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
+    @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)  // O and ChronoUnit.SECONDS are the default, just to be explicit here.
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensate methods
 
-        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, URI.create(lraId), LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId, LraController.class.getName());
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -199,23 +197,23 @@ public class LraController {
     @Path("/forget")
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
-    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, URI.create(lraId), LraController.class.getName());
+    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId, LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
-        if(activity == null) {
+        if (activity == null) {
             throw new IllegalStateException(
-                String.format("Activity store does not contain LRA id '%s' while it was invoked forget method at " + context.getPath()));
+                String.format("Activity store does not contain LRA id '%s' while it was invoked forget method at ", context.getPath()));
         }
 
         activityStore.remove(activity.getLraId());
         activity.setStatus(ParticipantStatus.Completed);
         activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId));
 
-        LOGGER.info(String.format("LRA id '%s' was forgotten", lraId));
+        LOGGER.info(String.format("LRA id '%s' was forgotten", lraId.toASCIIString()));
         return Response.ok(activity.getStatusUrl()).build();
     }
 
@@ -223,8 +221,8 @@ public class LraController {
     @Path(LraController.ACCEPT_WORK)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response acceptWork(
-            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
 
         assertHeaderPresent(lraId);
 
@@ -237,7 +235,7 @@ public class LraController {
     @PUT
     @Path("/supports")
     @LRA(value = LRA.Type.SUPPORTS, end = false)
-    public Response supportsLRACall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response supportsLRACall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertHeaderPresent(lraId);
 
         storeActivity(lraId, null);
@@ -248,7 +246,7 @@ public class LraController {
     @PUT
     @Path("/startViaApi")
     @LRA(LRA.Type.NOT_SUPPORTED)
-    public Response subActivity(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response subActivity(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertNotHeaderPresent(lraId);
 
         Client client = null;
@@ -258,7 +256,7 @@ public class LraController {
             WebTarget target = client.target(context.getBaseUri());
             URI lra = new LRAClientOps(target).startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
 
-            lraId = lra.toString();
+            lraId = lra;
 
             storeActivity(lraId, null);
 
@@ -268,7 +266,7 @@ public class LraController {
             String id = restPutInvocation(lra,"supports", "");
 
             // check that the invoked method saw the LRA
-            if (!lraId.equals(id)) {
+            if (!lraId.toASCIIString().equals(id)) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
             }
 
@@ -283,8 +281,8 @@ public class LraController {
     @PUT
     @Path(TRANSACTIONAL_WORK_PATH)
     @LRA(value = LRA.Type.REQUIRED, end = false)
-    public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertHeaderPresent(lraId);
 
         Activity activity = storeActivity(lraId, recoveryId);
@@ -326,16 +324,16 @@ public class LraController {
     @Path(MANDATORY_LRA_RESOURCE_PATH)
     @Produces(MediaType.TEXT_PLAIN)
     @LRA(value = LRA.Type.MANDATORY, end = false)
-    public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return activityWithLRA(recoveryId, lraId);
     }
 
     @PUT
     @Path("/nestedActivity")
     @LRA(value = LRA.Type.NESTED, end = true)
-    public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRAId) {
+    public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId) {
         assertHeaderPresent(nestedLRAId);
 
         storeActivity(nestedLRAId, recoveryId);
@@ -347,31 +345,23 @@ public class LraController {
     @Path("/multiLevelNestedActivity")
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response multiLevelNestedActivity(
-            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) String recoveryId,
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String nestedLRAId,
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId,
             @QueryParam("nestedCnt") @DefaultValue("1") Integer nestedCnt) {
         assertHeaderPresent(nestedLRAId);
 
         storeActivity(nestedLRAId, recoveryId);
 
-        URI lraURI;
-
-        try {
-            lraURI = URI.create(URLDecoder.decode(nestedLRAId, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            throw new InvalidLRAIdException(nestedLRAId, e.getMessage(), e);
-        }
-
         // invoke resources that enlist nested LRAs
         String[] lras = new String[nestedCnt + 1];
-        lras[0] = nestedLRAId;
-        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(lraURI,"nestedActivity", ""));
+        lras[0] = nestedLRAId.toASCIIString();
+        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(nestedLRAId,"nestedActivity", ""));
 
         return Response.ok(String.join(",", lras)).build();
     }
 
-    private Activity storeActivity(String lraId, String recoveryId) {
-        LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lraId, recoveryId));
+    private Activity storeActivity(URI lraId, URI recoveryId) {
+        LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lraId.toASCIIString(), recoveryId.toASCIIString()));
 
         Activity activity = new Activity(lraId)
             .setRecoveryUri(recoveryId)
@@ -393,7 +383,7 @@ public class LraController {
     @Path("/timeLimit")
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
-    public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertHeaderPresent(lraId);
 
         activityStore.add(new Activity(lraId));
@@ -424,7 +414,7 @@ public class LraController {
     @PUT
     @Path("/{LRAId}/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response compensate(@PathParam("LRAId") String lraId) throws NotFoundException {
+    public Response compensate(@PathParam("LRAId") URI lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(ParticipantStatus.Compensated);
@@ -450,7 +440,7 @@ public class LraController {
     @PUT
     @Path("/{LRAId}/complete")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response complete(@PathParam("LRAId") String lraId) throws NotFoundException {
+    public Response complete(@PathParam("LRAId") URI lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(ParticipantStatus.Completed);
@@ -461,7 +451,7 @@ public class LraController {
 
     @PUT
     @Path("/{LRAId}/forget")
-    public void forget(@PathParam("LRAId")String lraId) throws NotFoundException {
+    public void forget(@PathParam("LRAId") URI lraId) throws NotFoundException {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activityStore.remove(activity.getLraId());
@@ -481,17 +471,15 @@ public class LraController {
         return ParticipantStatus.Compensated.name();
     }
 
-    private void assertHeaderPresent(String lraId) {
+    private void assertHeaderPresent(URI lraId) {
         if (lraId == null) {
-            throw new InvalidLRAIdException(null,
-                    String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
+            throw new WrongHeaderException(String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
     }
 
-    private void assertNotHeaderPresent(String lraId) {
+    private void assertNotHeaderPresent(URI lraId) {
         if (lraId != null) {
-            throw new InvalidLRAIdException(null,
-                    String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
+            throw new WrongHeaderException(String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
     }
 }

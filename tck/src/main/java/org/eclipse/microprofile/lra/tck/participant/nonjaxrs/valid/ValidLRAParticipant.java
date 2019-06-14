@@ -64,7 +64,7 @@ public class ValidLRAParticipant {
     @GET
     @Path(ENLIST_WITH_COMPLETE)
     @LRA(value = Type.REQUIRED)
-    public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
 
@@ -73,7 +73,7 @@ public class ValidLRAParticipant {
     @GET
     @Path(ENLIST_WITH_COMPENSATE)
     @LRA(value = Type.REQUIRED, cancelOn = Response.Status.INTERNAL_SERVER_ERROR)
-    public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response enlistWithCompensate(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
@@ -84,7 +84,7 @@ public class ValidLRAParticipant {
 
         lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
 
-        LOGGER.fine(String.format("LRA id '%s' was completed", lraId));
+        LOGGER.fine(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
         throw new WebApplicationException(Response.ok().build());
     }
 
@@ -94,7 +94,7 @@ public class ValidLRAParticipant {
 
         lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
 
-        LOGGER.fine(String.format("LRA id '%s' was compensated", lraId));
+        LOGGER.fine(String.format("LRA id '%s' was compensated", lraId.toASCIIString()));
         return ParticipantStatus.Compensating;
     }
 
@@ -104,7 +104,7 @@ public class ValidLRAParticipant {
 
         lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
 
-        LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called", lraId));
+        LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called", lraId.toASCIIString()));
         return Response.ok(ParticipantStatus.FailedToCompensate).build();
     }
 
@@ -114,7 +114,7 @@ public class ValidLRAParticipant {
 
         lraMetricService.incrementMetric(LRAMetricType.FORGET, lraId);
 
-        LOGGER.fine(String.format("LRA id '%s' forget called", lraId));
+        LOGGER.fine(String.format("LRA id '%s' forget called", lraId.toASCIIString()));
     }
 
     private void verifyLRAId(URI lraId) {

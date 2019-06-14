@@ -22,6 +22,7 @@ package org.eclipse.microprofile.lra.tck.participant.activity;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 
 import java.io.Serializable;
+import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,8 +32,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Activity implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String lraId;
-    private String recoveryUri;
+    private URI lraId;
+    private URI recoveryUri;
     private String statusUrl;
     private ParticipantStatus status;
     private String userData;
@@ -40,24 +41,24 @@ public class Activity implements Serializable {
 
     private final AtomicInteger acceptedCount = new AtomicInteger(0);
 
-    public Activity(String lraId) {
+    public Activity(URI lraId) {
         this.setLraId(lraId);
     }
 
-    public String getLraId() {
+    public URI getLraId() {
         return lraId;
     }
 
-    public Activity setLraId(String lraId) {
+    public Activity setLraId(URI lraId) {
         this.lraId = lraId;
         return this;
     }
 
-    public String getRcvUri() {
+    public URI getRecoveryUri() {
         return recoveryUri;
     }
 
-    public Activity setRecoveryUri(String recoveryUri) {
+    public Activity setRecoveryUri(URI recoveryUri) {
         this.recoveryUri = recoveryUri;
         return this;
     }
@@ -84,7 +85,7 @@ public class Activity implements Serializable {
     public String toString() {
         return "Activity{" +
                 "lraId='" + getLraId() + '\'' +
-                ", recoveryUri='" + getRcvUri() + '\'' +
+                ", recoveryUri='" + getRecoveryUri() + '\'' +
                 ", statusUrl='" + getStatusUrl() + '\'' +
                 ", status=" + getStatus() +
                 ", userData='" + getUserData() + '\'' +

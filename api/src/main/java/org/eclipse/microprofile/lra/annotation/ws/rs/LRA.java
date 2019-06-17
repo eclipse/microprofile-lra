@@ -300,11 +300,6 @@ public @interface LRA {
          *     second time with the parent context. The order in which the two callbacks
          *     are invoked is undefined.
          * </p>
-         * <p>
-         *     Note also that it is not possible to require an LRA to be present
-         *     (cf.` MANDATORY`) or to require an LRA to be not present (cf. `NEVER`)
-         *     on a method marked with the `NESTED` element.
-         * </p>
          *
          * <p>
          *     Note that the elements of the LRA annotation always apply to the

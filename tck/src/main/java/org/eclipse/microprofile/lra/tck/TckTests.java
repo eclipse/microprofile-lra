@@ -136,8 +136,7 @@ public class TckTests extends TckTestBase {
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
                     parentId, lra.toString());
     
-            URI nestedLraId = URI.create(response.readEntity(String.class));  // When all JAX-RS implementation has Support URI,
-                                                                             // we can read it directly as URI.
+            URI nestedLraId = URI.create(response.readEntity(String.class)); // We can keep String.class here as it is in TCK
     
             // close the LRA
             lraClient.closeLRA(lra);
@@ -509,7 +508,7 @@ public class TckTests extends TckTestBase {
 
         String lraStr = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
         assertNotNull("expecting a LRA string returned from " + resourcePath.getUri(), lraStr);
-        String[] lraArray = lraStr.split(","); // We keep heer type String (and not URI) because of the easy String.split
+        String[] lraArray = lraStr.split(","); // We keep here type String (and not URI) because of the easy String.split
         URI[] uris = new URI[lraArray.length];
 
         IntStream.range(0, uris.length).forEach(i -> {

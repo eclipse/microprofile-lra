@@ -579,7 +579,7 @@ reporting its` progress using the `@Status` annotation:
     @Path("/status")
     @GET
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFinished(lraId))  // Bussiness logic, not provided by spec or Implementation
+        if (isFinished(lraId))  // Business logic, not provided by spec or Implementation
             return Response.ok().entity(ParticipantStatus.Compensated).build();
         else
             return Response.ok().entity(ParticipantStatus.Compensating).build();
@@ -600,7 +600,7 @@ by reporting `FailedToCompensate` either via the compensate method, for example
     @Path("/compensate")
     @PUT
     public Response compensatePreviousAction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFailed(lraId)) // Bussiness logic, not provided by spec or Implementation
+        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
               return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
@@ -614,7 +614,7 @@ or it can report the failure via the `@Status` method:
     @Path("/status")
     @GET
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFailed(lraId)) // Bussiness logic, not provided by spec or Implementation
+        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
             return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
@@ -633,7 +633,7 @@ it is explicitly told that it can clean up via the `@Forget` method:
     @Path("/forget")
     @DELETE
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        // Bussiness logic, not provided by spec or Implementation
+        // Business logic, not provided by spec or Implementation
         if (isFailed(lraId)) {
             cleanupResources(lraId);
         }
@@ -865,6 +865,7 @@ for the duration of the bookFlight method.
     @Produces(MediaType.APPLICATION_JSON)
     public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                               @QueryParam("flightNumber") String flightNumber) {
+        // business logic for handling the LRA, not provided by spec or implementation.
         return service.book(lraId, flightNumber);
     }
 ----

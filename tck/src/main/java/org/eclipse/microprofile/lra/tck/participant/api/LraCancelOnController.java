@@ -63,24 +63,26 @@ public class LraCancelOnController {
     public static final String CANCEL_ON_FAMILY_DEFAULT_4XX = "cancelOnFamilyDefault4xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_4XX)
     @LRA(value = Type.REQUIRED)
-    public Response cancelOnFamilyDefault4xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response cancelOnFamilyDefault4xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.BAD_REQUEST).entity(lraId).build();
     }
 
     public static final String CANCEL_ON_FAMILY_DEFAULT_5XX = "cancelOnFamilyDefault5xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_DEFAULT_5XX)
     @LRA(value = Type.REQUIRED)
-    public Response cancelOnFamilyDefault5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response cancelOnFamilyDefault5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
@@ -88,13 +90,14 @@ public class LraCancelOnController {
     /**
      * Cancel on family is set to <code>3xx</code>. The <code>3xx</code> return code
      * has to cancel the LRA.
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_3XX)
     @LRA(value = Type.REQUIRES_NEW,
             cancelOnFamily = Family.REDIRECTION)
-    public Response cancelOnFamily3xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response cancelOnFamily3xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.SEE_OTHER).entity(lraId).build();
     }
 
@@ -102,13 +105,14 @@ public class LraCancelOnController {
     /**
      * Cancel on is set to <code>301</code>. The <code>301</code> return code
      * has to cancel the LRA.
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_301)
     @LRA(value = Type.REQUIRES_NEW,
         cancelOn = {Status.MOVED_PERMANENTLY})
-    public Response cancelOn301(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response cancelOn301(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.MOVED_PERMANENTLY).entity(lraId).build();
     }
 
@@ -117,13 +121,14 @@ public class LraCancelOnController {
      * Cancel on family is set to <code>4xx</code>,
      * the code from other families (e.g. for <code>5xx</code>
      * should not cancel but should go with close the LRA.
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(NOT_CANCEL_ON_FAMILY_5XX)
     @LRA(value = Type.REQUIRES_NEW,
             cancelOnFamily = {Family.CLIENT_ERROR})
-    public Response notCancelOnFamily5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response notCancelOnFamily5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
 
@@ -137,18 +142,19 @@ public class LraCancelOnController {
      * <p>
      * The remote REST call invokes the same controller class {@link LraCancelOnController}
      * That assumes the call to the representative of the same LRA participant
-     * as it's already enlisted by the method {@link #cancelFromRemoteCall(String)} invoked by the test.
+     * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI)} invoked by the test.
      * Because the specification mandates that the same participant can be enlisted
      * only once per LRA instance then
      * the {@link Compensate} method {@link #compensateWork(URI, String)}
      * will be called only once for the test invocation.
      * </p>
+     * @param lraId The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_FROM_REMOTE_CALL)
     @LRA(value = Type.REQUIRES_NEW)
-    public Response cancelFromRemoteCall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response cancelFromRemoteCall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         Client client = ClientBuilder.newClient();
         try {
             Response response = client
@@ -173,13 +179,13 @@ public class LraCancelOnController {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
         throws NotFoundException {
-        if(lraId == null) {
+        if (lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
         lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
 
-        LOGGER.info(String.format("LRA id '%s' was completed", lraId));
+        LOGGER.info(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
         return Response.ok().build();
     }
 
@@ -188,13 +194,13 @@ public class LraCancelOnController {
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
-        if(lraId == null) {
+        if (lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
         lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
 
-        LOGGER.info(String.format("LRA id '%s' was compensated", lraId));
+        LOGGER.info(String.format("LRA id '%s' was compensated", lraId.toASCIIString()));
         return Response.ok().build();
     }
 }

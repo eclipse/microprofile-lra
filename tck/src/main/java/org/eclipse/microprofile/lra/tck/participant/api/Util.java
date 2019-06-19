@@ -162,7 +162,9 @@ public class Util {
 
     /**
      * see {@link Util#adjust(int, double)}
-     *
+
+     * @param value  value to be adjusted
+     * @param factor  factor for adjusting value
      * @return adjusted value by factor
      */
     public static long adjust(long value, double factor) {

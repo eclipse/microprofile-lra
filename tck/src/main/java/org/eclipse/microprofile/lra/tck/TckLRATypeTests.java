@@ -241,7 +241,7 @@ public class TckLRATypeTests extends TckTestBase {
         Response response = target.get();
 
         try {
-            String methodLRA = response.readEntity(String.class);
+            String methodLRA = response.readEntity(String.class); // Keep as String as we do some String based tests afterwards
             String incomingLRA = lra == null ? "" : lra.toASCIIString();
 
             assertEquals(testName.getMethodName() + ": Unexpected status", expectedStatus, response.getStatus());
@@ -273,11 +273,11 @@ public class TckLRATypeTests extends TckTestBase {
                 // validate that the method ran with an LRA and that it is still active
                 assertNotEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLRA,
                         0, methodLRA.length());
-                assertFalse(lraClient.isLRAFinished(methodLRA));
+                assertFalse(lraClient.isLRAFinished(URI.create(methodLRA)));
                 lraClient.closeLRA(methodLRA);
             } else if (methodLRA.length() != 0) {
                 // otherwise it should be finished
-                assertTrue(lraClient.isLRAFinished(methodLRA));
+                assertTrue(lraClient.isLRAFinished(URI.create(methodLRA)));
             }
 
             if (lra != null) {

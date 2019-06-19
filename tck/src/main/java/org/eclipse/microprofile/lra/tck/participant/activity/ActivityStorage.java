@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.activity;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,9 +35,9 @@ import javax.ws.rs.core.UriInfo;
  */
 @ApplicationScoped
 public class ActivityStorage {
-    private Map<String, Activity> activities = new HashMap<>();
+    private Map<URI, Activity> activities = new HashMap<>();
 
-    public Activity getActivityAndAssertExistence(String lraId, UriInfo jaxrsContext) {
+    public Activity getActivityAndAssertExistence(URI lraId, UriInfo jaxrsContext) {
         if(!activities.containsKey(lraId)) {
            String errorMessage = String.format("Activity store does not contain LRA id '%s', "
                    + "invoked from endpoint '%s'", lraId, jaxrsContext.getPath());
@@ -55,7 +56,7 @@ public class ActivityStorage {
         return activities.get(activity.getLraId());
     }
 
-    public void remove(String id) {
+    public void remove(URI id) {
         activities.remove(id);
     }
 }

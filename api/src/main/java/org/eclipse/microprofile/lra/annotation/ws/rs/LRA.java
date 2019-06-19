@@ -97,7 +97,7 @@ public @interface LRA {
     /**
      * When a JAX-RS invocation is made with an active LRA it is made available
      * via an HTTP header field with the following name. The value contains
-     * the LRA id associated with the HTTP request/response
+     * the LRA id associated with the HTTP request/response and is of type {@link java.net.URI}.
      */
     String LRA_HTTP_CONTEXT_HEADER = "Long-Running-Action";
 
@@ -105,13 +105,13 @@ public @interface LRA {
      * When a JAX-RS invocation is made with an active LRA which is nested,
      * the parent LRA is made available via an HTTP header field with the
      * following name. The value contains the parent LRA id associated with
-     * the HTTP request/response.
+     * the HTTP request/response and is of type {@link java.net.URI}.
      */
     String LRA_HTTP_PARENT_CONTEXT_HEADER = "Long-Running-Action-Parent";
 
     /**
      * the name of the HTTP header field that contains a recovery URI corresponding
-     * to a participant enlistment in an LRA
+     * to a participant enlistment in an LRA. The value is of type {@link java.net.URI}.
      */
     String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
@@ -148,7 +148,7 @@ public @interface LRA {
      * <p>
      *     When an LRA is present its identifier is made available to
      *     the business logic in the JAX-RS request and response headers with the
-     *     name {@value #LRA_HTTP_CONTEXT_HEADER}.
+     *     name {@value #LRA_HTTP_CONTEXT_HEADER} of type {@link java.net.URI}.
      * </p>
      *
      * @return the type of behaviour expected when the annotated method is executed.
@@ -241,7 +241,7 @@ public @interface LRA {
          *     LRA present a new nested LRA is started whose outcome depends upon
          *     whether or not the enclosing LRA is closed or cancelled.
          *     The id of the parent LRA MUST be present in the header with the name
-         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER}.
+         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER} and value is of type {@link java.net.URI}.
          * </p>
          *
          * <p>

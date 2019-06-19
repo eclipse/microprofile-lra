@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2019 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -20,38 +20,28 @@
 package org.eclipse.microprofile.lra.tck.participant.api;
 
 import javax.ws.rs.WebApplicationException;
-import java.net.URI;
 
-public class InvalidLRAIdException extends WebApplicationException {
-    private static final long serialVersionUID = 1271422145863321852L;
-    private final URI lraId;
+public class WrongHeaderException extends WebApplicationException {
 
     /**
-     * Invalid LRA id exception.
+     * Wrong header exception.
      *
-     * @param lraId  LRA id that is behind this exception
-     * @param message  error message of this exception
-     * @param cause  cause exception
+     * @param message error message of this exception
+     * @param cause   cause exception
      */
-    public InvalidLRAIdException(URI lraId, String message, Throwable cause) {
-        super(String.format("%s, LRA id: %s", message, lraId.toASCIIString()), cause);
-
-        this.lraId = lraId;
+    public WrongHeaderException(String message, Throwable cause) {
+        super(message, cause);
     }
 
     /**
-     * Invalid LRA id exception.
+     * Wrong header exception.
      *
-     * @param lraId  LRA id that is behind this exception
-     * @param message  error message of this exception
+     * @param message error message of this exception
      */
-    public InvalidLRAIdException(URI lraId, String message) {
-        super(String.format("%s, LRA id: %s", message, lraId.toASCIIString()));
+    public WrongHeaderException(String message) {
+        super(message);
 
-        this.lraId = lraId;
     }
 
-    public URI getLraId() {
-        return this.lraId;
-    }
+
 }

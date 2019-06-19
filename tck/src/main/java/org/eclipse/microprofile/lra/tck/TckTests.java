@@ -136,7 +136,7 @@ public class TckTests extends TckTestBase {
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
                     parentId, lra.toString());
     
-            String nestedLraId = response.readEntity(String.class);
+            URI nestedLraId = URI.create(response.readEntity(String.class)); // We can keep String.class here as it is in TCK
     
             // close the LRA
             lraClient.closeLRA(lra);
@@ -508,7 +508,7 @@ public class TckTests extends TckTestBase {
 
         String lraStr = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
         assertNotNull("expecting a LRA string returned from " + resourcePath.getUri(), lraStr);
-        String[] lraArray = lraStr.split(",");
+        String[] lraArray = lraStr.split(","); // We keep here type String (and not URI) because of the easy String.split
         URI[] uris = new URI[lraArray.length];
 
         IntStream.range(0, uris.length).forEach(i -> {
@@ -528,7 +528,7 @@ public class TckTests extends TckTestBase {
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
-                lraClient.isLRAFinished(lraArray[0]));
+                lraClient.isLRAFinished(URI.create( lraArray[0])));
 
         applyConsistencyDelay();
         int inMiddleCompletedCount = lraMetricService.getMetric(LRAMetricType.COMPLETE);
@@ -569,7 +569,7 @@ public class TckTests extends TckTestBase {
         IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertTrue(
                 String.format("multiLevelNestedActivity: %s LRA still active (resource path was %s)",
                         (i == 0 ? "top level" : "nested"), resourcePath.getUri()),
-                lraClient.isLRAFinished(lraArray[i])));
+                lraClient.isLRAFinished(URI.create(lraArray[i]))));
 
         applyConsistencyDelay();
         int afterCompletedCount = lraMetricService.getMetric(LRAMetricType.COMPLETE);

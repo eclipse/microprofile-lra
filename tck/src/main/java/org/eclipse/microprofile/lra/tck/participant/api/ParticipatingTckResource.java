@@ -63,7 +63,7 @@ public class ParticipatingTckResource {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
             throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
@@ -71,13 +71,13 @@ public class ParticipatingTckResource {
 
         LOGGER.info(String.format("LRA id '%s' was told to compensate", lraId));
 
-        return getEndPhaseResponse(false, URI.create(lraId));
+        return getEndPhaseResponse(false, lraId);
     }
 
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId, String userData)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
             throws NotFoundException {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
@@ -85,7 +85,7 @@ public class ParticipatingTckResource {
 
         LOGGER.info(String.format("LRA id '%s' was told to complete", lraId));
 
-        return getEndPhaseResponse(true, URI.create(lraId));
+        return getEndPhaseResponse(true, lraId);
     }
 
     private Response getEndPhaseResponse(boolean complete, URI lraId) {
@@ -130,21 +130,21 @@ public class ParticipatingTckResource {
     @PUT
     @Path(ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH)
     @LRA(value = LRA.Type.MANDATORY, end = false)
-    public Response joinWithExistingLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response joinWithExistingLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }
 
     @PUT
     @Path(ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH2)
     @LRA(value = LRA.Type.MANDATORY, end = false)
-    public Response joinWithExistingLRA2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response joinWithExistingLRA2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }
 
     @PUT
     @Path(ParticipatingTckResource.JOIN_WITH_NEW_LRA_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW, end = false)
-    public Response joinWithNewLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response joinWithNewLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }
 }

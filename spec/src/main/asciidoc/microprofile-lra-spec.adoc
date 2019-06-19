@@ -308,7 +308,7 @@ If multiple methods are annotated with the same annotation an arbitrary one will
 [[lra-context]]
 ==== The LRA Context
 
-When a method is invoked in the context of an LRA its identifier MUST be made
+When a method is invoked in the context of an LRA its identifier (of type java.net.URI) MUST be made
 available to the business logic. This LRA is referred to as the `active context`.
 For JAX-RS resource methods the identifier is made available via request and
 response headers which the business method can obtain using standard JAX-RS mechanisms,
@@ -421,7 +421,7 @@ public class SimpleLRAParticipant
     @LRA(LRA.Type.REQUIRES_NEW)
     @Path("/cdi")
     @PUT
-    public void doInTransaction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId)
+    public void doInTransaction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
     {
         /*
          * Perform business actions in the context of the LRA identified by the
@@ -435,14 +435,14 @@ public class SimpleLRAParticipant
     @Complete
     @Path("/complete")
     @PUT
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                  String userData)
     {
         /*
          * Free up resources allocated in the context of the LRA identified by the
          * value in the injected JAX-RS header.
          *
-         * Since there is no @Status method in this class completeWork MUST be
+         * Since there is no @Status method in this class, completeWork MUST be
          * idempotent and MUST return the status.
          */
          return Response.ok(ParticipantStatus.Completed.name()).build();
@@ -451,7 +451,7 @@ public class SimpleLRAParticipant
     @Compensate
     @Path("/compensate")
     @PUT
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                    String userData)
     {
         /*
@@ -459,7 +459,7 @@ public class SimpleLRAParticipant
          * cancelled so the business logic should compensate for any actions
          * that have been performed while running in its context.
          *
-         * Since there is no @Status method in this class compensateWork MUST be
+         * Since there is no @Status method in this class, compensateWork MUST be
          * idempotent and MUST return the status
          */
          return Response.ok(ParticipantStatus.Compensated.name()).build();
@@ -536,8 +536,8 @@ If a compensating activity is brief then the synchronous model may be appropriat
     @Path("/compensate")
     @PUT
     public Response compensatePreviousAction(
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        getActivity(lraId).setCompensated();
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        getActivity(lraId).setCompensated();  // business logic for handling the LRA, not provided by spec or implementation.
 
         return Response.ok();;
     }
@@ -554,7 +554,9 @@ shows how a compensating activity can be started in the background:
     @Path("/compensate")
     @PUT
     public Response compensatePreviousAction(
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+
+        // business logic for handling the LRA, not provided by spec or implementation.
         ActivityClient client = getActivity(lraId).getResourceForCompensation();
         String backgroundActivity = client.compensate(lraId);
         ...
@@ -576,8 +578,8 @@ reporting its` progress using the `@Status` annotation:
     @Status
     @Path("/status")
     @GET
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        if (isFinished(lraId))
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        if (isFinished(lraId))  // Business logic, not provided by spec or Implementation
             return Response.ok().entity(ParticipantStatus.Compensated).build();
         else
             return Response.ok().entity(ParticipantStatus.Compensating).build();
@@ -597,8 +599,8 @@ by reporting `FailedToCompensate` either via the compensate method, for example
     @Compensate
     @Path("/compensate")
     @PUT
-    public Response compensatePreviousAction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        if (isFailed(lraId))
+    public Response compensatePreviousAction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
               return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
@@ -611,8 +613,8 @@ or it can report the failure via the `@Status` method:
     @Status
     @Path("/status")
     @GET
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        if (isFailed(lraId))
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
             return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
@@ -630,9 +632,11 @@ it is explicitly told that it can clean up via the `@Forget` method:
     @Forget
     @Path("/forget")
     @DELETE
-    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
-        if (isFailed(lraId))
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        // Business logic, not provided by spec or Implementation
+        if (isFailed(lraId)) {
             cleanupResources(lraId);
+        }
 
         return Response.ok().build();
     }
@@ -859,8 +863,9 @@ for the duration of the bookFlight method.
     @LRA(LRA.Type.NESTED)
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                               @QueryParam("flightNumber") String flightNumber) {
+        // business logic for handling the LRA, not provided by spec or implementation.
         return service.book(lraId, flightNumber);
     }
 ----
@@ -882,7 +887,7 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   public Response theClockIsTicking(
-      @HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) String lraId) {...}
+      @HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {...}
 ----
 
 Furthermore, the ability to compensate or complete may be transient capabilities of a
@@ -899,7 +904,7 @@ indicate that its' ability to compensate is limited to 100 milliseconds could be
     @Compensate(timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     @Path("/compensate")
     @PUT
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                  String userData) { ... }
 ----
 
@@ -926,7 +931,7 @@ An example of this annotation is shown next:
     @Leave
     @Path("/leave")
     @PUT
-    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
       // clean up since this participant is no longer associated with the LRA
     }
 ----
@@ -1003,7 +1008,7 @@ an asynchronous response:
             cancelOn = NOT_FOUND) // cancel LRA on 404
     @Path("async-path")
     @POST
-    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     try {
@@ -1032,7 +1037,7 @@ participant compensation handlers to run:
     @Path("completion-stage-exceptionally-lra")
     @POST
     public CompletionStage<Response> asyncInvocationWithException(
-        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
 
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
@@ -1058,7 +1063,7 @@ the JAX-RS `@Suspended` annotation:
          end = true) // the LRA must end when the method completes
     @Path("asyncresponse-lra")
     @POST
-    public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId,
+    public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                          final @Suspended AsyncResponse ar) {
         excecutorService.submit(() -> {
             // excecute long running business activity and resume when done
@@ -1088,7 +1093,7 @@ an LRA consuming an async API using an AWS S3 client:
     @Path("completion-stage-lra")
     @POST
     public CompletionStage<PutObjectResponse> asyncInvocationWithLRA(
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
 
         return client.putObject(
                 PutObjectRequest.builder()

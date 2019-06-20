@@ -361,7 +361,9 @@ public class LraController {
     }
 
     private Activity storeActivity(URI lraId, URI recoveryId) {
-        LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lraId.toASCIIString(), recoveryId.toASCIIString()));
+        String lra = lraId != null ? lraId.toASCIIString() : null; // already asserted by the caller but check anyway
+        String rid = recoveryId != null ? recoveryId.toASCIIString() : null; // not asserted by the call so check for null
+        LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lra, rid));
 
         Activity activity = new Activity(lraId)
             .setRecoveryUri(recoveryId)
@@ -393,7 +395,7 @@ public class LraController {
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }
-        return Response.status(Response.Status.OK).entity(lraId).build();
+        return Response.status(Response.Status.OK).entity(lraId.toASCIIString()).build();
     }
 
     /**

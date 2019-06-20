@@ -241,7 +241,7 @@ public class TckLRATypeTests extends TckTestBase {
         Response response = target.get();
 
         try {
-            String methodLRA = response.readEntity(String.class); // Keep as String as we do some String based tests afterwards
+            String methodLRA; // Make it a String as we do some String based tests afterwards
             String incomingLRA = lra == null ? "" : lra.toASCIIString();
 
             assertEquals(testName.getMethodName() + ": Unexpected status", expectedStatus, response.getStatus());
@@ -250,6 +250,9 @@ public class TckLRATypeTests extends TckTestBase {
                 // 412 errors should abort running the target method so skip the LRA check
                 lraCheckType = MethodLRACheck.NONE;
                 methodLRAShouldBeActive = false;
+                methodLRA = "";
+            } else {
+                methodLRA = response.readEntity(String.class);
             }
 
             switch (lraCheckType) {
@@ -283,6 +286,8 @@ public class TckLRATypeTests extends TckTestBase {
             if (lra != null) {
                 lraClient.closeLRA(lra);
             }
+        } catch (Throwable e) {
+            LOGGER.warning(e.getMessage());
         } finally {
             response.close();
         }

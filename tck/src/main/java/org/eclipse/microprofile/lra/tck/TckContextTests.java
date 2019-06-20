@@ -43,6 +43,7 @@ import static org.eclipse.microprofile.lra.tck.TckContextTests.HttpMethod.PUT;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH1;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH2;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.ASYNC_LRA_PATH3;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.CLEAR_STATUS_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.CONTEXT_CHECK_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LEAVE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LRA_TCK_FAULT_CODE_HEADER;
@@ -99,17 +100,17 @@ public class TckContextTests extends TckTestBase {
         URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202));
 
         // verify that the resource was asked to complete and is in the state Completing
-        String status = invoke(true, STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
+        String status = invoke(true, STATUS_PATH, HttpMethod.PUT, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completing", ParticipantStatus.Completing.name(), status);
 
         // clear the EndPhase override data so that the next status request returns completed or compensated
-        invoke(false, STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        invoke(false, CLEAR_STATUS_PATH, HttpMethod.POST, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         // trigger a replay of the end phase
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // and verify that the resource was asked to complete
-        status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        status = invoke(false, STATUS_PATH, HttpMethod.PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completed", ParticipantStatus.Completed.name(), status);
     }
 
@@ -118,7 +119,7 @@ public class TckContextTests extends TckTestBase {
         // call a resource that begins but does not end an LRA
         URI lra = URI.create(invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200));
         // verify that the resource is active
-        String status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        String status = invoke(false, STATUS_PATH, HttpMethod.PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         assertEquals(testName.getMethodName() + ": participant is not active", ParticipantStatus.Active.name(), status);
 
@@ -153,14 +154,16 @@ public class TckContextTests extends TckTestBase {
         assertEquals(testName.getMethodName() + " resource forget should not have been called", 0, count);
 
         // clear the fault
-        invoke(false, STATUS_PATH, PUT, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
+        invoke(false, CLEAR_STATUS_PATH, HttpMethod.POST, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
 
         // trigger a replay of the end phase
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // the implementation should have called status again which will have returned 200
         count = lraMetricService.getMetric(LRAMetricType.STATUS, lra);
-        assertEquals(testName.getMethodName() + " resource status should have been called again", 2, count);
+        // the implementation should have called status at least once. Since we have alread called status in this test
+        // check that the stat is at least 2
+        assertTrue(testName.getMethodName() + " resource status should have been called again", count >= 2);
         // the implementation should call forget since it knows the participant status
         count = lraMetricService.getMetric(LRAMetricType.FORGET, lra);
         assertEquals(testName.getMethodName() + " resource forget should have been called", 1, count);
@@ -261,7 +264,7 @@ public class TckContextTests extends TckTestBase {
                 .header(LRA_TCK_FAULT_CODE_HEADER, finishStatus);
         Response response;
 
-        if (where.startsWith(METRIC_PATH) || (where.startsWith(STATUS_PATH) && method == PUT)) {
+        if (where.startsWith(METRIC_PATH) || (where.startsWith(CLEAR_STATUS_PATH))) {
             builder.header(LRA_TCK_HTTP_CONTEXT_HEADER, lraContext);
         } else {
             builder.header(LRA_HTTP_CONTEXT_HEADER, lraContext);

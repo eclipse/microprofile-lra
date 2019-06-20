@@ -79,7 +79,8 @@ public class ContextTckResource {
 
     public static final String LEAVE_PATH = "/leave";
     // resource path for reading and writing the participant status
-    public static final String STATUS_PATH = "/status";
+    public static final String STATUS_PATH = "/status";    // resource path for reading and writing the participant status
+    public static final String CLEAR_STATUS_PATH = "/clear-status";
     // resource path for reading stats relating to a participant in the context of a single LRA
     public static final String METRIC_PATH = "/count";
     // resource path for clearing state
@@ -167,7 +168,7 @@ public class ContextTckResource {
         // check for a requests to inject particular behaviour
         setEndPhase(tckFaultType, tckFaultCode);
 
-        return Response.ok().entity(lraId).build();
+        return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
     // end an existing LRA or start and end a new one
@@ -179,14 +180,14 @@ public class ContextTckResource {
                                 @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
         setEndPhase(tckFaultType, tckFaultCode);
 
-        return Response.ok().entity(lraId).build();
+        return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
     @LRA(value = LRA.Type.REQUIRES_NEW)
     @PUT
     @Path(REQUIRES_NEW_LRA_PATH)
     public Response requiresNew(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        return Response.ok().entity(lraId).build();
+        return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
     @LRA(value = LRA.Type.NESTED, end = false)
@@ -223,7 +224,7 @@ public class ContextTckResource {
         assertEquals("contextCheck4: the remote service should have ran with the active context", remote, active);
         assertEquals("contextCheck4: after calling a remote service the active LRAs is different", active, getActiveLRA());
 
-        return Response.ok().entity(lraId).build();
+        return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
     @LRA(value = LRA.Type.REQUIRED)
@@ -233,7 +234,7 @@ public class ContextTckResource {
                          final @Suspended AsyncResponse ar) {
         excecutorService.submit(() -> {
             // excecute long running business activity and resume when done
-            ar.resume(Response.ok().entity(lraId).build());
+            ar.resume(Response.ok().entity(lraId.toASCIIString()).build());
         });
     }
 
@@ -248,9 +249,9 @@ public class ContextTckResource {
                 () -> {
                     try {
                         Thread.sleep(10);
-                        return Response.ok().entity(lraId).build();
+                        return Response.ok().entity(lraId.toASCIIString()).build();
                     } catch (InterruptedException ex) {
-                        return Response.status(NOT_FOUND).entity(lraId).build();
+                        return Response.status(NOT_FOUND).entity(lraId.toASCIIString()).build();
                     }
                 },
                 getExcecutorService()
@@ -267,7 +268,7 @@ public class ContextTckResource {
             // excecute long running business activity finishing with an error
             // code of NOT_FOUND which causes the LRA to cancel
             response.completeExceptionally(
-                    new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId).build()));
+                    new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId.toASCIIString()).build()));
         });
 
         return response;
@@ -277,7 +278,7 @@ public class ContextTckResource {
     @PUT
     @Path(LEAVE_PATH)
     public Response leave(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        return Response.ok().entity(lraId).build();
+        return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
     // Compensate methods SHOULD use @PUT but to verify that other HTTP methods are also supported use here HTTP GET
@@ -310,7 +311,7 @@ public class ContextTckResource {
         return getEndPhaseResponse(true);
     }
 
-    // Status methods SHOULD use @GET but to verify that other HTTP methods are also supported use here HTTP PUT
+    // Status methods SHOULD use @GET but to verify that other HTTP methods are also supported use HTTP PUT
     @PUT
     @Path(STATUS_PATH)
     @Status
@@ -324,7 +325,7 @@ public class ContextTckResource {
         return Response.status(endPhaseStatus).entity(status.name()).build();
     }
 
-    // Forget methods SHOULD use @DELETE but to verify that other HTTP methods are also supported use here HTTP PUT
+    // Forget methods SHOULD use @DELETE but to verify that other HTTP methods are also supported use HTTP PUT
     @PUT
     @Path("/forget")
     @Forget
@@ -339,8 +340,8 @@ public class ContextTckResource {
     }
 
     // clear any injected participant behaviour
-    @PUT
-    @Path(STATUS_PATH)
+    @POST
+    @Path(CLEAR_STATUS_PATH)
     public Response clearStatus(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType) {
         switch (status) {

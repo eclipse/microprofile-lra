@@ -501,6 +501,52 @@ The `end = false` element on the bookTrip method forces the LRA to continue runn
 the method finishes and the `end = true` element on the confirmTrip method forces the LRA
 (started by the bookTrip method) to close the LRA.
 
+[[after-lra]]
+===== Discovering the Outcome of an LRA
+
+As remarked in the previous section, a JAX-RS resource method runs with an active
+context depending upon the value specified in the `@LRA` annotation.
+The final state of this LRA can be discovered by marking one of the other methods
+in the class with the `@AfterLRA` annotation. When the LRA enters a terminal state
+the method will be passed the id of the LRA together with the `LRAStatus` (see the
+javadoc for the `@AfterLRA` annotation for more information). Note that the final
+states of an LRA is defined by <<lra-state-model,the LRA state model>> and it
+would be a specification violation if the implementation calls the method when the
+LRA is not in a final state. Further information about method signatures and
+JAX-RS response codes is given below in section <<jaxrs-participant-methods>>.
+
+Note that the resource does not need to be a participant in order to receive this
+notification. Therefore in the following resource definition, although no method
+is annotated with `@Compensate`, if the method called
+`activityWithLRA` is invoked then the method `notifyLRAFinished` will be called
+when the LRA finishes:
+
+[source,java]
+----
+public class BusinessResource {
+    @PUT
+    @Path("/work")
+    @LRA(value = LRA.Type.REQUIRES_NEW)
+    public Response activityWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        // perform a business action in the context of lraId
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/after")
+    @AfterLRA // method is called when the LRA associated with the method activityWithLRA finishes
+    public Response notifyLRAFinished(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+                                      LRAStatus status) {
+
+        switch (status) {
+            case Closed:
+                // the LRA was successfully closed
+            ...    
+        }
+    }
+}
+----
+
 [[compensating-activities]]
 ==== Compensating Activities
 
@@ -545,7 +591,7 @@ If a compensating activity is brief then the synchronous model may be appropriat
 
 On the other hand, the compensating logic may involve concerted activities,
 perhaps even compensating in the context of another LRA. In this case the
-protocol accomodates a more decoupled mode of operation - the following example
+protocol accommodates a more decoupled mode of operation - the following example
 shows how a compensating activity can be started in the background:
 
 [source,java]
@@ -689,7 +735,7 @@ the participant state model>>. These annotations are:
 * `@Compensate` -- a method to be executed when the LRA is cancelled
 * `@Complete` -- a method to be executed when the LRA is closed
 * `@Status` -- a method that allow user to state status of the participant with regards 
-to a paricular LRA
+to a particular LRA
 * `@Forget` -- a method to be executed when the LRA allows participant to 
 clear all associated information
 
@@ -698,9 +744,9 @@ methods associated with the JAX-RS resource method or the methods which are not
 bound to JAX-RS. 
 
 [[jaxrs-participant-methods]]
-===== JAX-RS participant methods
+===== JAX-RS methods
 
-The following table presents expectations that are placed on individual participant 
+The following table presents expectations that are placed on individual
 annotations when associated with JAX-RS resource methods:
 
 [[jaxrs-response-table]]
@@ -727,22 +773,50 @@ annotations when associated with JAX-RS resource methods:
 | 200, 404, 412
 | no expectations
 
+| `@AfterLRA`
+| PUT
+| 200
+| no expectations
+
 |=== 
 
-The presented HTTP methods SHOULD be applied at individual JAX-RS participant methods 
+The presented HTTP methods SHOULD be applied at individual JAX-RS methods
 but they are not enforced by the specification. 
 
-If the annotated method returns an unexpected HTTP status code the implementation MAY
-invoke the same method again.
+If the method annotated with `@AfterLRA` returns an unexpected HTTP status
+or never reaches the caller then the implementation MUST invoke the same method again.
 
-Users are allowed to reuse existing JAX-RS endpoints for participant methods definitions. 
+If the annotated method returns an unexpected HTTP status code the implementation MAY
+invoke the same method again with the following caveat: if there is no `@Status` method
+and the implementation receives an unexpected response code from either of the
+`@Compensate` or `@Complete` invocations then it MUST reinvoke the method. [Note that
+this caveat applies to the situation where the response is lost since the caller will
+not see the correct code].
+
+Users are allowed to reuse existing JAX-RS endpoints for participant methods definitions.
 In this case, LRA implementation MUST ensure that invoking these methods outside of the 
 implementation of the LRA specification will not influence any running LRA.
+
+===== Non-JAX-RS afterLRA method
+
+A method annotated with `@AfterLRA` that is not a JAX-RS resource method MUST accept
+two arguments of type URI and LRAStatus, in that order. The first parameter holds
+an LRA context and the second parameter holds the final status of the LRA. If the
+signature does not conform to this requirement then the behaviour of the implementation
+is unspecified.
+
+An example of a valid signature is:
+
+[source,java]
+----
+@AfterLRA
+public void onLRAEnd(URI lraId, LRAStatus status)
+----
 
 [[non-jaxrs-participant-methods]]
 ===== Non-JAX-RS participant methods
 
-When the participant annotations are applied to the non-JAX-RS resource methods they 
+When the participant annotations are applied to the non-JAX-RS resource methods they
 MUST adhere to these predefined signatures:
 
 * *Return type*: 
@@ -1043,8 +1117,8 @@ participant compensation handlers to run:
 
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
-        excecutorService.submit(() -> {
-            // excecute long running business activity finishing with a NOT_FOUND error
+        executorService.submit(() -> {
+            // execute long running business activity finishing with a NOT_FOUND error
             // which causes the LRA to cancel
             response.completeExceptionally(
                     new WebApplicationException(
@@ -1067,8 +1141,8 @@ the JAX-RS `@Suspended` annotation:
     @POST
     public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                          final @Suspended AsyncResponse ar) {
-        excecutorService.submit(() -> {
-            // excecute long running business activity and resume when done
+        executorService.submit(() -> {
+            // execute long running business activity and resume when done
             ar.resume(Response.ok().entity(lraId).build());
         });
     }

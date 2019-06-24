@@ -79,7 +79,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.runAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
+            lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
             
             simulateLongRunningCompensation();
         });
@@ -90,7 +90,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
+            lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
             
             simulateLongRunningCompensation();
             return Response.accepted().build(); // Completing
@@ -102,7 +102,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
+            lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
             
             simulateLongRunningCompensation();
             return ParticipantStatus.Completed;

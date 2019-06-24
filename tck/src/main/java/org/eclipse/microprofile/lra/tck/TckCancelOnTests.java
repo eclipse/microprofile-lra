@@ -66,9 +66,9 @@ public class TckCancelOnTests extends TckTestBase {
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.BAD_REQUEST, response, resourcePath));
         applyConsistencyDelay();
         assertEquals("After 400 compensate should be invoked", 
-            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+            1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("After 400 complete can't be invoked", 
-            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+            0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 
     /**
@@ -84,9 +84,9 @@ public class TckCancelOnTests extends TckTestBase {
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
         applyConsistencyDelay();
         assertEquals("After 500 compensate should be invoked", 
-            1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+            1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("After 500 complete can't be invoked", 
-            0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+            0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 
     /**
@@ -102,9 +102,9 @@ public class TckCancelOnTests extends TckTestBase {
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.SEE_OTHER, response, resourcePath));
         applyConsistencyDelay();
         assertEquals("After status code 303 is received, compensate should be invoked as set by attribute cancelOnFamily",
-                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+                1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("After status code 303 is received, complete can't be invoked as not defined in annotation @LRA",
-                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+                0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 
     /**
@@ -120,9 +120,9 @@ public class TckCancelOnTests extends TckTestBase {
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.MOVED_PERMANENTLY, response, resourcePath));
         applyConsistencyDelay();
         assertEquals("After status code 301 is received, compensate should be invoked as set by attribute cancelOn",
-                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+                1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("After status code 301 is received, complete can't be invoked as not defined in annotation @LRA",
-                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+                0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 
     /**
@@ -138,9 +138,9 @@ public class TckCancelOnTests extends TckTestBase {
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
         applyConsistencyDelay();
         assertEquals("After status code 500 is received, compensate can't be invoked as default behaviour was changed",
-                0, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+                0, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("After status code 500 is received, complete has to be called as default behaviour was changed",
-                1, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+                1, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 
     /**
@@ -157,8 +157,8 @@ public class TckCancelOnTests extends TckTestBase {
         applyConsistencyDelay();
         // LraCancelOnController enlists twice the same participant, compensate is expected to be called only once
         assertEquals("Status was 200 but compensate should be called as LRA should be cancelled for remotely called participant as well",
-                1, lraMetricService.getMetric(LRAMetricType.COMPENSATE, lraId));
+                1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("Even the 200 status was received the remotely called participant should cause the LRA being cancelled",
-                0, lraMetricService.getMetric(LRAMetricType.COMPLETE, lraId));
+                0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
     }
 }

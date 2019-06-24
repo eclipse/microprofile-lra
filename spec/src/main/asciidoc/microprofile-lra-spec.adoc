@@ -539,7 +539,7 @@ If a compensating activity is brief then the synchronous model may be appropriat
             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         getActivity(lraId).setCompensated();  // business logic for handling the LRA, not provided by spec or implementation.
 
-        return Response.ok();;
+        return Response.ok();
     }
 ----
 

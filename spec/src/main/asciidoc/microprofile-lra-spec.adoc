@@ -1239,6 +1239,8 @@ survive system failures. The specification is not prescriptive about how
 an implementation achieves resiliency provided that it obeys the requirements
 of the specification as laid out in this document.
 
+include::release_notes.asciidoc[]
+
 [[appendix-1]]
 == Appendix 1: Selected Javadoc API Descriptions
 

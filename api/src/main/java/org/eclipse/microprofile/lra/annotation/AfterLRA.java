@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * {@link LRA} and is invoked in the context of an LRA then
  * the resource can ask to be notified when the LRA finishes
  * by marking one of the other methods in the class with
- * the {@link AfterLRA} annotation.
+ * the <code>&#64;AfterLRA</code> annotation.
  * </p>
  *
  * <p>
@@ -47,7 +47,7 @@ import java.lang.annotation.Target;
  *
  * <pre>
  * <code>
- *   &#064;PUT
+ *   &#64;PUT
  *   &#64;AfterLRA
  *   public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
  *                          LRAStatus status)
@@ -55,10 +55,11 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * The implementation will keep resending the notification
+ * The implementation SHOULD keep resending the notification
  * until it receives a <code>200 OK</code> status code from the
  * resource method (which means that the method SHOULD be
  * idempotent).
+ * If it stops retrying a warning message SHOULD be logged.
  * </p>
  *
  * <p>
@@ -68,9 +69,11 @@ import java.lang.annotation.Target;
  * signature:
  * </p>
  *
+ * <pre>
  * <code>
  *     public void onLRAEnd(URI lraId, LRAStatus status)
  * </code>
+ * </pre>
  *
  * <p>
  * The return type is ignored and the method name is not

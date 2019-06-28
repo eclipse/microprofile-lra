@@ -86,7 +86,7 @@ import java.time.temporal.ChronoUnit;
  *
  * <p>
  * Resource methods can access the LRA context id by inspecting the request headers
- * using standard JAX-RS mechanisms, ie `@Context` or by injecting it via the JAX-RS
+ * using standard JAX-RS mechanisms, ie <code>&#64;Context</code> or by injecting it via the JAX-RS
  * {@link HeaderParam} annotation with value {@value #LRA_HTTP_CONTEXT_HEADER}.
  * This may be useful, for example, for associating business work with an LRA.
  * </p>

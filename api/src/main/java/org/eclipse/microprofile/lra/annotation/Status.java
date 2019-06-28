@@ -26,6 +26,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * LRA annotations support distributed communications amongst software
  * components and due to the unreliable nature of networks,
  * messages/requests can be lost, delayed or duplicated etc and the
@@ -35,40 +36,86 @@ import java.lang.annotation.Target;
  * or compensation notification but if the participant (the class that
  * contains the Compensate and Complete annotations) does not
  * support idempotency then it must be able to report its' status by
- * by annotating one of the methods with this <em>@Status</em>.
+ * by annotating one of the methods with this <code>&#64;Status</code>.
  * The annotated method should report the status according to one of the
  * {@link ParticipantStatus} enum values.
+ * </p>
  *
+ * <p>
  * If the annotated method is a JAX-RS resource method the id of the currently
  * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
  * this LRA is nested then the parent LRA MUST be present in the header with the name
  * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
  * and value is of type {@link java.net.URI}.
+ * </p>
  *
+ * <p>
  * If the annotated method is not a JAX-RS resource method the id of the currently
  * running LRA can be obtained by adhering to a predefined method signature as
  * defined in the LRA specification document. Similarly the method may determine
  * whether or not it runs with a nested LRA by providing a parameter to hold the parent id.
  * For example,
+ * </p>
+ *
  * <pre>
  *     <code>
  *          &#64;Status
  *          public void status(URI lraId, URI parentId) { ...}
  *     </code>
  * </pre>
+ *
+ * <p>
  * would be a valid status method declaration. If an invalid signature is detected 
  * the implementation of this specification MUST prohibit successful startup of the application
  * (e.g. with a runtime exception).
+ * </p>
  *
+ * <p>
  * If the participant has already responded successfully to an invocation
- * of the <em>@Compensate</em> or <em>@Complete</em> method then it may
- * report <em>404 Not Found</em> HTTP status code or in case of 
- * non-JAX-RS method returning {@link ParticipantStatus} to return <em>null</em>. 
+ * of the <code>&#64;Compensate</code> or <code>&#64;Complete</code> method then it may
+ * report <code>404 Not Found</code> HTTP status code or in case of
+ * non-JAX-RS method returning {@link ParticipantStatus} to return <code>null</code>.
  * This enables the participant to free up resources.
+ * </p>
  *
+ * <p>
  * Since the participant generally needs to know the id of the LRA in order
  * to report its status there is generally no benefit to combining this
- * annotation with the `@LRA` annotation (though it is not prohibited).
+ * annotation with the <code>&#64;LRA</code> annotation (though it is not prohibited).
+ * </p>
+ *
+ * <p>
+ * If the method is a JAX-RS resource method (or is a non JAX-RS method
+ * annotated with <code>&#64;Status</code> with return type
+ * <code>javax.ws.rs.core.Response</code>) then the following are the only
+ * valid response codes:
+ * </p>
+ *
+ * <table border="0" cellpadding="3" cellspacing="0"
+ *   summary="Valid JAX-RS response codes for Status methods">
+ * <caption><span>JAX-RS Response Codes For Status Methods</span><span>&nbsp;</span></caption>
+ * <tr>
+ *   <th scope="col">Code</th>
+ *   <th scope="col">Response Body</th>
+ *   <th scope="col">Meaning</th>
+ * </tr>
+ * <tr>
+ *   <td scope="row">200</td>
+ *   <td scope="row">{@link ParticipantStatus} enum value</td>
+ *   <td scope="row">The current status of the participant</td>
+ * </tr>
+ * <tr>
+ *   <td scope="row">202</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The resource is attempting to determine the status and
+ *   the caller should retry later</td>
+ * </tr>
+ * <tr>
+ *   <td scope="row">404</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The method does not know about the LRA</td>
+ * </tr>
+ * </table>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

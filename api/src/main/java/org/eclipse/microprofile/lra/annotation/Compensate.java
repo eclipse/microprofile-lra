@@ -27,42 +27,137 @@ import java.lang.annotation.Target;
 import java.time.temporal.ChronoUnit;
 
 /**
- * When a resource method executes in the context of an LRA and if the containing
- * class contains a method annotated with `@Compensate` then the resource will
- * be used as a participant for the LRA. If this associated LRA is subsequently
- * cancelled then the method that this annotation is applied to will be invoked
- * (if the annotation is present on more than one method then an arbitrary one
- * will be chosen). The spec makes no guarantees about when it will be invoked,
- * just that is will eventually be called.
+ * <p>
+ * If a resource method executes in the context of an LRA and if the containing
+ * class has a method annotated with <code>&#64;Compensate</code> then this
+ * method will be invoked if the LRA is cancelled. The resource should attempt to
+ * compensate for any actions it performed in the context of the LRA.
+ * If the annotation is present on more than one method then an arbitrary one
+ * will be chosen. The LRA specification makes no guarantees about when
+ * Compensate method will be invoked, just that it will eventually be called.
+ * </p>
  *
- * If the annotated method is a JAX-RS resource method the id of the currently
+ * <p>
+ * If the annotation is applied to a JAX-RS resource method then the id of the currently
  * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
  * this LRA is nested then the parent LRA MUST be present in the header with the name
  * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
- * and value is of type {@link java.net.URI}.
+ * and the header value will be of type {@link java.net.URI}.
+ * </p>
  *
- * If the annotated method is not a JAX-RS resource method the id of the currently
- * running LRA can be obtained by adhering to a predefined method signature as
- * defined in the LRA specification document. Similarly the method may determine
- * whether or not it runs with a nested LRA by providing a parameter to hold the parent id.
+ * <p>
+ * If the annotated method is not a JAX-RS resource method then the id of the currently
+ * running LRA and its parent LRA (if it is nested) can be obtained by adhering to
+ * predefined method signatures as defined in the LRA specification document.
  * For example,
+ * </p>
+ *
  * <pre>
  *     <code>
- *          &#64;Compensate
- *          public void compensate(URI lraId, URI parentId) { ...}
+ *        &#64;Compensate
+ *        public void compensate(URI lraId, URI parentId) { ...}
  *     </code>
  * </pre>
+ *
+ * <p>
  * would be a valid compensation method declaration. If an invalid signature is detected 
  * the implementation of this specification MUST prohibit successful startup of the application
  * (e.g. with a runtime exception).
+ * </p>
  *
- * Note that, according to the state model {@link LRAStatus} once an LRA has been
- * asked to cancel it is no longer possible to join with it as a participant.
- * Therefore in JAX-RS, combining this annotation with an `@LRA` annotation that does not
- * start a new LRA will result in a `412 PreCondition Failed` status code and is
- * not advised. On the other hand, combining it with an `@LRA` annotation that
- * begins a new LRA can in certain use case make sense, but in this case the LRA
+ * <p>
+ * If the participant cannot compensate immediately then it must report that the
+ * compensation is in progress by either returning a future (such as
+ * {@link java.util.concurrent.CompletionStage}) which will eventually report
+ * one of the final states, or a <code>202 Accepted</code> JAX-RS response code or,
+ * in the case of non JAX-RS resource methods, by returning
+ * {@link ParticipantStatus#Compensating} (see the specification
+ * document for more details).
+ * </p>
+ *
+ * <p>
+ * Note that, according to the state model defined by {@link LRAStatus}, it is not possible
+ * to receive compensation notifications after an LRA has been asked to cancel.
+ * Therefore combining this annotation with an <code>&#64;LRA</code> annotation that does not
+ * start a new LRA will result in a <code>412 PreCondition Failed</code> JAX-RS response
+ * code. On the other hand, combining it with an <code>&#64;LRA</code> annotation that
+ * begins a new LRA can in certain uses case make sense, but in this case the LRA
  * that this method is being asked to compensate for will be unavailable.
+ * </p>
+ *
+ * <p>
+ * If the method is a JAX-RS resource method (or is a non JAX-RS method
+ * annotated with <code>&#64;Compensate</code> with return type
+ * <code>javax.ws.rs.core.Response</code>) then the following are the only
+ * valid response codes:
+ * </p>
+ *
+ *<table border="0" cellpadding="3" cellspacing="0"
+ *   summary="Valid JAX-RS compensation response codes">
+ * <caption>
+ *     <span>JAX-RS Compensation Response Codes</span>
+ *     <span>&nbsp;</span>
+ * </caption>
+ * <tr>
+ *   <th scope="col">Code</th>
+ *   <th scope="col">Response Body</th>
+ *   <th scope="col">Meaning</th>
+ * </tr>
+ * <tr>
+ *   <td scope="row">200</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The resource has successfully compensated</td>
+ * </tr>
+ * <tr>
+ *   <td scope="row">202</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The resource is still attempting compensation</td>
+ * </tr>
+ * <tr>
+ *   <td scope="row">404</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The resource does not know about the LRA</td>
+ * </tr>
+ * <tr>
+ *   <td scope="row">500</td>
+ *   <td scope="row">{@link ParticipantStatus} enum value</td>
+ *   <td scope="row"><p>The resource has failed to compensate.
+ *   The payload contains the reason for the failure.
+ *   A participant MUST remember this state until its
+ *   {@link Forget} method is called.</p>
+ *   <p>The actual value is not important but it MUST
+ *   correspond to a valid {@link ParticipantStatus} enum value. For example,
+ *   if compensation was not possible because the resource already
+ *   completed (without being asked to) then a value such as
+ *   {@link ParticipantStatus#Completed} would be appropriate or
+ *   if it was due to a generic failure then
+ *   {@link ParticipantStatus#FailedToCompensate} would be valid.
+ *   </p>
+ *   <p>
+ *   Note that the
+ *   actual state as reported by the {@link Status} method MUST
+ *   be {@link ParticipantStatus#FailedToCompensate}</p></td>
+ * </tr>
+ * </table>
+ *
+ * <p>
+ * If any other code is returned (or, in the 500 case, the body does not
+ * correspond to a valid state) then the implementation SHOULD either keep
+ * retrying or attempt to discover the status by calling the
+ * {@link Status} method if present or a combination of both.
+ * If the implementation stops retrying then it SHOULD log a warning.
+ * An example scenario where the implementation might attempt to invoke the
+ * compensate method twice and the status method is as follows:
+ * </p>
+ *
+ * <ol>
+ * <li>The implementation invokes the compensate method via JAX-RS.</li>
+ * <li>The JAX-RS server returns a 500 code (ie the notification does not reach the participant).</li>
+ * <li>If there is a status method then the implementation uses that to get the current
+ * state of the participant. If the status is Active then the implementation may
+ * infer that the original request never reached the participant so it is safe to
+ * reinvoke the compensate method.</li>
+ * </ol>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
@@ -71,7 +166,7 @@ public @interface Compensate {
      * The period for which the participant will guarantee it will be able
      * to compensate for any work that it performed during the associated LRA.
      * When this period elapses the LRA that it joined becomes eligible for
-     * cancellation. The units are specified in the {@link Compensate#timeUnit()}
+     * cancellation. The units are specified in the {@link #timeUnit()}
      * attribute.
      *
      * A value of zero indicates that it will always be able to compensate.
@@ -82,7 +177,7 @@ public @interface Compensate {
     long timeLimit() default 0;
 
     /**
-     * @return the unit of time that the {@link Compensate#timeLimit()} attribute is
+     * @return the unit of time that the {@link #timeLimit()} attribute is
      * measured in.
      */
     ChronoUnit timeUnit() default ChronoUnit.SECONDS;

@@ -71,7 +71,6 @@ import java.lang.annotation.Target;
  * to report its status there is generally no benefit to combining this
  * annotation with the `@LRA` annotation (though it is not prohibited).
  */
-@Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Status {

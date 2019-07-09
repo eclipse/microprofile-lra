@@ -59,8 +59,7 @@ import java.lang.annotation.Target;
  *     </code>
  * </pre>
  * would be a valid forget method declaration. If an invalid signature is detected 
- * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
- * will be thrown during the application startup.
+ * the {@link java.lang.RuntimeException} will be thrown during the application startup.
  *
  *
  * Since the participant generally needs to know the id of the LRA in order

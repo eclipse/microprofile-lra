@@ -55,8 +55,8 @@ import java.time.temporal.ChronoUnit;
  *     </code>
  * </pre>
  * would be a valid completion method declaration. If an invalid signature is detected 
- * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
- * will be thrown during the application startup.
+ * the implementation of this specification MUST prohibit successful startup of the application
+ * (e.g. with a runtime exception).
  *
  * Note that, according to the state model {@link LRAStatus} once an LRA has been
  * asked to close it is no longer possible to join with it as a participant.

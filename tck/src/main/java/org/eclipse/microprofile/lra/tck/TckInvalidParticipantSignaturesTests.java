@@ -19,7 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidArgumentTypesParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidReturnTypeParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.TooManyArgsParticipant;
@@ -45,8 +44,7 @@ import org.junit.runner.RunWith;
  * 
  * <p>
  * Each test deploys an archive containing single invalid participant containing an error in its participant 
- * method signature and expects that such deployment is aborted with {@link InvalidLRAParticipantDefinitionException} 
- * according to the specification.
+ * method signature and expects that such deployment is aborted according to the specification.
  * </p>
  */
 @RunWith(Arquillian.class)
@@ -120,7 +118,6 @@ public class TckInvalidParticipantSignaturesTests {
     private void testInvalidDeployment(String deploymentName) {
         deploymentNameRule.deploymentName = deploymentName;
         expectedException.expect(DeploymentException.class);
-        expectedException.expectMessage(InvalidLRAParticipantDefinitionException.class.getSimpleName());
 
         deployer.deploy(deploymentName);
     }

@@ -57,8 +57,8 @@ import java.lang.annotation.Target;
  *     </code>
  * </pre>
  * would be a valid status method declaration. If an invalid signature is detected 
- * the {@link org.eclipse.microprofile.lra.participant.InvalidLRAParticipantDefinitionException} 
- * will be thrown during the application startup.
+ * the implementation of this specification MUST prohibit successful startup of the application
+ * (e.g. with a runtime exception).
  *
  * If the participant has already responded successfully to an invocation
  * of the <em>@Compensate</em> or <em>@Complete</em> method then it may

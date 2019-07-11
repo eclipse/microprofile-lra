@@ -288,9 +288,9 @@ public class ContextTckResource {
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                    @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
             throws NotFoundException {
-        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
         }
 
         return getEndPhaseResponse(false);
@@ -303,9 +303,9 @@ public class ContextTckResource {
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                  @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
             throws NotFoundException {
-        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
         }
 
         return getEndPhaseResponse(true);
@@ -317,9 +317,9 @@ public class ContextTckResource {
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.STATUS, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();
@@ -331,9 +331,9 @@ public class ContextTckResource {
     @Forget
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.FORGET, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.NESTED, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();

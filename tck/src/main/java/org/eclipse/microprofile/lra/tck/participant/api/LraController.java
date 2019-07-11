@@ -140,9 +140,9 @@ public class LraController {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
-        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraController.class.getName());
 
-        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Complete methods
+        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Completed methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -170,9 +170,9 @@ public class LraController {
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
         throws NotFoundException {
 
-        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensate methods
+        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensated methods
 
-        lraMetricService.incrementMetric(LRAMetricType.COMPENSATE, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraController.class.getName());
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -198,7 +198,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
     public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.COMPLETE, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
 

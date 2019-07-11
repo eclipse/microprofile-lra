@@ -23,6 +23,7 @@ package org.eclipse.microprofile.lra.annotation.ws.rs;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
@@ -102,6 +103,12 @@ public @interface LRA {
     String LRA_HTTP_CONTEXT_HEADER = "Long-Running-Action";
 
     /**
+     * Header name holding the LRA context of an LRA that has finished - to be
+     * used in conjunction with the {@link AfterLRA} annotation.
+     */
+    String LRA_HTTP_ENDED_CONTEXT_HEADER = "Long-Running-Action-Ended";
+
+    /**
      * When a JAX-RS invocation is made with an active LRA which is nested,
      * the parent LRA is made available via an HTTP header field with the
      * following name. The value contains the parent LRA id associated with
@@ -132,6 +139,12 @@ public @interface LRA {
      *     but it does guarantee that they will eventually be sent. Under failure
      *     conditions the system will keep retrying until it is certain that all
      *     participants have been successfully notified.
+     * </p>
+     *
+     * <p>
+     *     If the method is to run in the context of an LRA and the annotated class
+     *     also contains a method annotated with {@link AfterLRA}
+     *     then the resource will be notified of the final state of the LRA.
      * </p>
      *
      * <p>

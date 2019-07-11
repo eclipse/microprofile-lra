@@ -760,7 +760,9 @@ defined types
 
 Declaring more than two arguments, different types of arguments or different return type 
 for any non-JAX-RS method annotatated with the participant marker annotation MUST result 
-in the deployment time `InvalidLRAParticipantDefinitionException`. 
+in the prohibition of the successful application startup (e.g. through the deployment
+time runtime exception). 
+
 Please note that both arguments are optional but the order is required. This means that 
 if only one argument is provided this argument will contain the value of the current 
 active LRA context (not the parent LRA context in case of nested LRA).

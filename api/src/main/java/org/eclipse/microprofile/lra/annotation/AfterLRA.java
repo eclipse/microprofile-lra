@@ -43,15 +43,16 @@ import java.lang.annotation.Target;
  * final status is passed to the method as plain text
  * corresponding to one of the {@link LRAStatus} enum values.
  * For example:
- * <pre>
- *     <code>
- * @PUT
- * @AfterLRA
- * public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
- *                          LRAStatus status)
- *     </code>
- * </pre>
  * </p>
+ *
+ * <pre>
+ * <code>
+ *   &#064;PUT
+ *   &#64;AfterLRA
+ *   public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+ *                          LRAStatus status)
+ * </code>
+ * </pre>
  *
  * <p>
  * The implementation will keep resending the notification
@@ -65,12 +66,12 @@ import java.lang.annotation.Target;
  * then the id of the LRA and its final status can be obtained
  * by ensuring that the annotated method conforms to the
  * signature:
+ * </p>
  *
  * <code>
  *     public void onLRAEnd(URI lraId, LRAStatus status)
  * </code>
  *
- * </p>
  * <p>
  * The return type is ignored and the method name is not
  * significant.

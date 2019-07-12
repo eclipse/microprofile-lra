@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidAfterLRASignatureListener;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidArgumentTypesParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidReturnTypeParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.TooManyArgsParticipant;
@@ -48,11 +49,12 @@ import org.junit.runner.RunWith;
  * </p>
  */
 @RunWith(Arquillian.class)
-public class TckInvalidParticipantSignaturesTests {
+public class TckInvalidSignaturesTests {
     
     private static final String INVALID_RETURN_TYPE_DEPLOYMENT = "nonjaxrs-return-type-deploy";
     private static final String TOO_MANY_ARGS_DEPLOYMENT = "too-many-args-deploy";
     private static final String INVALID_ARGUMENT_TYPE_DEPLOYMENT = "nonjaxrs-argument-type-deploy";
+    private static final String INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT = "invalid-after-lra-deploy";
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -77,12 +79,17 @@ public class TckInvalidParticipantSignaturesTests {
     public static WebArchive deployInvalidArgumentTypeParticipant() {
         return createArchive(InvalidArgumentTypesParticipant.class);
     }
+    
+    @Deployment(name = INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT, managed = false)
+    public static WebArchive deployInvalidAfterLRASignatureResource() {
+        return createArchive(InvalidAfterLRASignatureListener.class);
+    }
 
-    private static WebArchive createArchive(Class<?> participantClass) {
-        String archiveName = participantClass.getSimpleName();
+    private static WebArchive createArchive(Class<?> resourceClass) {
+        String archiveName = resourceClass.getSimpleName();
         return ShrinkWrap
             .create(WebArchive.class, archiveName + ".war")
-            .addClasses(participantClass, JaxRsActivator.class)
+            .addClasses(resourceClass, JaxRsActivator.class)
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
     
@@ -108,11 +115,19 @@ public class TckInvalidParticipantSignaturesTests {
     }
 
     /**
-     * Verigy that invalid type of argument (int) in participant method is detected
+     * Verify that invalid type of argument (int) in participant method is detected
      */
     @Test
     public void invalidArgumentTypeInParticipantMethodTest() {
         testInvalidDeployment(INVALID_ARGUMENT_TYPE_DEPLOYMENT);
+    }
+
+    /**
+     * Verify that invalid <code>&#64;AfterLRA</code> method signature is detected
+     */
+    @Test
+    public void invalidAfterLRASignatureTest() {
+        testInvalidDeployment(INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT);
     }
 
     private void testInvalidDeployment(String deploymentName) {

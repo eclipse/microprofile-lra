@@ -19,7 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs;
 
-import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
 
@@ -28,22 +28,25 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
 /**
- * TCK invalid LRA participant containing invalid return type in the participant method signature
- * used for verification of deployment time invalid signature detection and error report in  
+ * TCK invalid LRA resource containing invalid signature for <code>&#64;AfterLRA</code> method. It's
+ * used for verification of deployment time invalid signature detection and error report in 
  * {@link TckInvalidSignaturesTests}.
  */
-@Path("nonjaxrs-return-type")
-public class InvalidReturnTypeParticipant {
+@Path(InvalidAfterLRASignatureListener.RESOURCE_PATH)
+public class InvalidAfterLRASignatureListener {
+
+    public static final String RESOURCE_PATH = "invalid-after-lra";
+    public static final String START_LRA = "start-lra";
 
     @GET
-    @Path("enlist")
+    @Path(START_LRA)
     @LRA(LRA.Type.REQUIRED)
     public Response doInLRA() {
         return Response.ok().build();
     }
-    
-    @Compensate
-    public String compensate() {
-        return "compensated";
+
+    @AfterLRA
+    public void onLRAEnd(String lraId, String lraStatus) {
+        // intentionally empty
     }
 }

@@ -808,8 +808,9 @@ implementation of the LRA specification will not influence any running LRA.
 A method annotated with `@AfterLRA` that is not a JAX-RS resource method MUST accept
 two arguments of type URI and LRAStatus, in that order. The first parameter holds
 an LRA context and the second parameter holds the final status of the LRA. If the
-signature does not conform to this requirement then the behaviour of the implementation
-is unspecified.
+signature does not conform to this requirement then the implementation MUST
+prohibit the successful startup of the application (e.g. through the deployment time
+runtime exception).
 
 An example of a valid signature is:
 

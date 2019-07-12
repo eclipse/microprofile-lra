@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -32,7 +33,7 @@ import java.net.URI;
 /**
  * TCK invalid LRA participant containing invalid type of arguments in the participant method signature
  * used for verification of deployment time invalid signature detection and error report in 
- * {@link org.eclipse.microprofile.lra.tck.TckInvalidParticipantSignaturesTests}
+ * {@link TckInvalidSignaturesTests}.
  */
 @Path("nonjaxrs-argument-type-nonjaxrs")
 public class InvalidArgumentTypesParticipant {

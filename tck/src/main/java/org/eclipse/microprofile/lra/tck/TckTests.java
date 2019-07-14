@@ -258,7 +258,7 @@ public class TckTests extends TckTestBase {
         // verify that the resource was notified of the final state of the LRA
         assertEquals("testAfterLRAListener: end synchronization was not invoked on resource " + resourcePath.getUri(),
                 1,
-                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAParticipant.class.getName()));
+                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()));
     }
 
     @Test

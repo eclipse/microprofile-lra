@@ -702,7 +702,10 @@ a call to `@Compensate` then it will free the room. But it won't do anything on
 
 If the participant successfully compensates or completes then it may forget about
 the LRA. Otherwise it should remember that it is still associated with the LRA and
-it MUST report the status of the association using one of the values in the
+it MUST report the status of the association using the
+<<jaxrs-response-table,appropriate JAX-RS response code>> if it uses JAX-RS for
+participant notifications. If it does not use JAX-RS for participant notifications
+then it MUST report the status of the association using one of the values in the
 `ParticipantStatus` enum according to the <<participant-state-model,the
 participant state model>>. If the compensation and completion methods are not
 idempotent then there MUST be a method annotated with `@Status` which reports the
@@ -751,26 +754,26 @@ annotations when associated with JAX-RS resource methods:
 
 [[jaxrs-response-table]]
 |===
-| Annotation | HTTP method | Expected status codes | Response
+| Annotation | Prefered HTTP method | Expected status codes | Response
 
 | `@Compensate`
 | PUT
-| 200, 202, 404, 412
-| <<source-ParticipantStatus,ParticipantStatus>>
+| 200, 202, 404, 500
+| <<source-Compensate,see javadoc>>
 
 | `@Complete`
 | PUT
-| 200, 202, 404, 412
-| <<source-ParticipantStatus,ParticipantStatus>>
+| 200, 202, 404, 500
+| <<source-Complete,see javadoc>>
 
 | `@Status`
 | GET
-| 200, 202, 404, 412
+| 200, 202, 404
 | <<source-ParticipantStatus,ParticipantStatus>>
 
 | `@Forget`
 | DELETE
-| 200, 404, 412
+| 200, 404
 | no expectations
 
 | `@AfterLRA`
@@ -779,6 +782,9 @@ annotations when associated with JAX-RS resource methods:
 | no expectations
 
 |=== 
+
+Please refer to the javadoc for each annotation for the description of the
+conditions under which the various JAX-RS response codes are returned.
 
 The presented HTTP methods SHOULD be applied at individual JAX-RS methods
 but they are not enforced by the specification. 
@@ -793,8 +799,8 @@ and the implementation receives an unexpected response code from either of the
 this caveat applies to the situation where the response is lost since the caller will
 not see the correct code].
 
-Users are allowed to reuse existing JAX-RS endpoints for participant methods definitions.
-In this case, LRA implementation MUST ensure that invoking these methods outside of the 
+Users are allowed to reuse existing JAX-RS endpoints for participant method definitions.
+In this case the LRA implementation MUST ensure that invoking these methods outside of the 
 implementation of the LRA specification will not influence any running LRA.
 
 ===== Non-JAX-RS afterLRA method
@@ -893,18 +899,23 @@ exposed method from unauthorized access. The specific security details are not s
 ==== Eventual compensations
 
 [[async-compensators]]
-If the resource cannot perform a compensation activity
-immediately the `@Compensate` method SHOULD do one or more of the following:
+If a resource cannot perform a compensation activity
+immediately the `@Compensate` method MUST report that the activity
+is still in progress using one of the following options:
 
-- return `ParticipantStatus.Compensating`
-- return a `202 Accepted` HTTP status code
-- mark the method as a JAX-RS asynchronous method (using the
-  `javax.ws.rs.container.Suspended` annotation).
+- Return a `CompletionStage` or mark the method as asynchronous
+  (using the `javax.ws.rs.container.Suspended` annotation). The future must
+  report the final status when the stage completes (if it delivers an
+  intermediate state then the implementation MUST use the `@Status` method if
+  it exists, and if there is no such method it will reinvoke the `@Compensate`
+  method). Please refer to the section
+  <<reactive-support,about reactive support>> for more details.
+- A JAX-RS method can return a `202 Accepted` HTTP status code
+- A non JAX-RS method can return `ParticipantStatus.Compensating`.
 
 The `@Status` method, if present, MUST report the progress of the compensation.
 
-Similarly if it cannot perform a completion activity immediately.
-
+Similarly if the resource cannot perform a completion activity immediately.
 
 [[nesting-lras]]
 ==== Nesting LRAs

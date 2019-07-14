@@ -139,8 +139,8 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testForget() throws InterruptedException {
         int count;
-        // call a resource that begins and ends an LRA and coerces the resource to return FAILED when asked to complete
-        URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 500));
+        // call a resource that begins and ends an LRA and coerces the resource to return an invalid HTTP code (503) when asked to complete
+        URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 503));
 
         // trigger a replay attempt
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);

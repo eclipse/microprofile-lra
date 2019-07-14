@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
 
 /**
  * <p>
- * If a resource method is annotated with `@Leave` and is invoked in the context of
+ * If a resource method is annotated with <code>&#64;Leave</code> and is invoked in the context of
  * an LRA and if the bean class has registered a participant with that LRA then
  * it will be removed from the LRA just before the bean method is entered.
  * The participant can forget about this LRA, in particular it will not
@@ -41,12 +41,14 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * If the resource method (or class) is also annotated with `@LRA` the method will
- * execute with the context dictated by the `@LRA` annotation. If this `@LRA` annotation
+ * If the resource method (or class) is also annotated with <code>&#64;LRA</code> the method will
+ * execute with the context dictated by the <code>&#64;LRA</code> annotation. If this
+ * <code>&#64;LRA</code> annotation
  * results in the creation of a new LRA then the participant will still be removed
  * from the incoming context and will be enlisted with the new context (and the method
  * will execute with this new context). Note that in this case the context exposed in
- * the `LRA_HTTP_CONTEXT_HEADER` JAX-RS header will be set to the new LRA (and not the original
+ * the <code>&#64;LRA_HTTP_CONTEXT_HEADER</code> JAX-RS header will be set to the new LRA (and
+ * not the original
  * one), ie the original context will not be available to the business logic.
  * </p>
  *

@@ -809,7 +809,7 @@ A method annotated with `@AfterLRA` that is not a JAX-RS resource method MUST ac
 two arguments of type URI and LRAStatus, in that order. The first parameter holds
 an LRA context and the second parameter holds the final status of the LRA. If the
 signature does not conform to this requirement then the implementation MUST
-prohibit the successful startup of the application (e.g. through the deployment time
+prohibit the successful startup of the application (e.g. through the startup time
 runtime exception).
 
 An example of a valid signature is:
@@ -841,7 +841,7 @@ defined types
 
 Declaring more than two arguments, different types of arguments or different return type 
 for any non-JAX-RS method annotatated with the participant marker annotation MUST result 
-in the prohibition of the successful application startup (e.g. through the deployment
+in the prohibition of the successful application startup (e.g. through the startup
 time runtime exception). 
 
 Please note that both arguments are optional but the order is required. This means that 

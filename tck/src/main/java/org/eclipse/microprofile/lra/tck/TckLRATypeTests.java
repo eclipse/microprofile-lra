@@ -24,6 +24,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -215,6 +216,30 @@ public class TckLRATypeTests extends TckTestBase {
     public void neverWithoutEndLRA() {
         resourceRequest(NEVER_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
+    
+    @Test
+    public void requiredWithClosedLRA() {
+        String lraId = resourceRequest(REQUIRED_PATH, false, 200, MethodLRACheck.NONE, false);
+     
+        // manually call REQUIRED LRA endpoint with the id of already finished LRA
+        Response response = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH).path(REQUIRED_PATH).request()
+            .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId).get();
+
+        Assert.assertNotEquals("REQUIRED LRA endpoint called with inactive LRA context should " +
+            "start a new LRA", lraId, response.readEntity(String.class));
+    }
+    
+    @Test
+    public void mandatoryWithClosedLRA() {
+        String lraId = resourceRequest(REQUIRED_PATH, false, 200, MethodLRACheck.NONE, false);
+        
+        // manually call MANDATORY LRA endpoint with the id of already finished LRA
+        Response response = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH).path(MANDATORY_PATH).request()
+            .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId).get();
+        
+        Assert.assertEquals("MANDATORY LRA method should return 412 when called with inactive LRA context",
+            Response.Status.PRECONDITION_FAILED.getStatusCode(), response.getStatus());
+    }
 
     /**
      * Perform a JAX-RS resource request and check the resulting status and whether or not it ran with
@@ -228,7 +253,7 @@ public class TckLRATypeTests extends TckTestBase {
      * @param methodLRAShouldBeActive if true the LRA started by the invoked method should still
      *                               be active after the resource invocation completes
      */
-    private void resourceRequest(String path, boolean startLRA, int expectedStatus, MethodLRACheck lraCheckType,
+    private String resourceRequest(String path, boolean startLRA, int expectedStatus, MethodLRACheck lraCheckType,
                                  boolean methodLRAShouldBeActive) {
         Invocation.Builder target = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH)
                 .path(path).request();
@@ -241,8 +266,8 @@ public class TckLRATypeTests extends TckTestBase {
         Response response = target.get();
 
         try {
-            String methodLRA; // Make it a String as we do some String based tests afterwards
-            String incomingLRA = lra == null ? "" : lra.toASCIIString();
+            String methodLraId; // Make it a String as we do some String based tests afterwards
+            String incomingLraId = lra == null ? "" : lra.toASCIIString();
 
             assertEquals(testName.getMethodName() + ": Unexpected status", expectedStatus, response.getStatus());
 
@@ -250,23 +275,23 @@ public class TckLRATypeTests extends TckTestBase {
                 // 412 errors should abort running the target method so skip the LRA check
                 lraCheckType = MethodLRACheck.NONE;
                 methodLRAShouldBeActive = false;
-                methodLRA = "";
+                methodLraId = "";
             } else {
-                methodLRA = response.readEntity(String.class);
+                methodLraId = response.readEntity(String.class);
             }
 
             switch (lraCheckType) {
                 case NOT_PRESENT:
-                    assertEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLRA,
-                            0, methodLRA.length());
+                    assertEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLraId,
+                            0, methodLraId.length());
                     break;
                 case EQUALS:
                     assertEquals(testName.getMethodName() + ": Resource method should have ran with the incoming LRA",
-                            incomingLRA, methodLRA);
+                            incomingLraId, methodLraId);
                     break;
                 case NOT_EQUALS:
                     assertNotEquals(testName.getMethodName() + ": Resource method should not have run with the incoming LRA",
-                            incomingLRA, methodLRA);
+                            incomingLraId, methodLraId);
                     break;
                 default:
                     break;
@@ -274,20 +299,23 @@ public class TckLRATypeTests extends TckTestBase {
 
             if (methodLRAShouldBeActive) {
                 // validate that the method ran with an LRA and that it is still active
-                assertNotEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLRA,
-                        0, methodLRA.length());
-                assertFalse(lraClient.isLRAFinished(URI.create(methodLRA)));
-                lraClient.closeLRA(methodLRA);
-            } else if (methodLRA.length() != 0) {
+                assertNotEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLraId,
+                        0, methodLraId.length());
+                assertFalse(lraClient.isLRAFinished(URI.create(methodLraId)));
+                lraClient.closeLRA(methodLraId);
+            } else if (methodLraId.length() != 0) {
                 // otherwise it should be finished
-                assertTrue(lraClient.isLRAFinished(URI.create(methodLRA)));
+                assertTrue(lraClient.isLRAFinished(URI.create(methodLraId)));
             }
 
             if (lra != null) {
                 lraClient.closeLRA(lra);
             }
+            
+            return methodLraId;
         } catch (Throwable e) {
             LOGGER.warning(e.getMessage());
+            return null;
         } finally {
             response.close();
         }

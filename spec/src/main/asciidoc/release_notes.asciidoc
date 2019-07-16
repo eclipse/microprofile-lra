@@ -1,0 +1,124 @@
+//
+// Copyright (c) 2019 Contributors to the Eclipse Foundation
+//
+// See the NOTICE file(s) distributed with this work for additional
+// information regarding copyright ownership.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// You may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+[[release_notes_10]]
+== Release Notes for MicroProfile LRA 1.0
+
+http://download.eclipse.org/microprofile/microprofile-lra-1.0/microprofile-lra.pdf[MicroProfile LRA Spec PDF]
+http://download.eclipse.org/microprofile/microprofile-lra-1.0/microprofile-lra.html[MicroProfile LRA Spec HTML]
+http://download.eclipse.org/microprofile/microprofile-lra-1.0/apidocs/[MicroProfile Propagation LRA Javadocs]
+
+Key features:
+
+A transaction model which isn’t full ACID:
+
+- an activity reflects business interactions
+- all scoped work must be compensatable
+- activities are visible to other services
+- when an activity ends all work is either accepted or all work is compensated
+- the LRA model defines the triggers for when and where compensation actions are executed
+- defines annotations for the safe/transactional execution of activities supporting long running activities involving loosely coupled processes
+
+Supports:
+
+- relaxion of atomicity (using nested transactions);
+- locking is optional  (=> loss of isolation);
+- forward progress by allowing work to finish early, to provisionally perform subsets of work (nesting), time bounds, composition of activities
+
+Provides CDI annotations:
+
+.LRA Annotations
+|===
+|Annotation |Description |JAX-RS
+
+|@LRA
+|Controls the life cycle of an LRA
+|Yes
+
+|@AfterLRA
+|Notification that an LRA has finished
+|Yes/Optional
+|===
+
+.Participant Annotations
+|===
+|Annotation |Description |JAX-RS
+
+|@Compensate
+|Indicates that the method should be invoked if the LRA is cancelled.
+|Optional
+
+|@Complete
+|Indicates that the method should be invoked if the LRA is closed.
+|Optional
+|@Leave
+|Indicates that this class is no longer interested in this LRA.
+|Yes
+|@Status
+|When the annotated method is invoked it should report the status.
+|Optional
+|@Forget
+|The method may release any resources associated with the LRA
+|Optional
+|===
+
+* reactive support:
+** CompletionStage
+** @Suspended AsyncResponse
+** HTTP 202 Accepted response code
+
+To get started, add this dependency to your project:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.eclipse.microprofile.lra</groupId>
+    <artifactId>microprofile-lra-api</artifactId>
+    <version>${version.microprofile.lra}</version>
+    <version>1.0</version>
+    <scope>provided</scope>
+</dependency>
+----
+
+Create a JAX-RS business resource and annotate the methods that you would like to be included in a long running action
+using the @LRA annotation. Minimally you should define which business method should be run if the LRA is cancelled
+using the @Compensate annotation.
+
+[source,java]
+----
+@Path("resource")
+public class SimpleParticipant {
+    @PUT
+    @Path("action")
+    @LRA(value = LRA.Type.REQUIRED)
+    public Response businessOp(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        // perform some business action in the context of the LRA with id lraId
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("compensate")
+    @Compensate
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        // compensate for any actions that were performed in the context of the LRA with id lraId
+
+        return Response.ok().build();
+    }
+}
+----

@@ -297,7 +297,7 @@ are idempotent, otherwise it MUST provide a method annotated with `@Status`.
 
 If the participant is no longer associated with the LRA (because it has successfully
 compensated or completed or because it has left the LRA) it MAY return the
-`404 Not Found` HTTP status code from any of these methods.
+`410 Gone` HTTP status code from any of these methods.
 
 If the participant knows it will never be able to compensate or complete then it MUST remember
 that it could not until explicitly told that it can clean up by providing a method annotated with `@Forget`
@@ -668,7 +668,7 @@ or it can report the failure via the `@Status` method:
 
 In the successful case the participant SHOULD clean up any resources it allocated in the
 context of the LRA. Any requests (including the current one) made in the context of the
-same LRA MAY return a `404 Not Found` status code.
+same LRA MAY return a `410 Gone` status code.
 
 In the failure case the participant is responsible for remembering that it failed until
 it is explicitly told that it can clean up via the `@Forget` method:
@@ -711,7 +711,7 @@ participant state model>>. If the compensation and completion methods are not
 idempotent then there MUST be a method annotated with `@Status` which reports the
 status. Otherwise the compensation and completion methods should return the status.
 If the participant is no longer associated with the LRA (because it has successfully
-compensated/completed) it MAY return the `404 Not Found` HTTP status code from any
+compensated/completed) it MAY return the `410 Gone` HTTP status code from any
 of these methods. If it knows it will never be able to compensate or complete then
 it MUST remember the fact until explicitly told that it can clean up by providing
 a method annotated with `@Forget` (the requirement is marked MUST because message
@@ -758,22 +758,22 @@ annotations when associated with JAX-RS resource methods:
 
 | `@Compensate`
 | PUT
-| 200, 202, 404, 500
+| 200, 202, 410, 500
 | <<source-Compensate,see javadoc>>
 
 | `@Complete`
 | PUT
-| 200, 202, 404, 500
+| 200, 202, 410, 500
 | <<source-Complete,see javadoc>>
 
 | `@Status`
 | GET
-| 200, 202, 404
+| 200, 202, 410
 | <<source-ParticipantStatus,ParticipantStatus>>
 
 | `@Forget`
 | DELETE
-| 200, 404
+| 200, 410
 | no expectations
 
 | `@AfterLRA`
@@ -1041,7 +1041,7 @@ report the status according to the
 (https://github.com/eclipse/microprofile-lra/blob/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ParticipantStatus.java[github link]).
 
 If the participant has already responded successfully to an `@Compensate`
-or `@Complete` method invocation then it MAY report `404 Not Found`
+or `@Complete` method invocation then it MAY report `410 Gone`
 HTTP status code or in the case of non-JAX-RS method returning 
 <<source-ParticipantStatus,ParticipantStatus>> `null`. 
 This enables the participant to free up resources.

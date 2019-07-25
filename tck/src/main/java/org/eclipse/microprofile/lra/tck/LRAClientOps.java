@@ -79,10 +79,10 @@ public class LRAClientOps {
     }
 
     boolean isLRAFinished(URI lra) {
-        // if the LRA has finished/finishing or does not exist 412 or 404 MUST be be reported
+        // if the LRA has finished/finishing or does not exist 412 or 410 MUST be be reported
         int status = tryToEnlistWithAnLRA(lra);
 
-        return status == Response.Status.NOT_FOUND.getStatusCode() || status == Response.Status.PRECONDITION_FAILED.getStatusCode();
+        return status == Response.Status.GONE.getStatusCode() || status == Response.Status.PRECONDITION_FAILED.getStatusCode();
     }
 
     /**

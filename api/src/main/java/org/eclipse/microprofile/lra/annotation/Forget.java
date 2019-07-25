@@ -104,7 +104,7 @@ import java.lang.annotation.Target;
  *   <td scope="row">The participant may have removed all knowledge of the LRA</td>
  * </tr>
  * <tr>
- *   <td scope="row">404</td>
+ *   <td scope="row">410</td>
  *   <td scope="row">Empty</td>
  *   <td scope="row">The method does not know about the LRA</td>
  * </tr>

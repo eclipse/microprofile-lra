@@ -37,7 +37,8 @@ import java.lang.annotation.Target;
  *
  * <p>
  * If the <code>AfterLRA</code> method is also a JAX-RS resource method
- * then the LRA context is made available to the annotated method
+ * then it MUST use the {@link javax.ws.rs.PUT} request method. In this
+ * case the LRA context is made available to the annotated method
  * via an HTTP header with the name
  * {@link LRA#LRA_HTTP_ENDED_CONTEXT_HEADER} and the
  * final status is passed to the method as plain text

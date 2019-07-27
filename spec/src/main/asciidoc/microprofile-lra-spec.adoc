@@ -310,17 +310,18 @@ If multiple methods are annotated with the same annotation an arbitrary one will
 
 When a method is invoked in the context of an LRA its identifier (of type java.net.URI) MUST be made
 available to the business logic. This LRA is referred to as the `active context`.
-For JAX-RS resource methods the identifier is made available via request and
+
+For JAX-RS resource methods, the identifier is made available via request and
 response headers which the business method can obtain using standard JAX-RS mechanisms,
 ie `@Context` or by injecting a JAX-RS header param with the name specified by
 the Java constant `LRA_HTTP_CONTEXT_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
 This header is referred to as the `context header`.
 
+When using non-JAX-RS based 'complete' and 'compensate' methods (see <<non-jaxrs-participant-methods>>)
+this identifier is passed as a method parameter.
+
 The implementation MUST propagate the `active context` on outgoing JAX-RS
 requests.
-footnote:[issue #35 (Do not define JAX-RS annotations on `@Compensate` methods)
-removes the requirement for some methods to be JAX-RS resources. The resolution
-of that issue should ensure the context is still available to business logic.
 
 If an LRA is propagated to a resource that is not annotated with any of the
 annotations defined in this specification then the LRA will not be made

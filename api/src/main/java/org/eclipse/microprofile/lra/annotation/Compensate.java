@@ -114,7 +114,7 @@ import java.time.temporal.ChronoUnit;
  *   <td scope="row">The resource is still attempting compensation</td>
  * </tr>
  * <tr>
- *   <td scope="row">404</td>
+ *   <td scope="row">410</td>
  *   <td scope="row">Empty</td>
  *   <td scope="row">The resource does not know about the LRA</td>
  * </tr>

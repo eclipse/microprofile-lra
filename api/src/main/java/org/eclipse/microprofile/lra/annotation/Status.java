@@ -73,7 +73,7 @@ import java.lang.annotation.Target;
  * <p>
  * If the participant has already responded successfully to an invocation
  * of the <code>&#64;Compensate</code> or <code>&#64;Complete</code> method then it may
- * report <code>404 Not Found</code> HTTP status code or in case of
+ * report <code>410 Gone</code> HTTP status code or in case of
  * non-JAX-RS method returning {@link ParticipantStatus} to return <code>null</code>.
  * This enables the participant to free up resources.
  * </p>
@@ -111,7 +111,7 @@ import java.lang.annotation.Target;
  *   the caller should retry later</td>
  * </tr>
  * <tr>
- *   <td scope="row">404</td>
+ *   <td scope="row">410</td>
  *   <td scope="row">Empty</td>
  *   <td scope="row">The method does not know about the LRA</td>
  * </tr>

@@ -35,7 +35,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -286,8 +285,7 @@ public class ContextTckResource {
     @Path("/compensate")
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
-            throws NotFoundException {
+                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
@@ -301,8 +299,7 @@ public class ContextTckResource {
     @Path("/complete")
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent)
-            throws NotFoundException {
+                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent);

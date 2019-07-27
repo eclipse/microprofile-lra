@@ -38,7 +38,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -87,18 +86,17 @@ public class LraController {
 
     /**
      * Performing a GET on the participant URL will return the current status of the
-     * participant {@link ParticipantStatus}, or 404 if the participant is no longer present.
+     * participant {@link ParticipantStatus}, or 410 if the participant does no longer know about this LRA.
      *
      * @param lraId the id of the LRA
      * @return the status of the LRA
-     * @throws NotFoundException if the activity was not found
      */
     @GET
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     @LRA(value = LRA.Type.NOT_SUPPORTED)
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) throws NotFoundException {
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity.getStatus() == null) {
@@ -120,8 +118,7 @@ public class LraController {
     @Path("/leave")
     @Produces(MediaType.APPLICATION_JSON)
     @Leave
-    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
-        throws NotFoundException {
+    public Response leaveWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
 
         if (lraId != null) {
             activityStore.getActivityAndAssertExistence(lraId, context);
@@ -138,8 +135,7 @@ public class LraController {
     @Path("/complete")
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
-        throws NotFoundException {
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraController.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Completed methods
@@ -167,8 +163,7 @@ public class LraController {
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
     @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)  // O and ChronoUnit.SECONDS are the default, just to be explicit here.
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData)
-        throws NotFoundException {
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensated methods
 
@@ -411,12 +406,11 @@ public class LraController {
      *
      * @param lraId the id of the LRA
      * @return the final status of the activity
-     * @throws NotFoundException if the activity does not exist
      */
     @PUT
     @Path("/{LRAId}/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response compensate(@PathParam("LRAId") URI lraId) throws NotFoundException {
+    public Response compensate(@PathParam("LRAId") URI lraId) {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(ParticipantStatus.Compensated);
@@ -437,12 +431,11 @@ public class LraController {
      *
      * @param lraId the id of the LRA
      * @return the final status of the activity
-     * @throws NotFoundException if the activity does not exist
      */
     @PUT
     @Path("/{LRAId}/complete")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response complete(@PathParam("LRAId") URI lraId) throws NotFoundException {
+    public Response complete(@PathParam("LRAId") URI lraId) {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activity.setStatus(ParticipantStatus.Completed);
@@ -453,7 +446,7 @@ public class LraController {
 
     @PUT
     @Path("/{LRAId}/forget")
-    public void forget(@PathParam("LRAId") URI lraId) throws NotFoundException {
+    public void forget(@PathParam("LRAId") URI lraId) {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         activityStore.remove(activity.getLraId());

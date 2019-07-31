@@ -34,12 +34,12 @@ import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.tck.participant.api.LraController.LRA_CONTROLLER_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
 
 @ApplicationScoped
-@Path(NoLRAController.NO_LRA_CONTROLLER_PATH)
-public class NoLRAController {
-    public static final String NO_LRA_CONTROLLER_PATH = "nolracontroller";
+@Path(NoLRAResource.NO_LRA_RESOURCE_PATH)
+public class NoLRAResource {
+    public static final String NO_LRA_RESOURCE_PATH = "nolraresource";
     public static final String NON_TRANSACTIONAL_WORK_PATH = "work";
 
     @Context
@@ -54,8 +54,8 @@ public class NoLRAController {
         }
 
         WebTarget resourcePath = ClientBuilder.newClient().target(context.getBaseUri())
-                .path(LRA_CONTROLLER_PATH)
-                .path(LraController.MANDATORY_LRA_RESOURCE_PATH);
+                .path(LRA_RESOURCE_PATH)
+                .path(LraResource.MANDATORY_LRA_RESOURCE_PATH);
 
         Response response = resourcePath.request().put(Entity.text(""));
 

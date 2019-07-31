@@ -19,7 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController;
+import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -35,7 +35,7 @@ import javax.ws.rs.core.Response.Status;
 
 import java.net.URI;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource.LRA_CANCEL_ON_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Arquillian.class)
@@ -54,12 +54,12 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault4xx(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelOnFamilyDefault4xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamilyDefault4xx() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_4XX);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_4XX);
         
         Response response = resourcePath.request().get();
 
@@ -72,12 +72,12 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamilyDefault5xx(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelOnFamilyDefault5xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamilyDefault5xx() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_5XX);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_5XX);
         
         Response response = resourcePath.request().get();
 
@@ -90,12 +90,12 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOnFamily3xx(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelOnFamily3xx(java.net.URI)}
      */
     @Test
     public void cancelOnFamily3xx() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.CANCEL_ON_FAMILY_3XX);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.CANCEL_ON_FAMILY_3XX);
         
         Response response = resourcePath.request().get();
 
@@ -108,12 +108,12 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelOn301(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelOn301(java.net.URI)}
      */
     @Test
     public void cancelOn301() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.CANCEL_ON_301);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.CANCEL_ON_301);
         
         Response response = resourcePath.request().get();
 
@@ -126,12 +126,12 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#notCancelOnFamily5xx(java.net.URI)}
+     * See {@link LraCancelOnResource#notCancelOnFamily5xx(java.net.URI)}
      */
     @Test
     public void notCancelOnFamily5xx() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.NOT_CANCEL_ON_FAMILY_5XX);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.NOT_CANCEL_ON_FAMILY_5XX);
         
         Response response = resourcePath.request().get();
 
@@ -144,18 +144,18 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnController#cancelFromRemoteCall(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelFromRemoteCall(java.net.URI)}
      */
     @Test
     public void cancelFromRemoteCall() {
-        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_CONTROLLER_PATH)
-            .path(LraCancelOnController.CANCEL_FROM_REMOTE_CALL);
+        WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
+            .path(LraCancelOnResource.CANCEL_FROM_REMOTE_CALL);
         
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.OK, response, resourcePath));
         applyConsistencyDelay();
-        // LraCancelOnController enlists twice the same participant, compensate is expected to be called only once
+        // LraCancelOnResource enlists twice the same participant, compensate is expected to be called only once
         assertEquals("Status was 200 but compensate should be called as LRA should be cancelled for remotely called participant as well",
                 1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("Even the 200 status was received the remotely called participant should cause the LRA being cancelled",

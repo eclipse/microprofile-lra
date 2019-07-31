@@ -48,10 +48,10 @@ import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 @ApplicationScoped
-@Path(LraCancelOnController.LRA_CANCEL_ON_CONTROLLER_PATH)
-public class LraCancelOnController {
-    private static final Logger LOGGER = Logger.getLogger(LraCancelOnController.class.getName());
-    public static final String LRA_CANCEL_ON_CONTROLLER_PATH = "lracontroller-cancelon";
+@Path(LraCancelOnResource.LRA_CANCEL_ON_RESOURCE_PATH)
+public class LraCancelOnResource {
+    private static final Logger LOGGER = Logger.getLogger(LraCancelOnResource.class.getName());
+    public static final String LRA_CANCEL_ON_RESOURCE_PATH = "lraresource-cancelon";
 
     @Inject
     private LraTckConfigBean config;
@@ -139,7 +139,7 @@ public class LraCancelOnController {
      * default for the cancelling and so the whole LRA should be cancelled.
      * </p>
      * <p>
-     * The remote REST call invokes the same controller class {@link LraCancelOnController}
+     * The remote REST call invokes the same resource class {@link LraCancelOnResource}
      * That assumes the call to the representative of the same LRA participant
      * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI)} invoked by the test.
      * Because the specification mandates that the same participant can be enlisted
@@ -158,8 +158,8 @@ public class LraCancelOnController {
         try {
             Response response = client
                     .target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()))
-                    .path(LRA_CANCEL_ON_CONTROLLER_PATH)
-                    .path(LraCancelOnController.CANCEL_ON_FAMILY_DEFAULT_5XX)
+                    .path(LRA_CANCEL_ON_RESOURCE_PATH)
+                    .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_5XX)
                     .request().get();
             assert response.getStatus() == 500;
         } catch (MalformedURLException murle) {

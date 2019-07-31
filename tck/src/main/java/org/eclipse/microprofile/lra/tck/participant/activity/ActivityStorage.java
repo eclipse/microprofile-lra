@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Storing activities processed by controllers during TCK suite run.
+ * Storing activities processed by resources during TCK suite run.
  */
 @ApplicationScoped
 public class ActivityStorage {

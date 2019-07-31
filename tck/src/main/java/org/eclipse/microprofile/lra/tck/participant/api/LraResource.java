@@ -63,13 +63,13 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 @ApplicationScoped
-@Path(LraController.LRA_CONTROLLER_PATH)
+@Path(LraResource.LRA_RESOURCE_PATH)
 @LRA(value = LRA.Type.SUPPORTS, end = false)
-public class LraController {
-    public static final String LRA_CONTROLLER_PATH = "lracontroller";
+public class LraResource {
+    public static final String LRA_RESOURCE_PATH = "lraresource";
     public static final String TRANSACTIONAL_WORK_PATH = "work";
     public static final String ACCEPT_WORK = "acceptWork";
-    private static final Logger LOGGER = Logger.getLogger(LraController.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(LraResource.class.getName());
 
     static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
 
@@ -136,7 +136,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Completed methods
 
@@ -147,7 +147,7 @@ public class LraController {
         if (activity.getAndDecrementAcceptCount() > 0) {
             activity.setStatus(ParticipantStatus.Completing);
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
-                    LRA_CONTROLLER_PATH, lraId));
+                    LRA_RESOURCE_PATH, lraId));
 
             return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
         }
@@ -167,7 +167,7 @@ public class LraController {
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensated methods
 
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName());
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -176,7 +176,7 @@ public class LraController {
         if (activity.getAndDecrementAcceptCount() > 0) {
             activity.setStatus(ParticipantStatus.Compensating);
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
-                    LRA_CONTROLLER_PATH, lraId));
+                    LRA_RESOURCE_PATH, lraId));
 
             return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
         }
@@ -193,7 +193,7 @@ public class LraController {
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
     public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraController.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class.getName());
 
         assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
 
@@ -213,7 +213,7 @@ public class LraController {
     }
 
     @PUT
-    @Path(LraController.ACCEPT_WORK)
+    @Path(LraResource.ACCEPT_WORK)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response acceptWork(
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
@@ -293,7 +293,7 @@ public class LraController {
         String id = null;
         Response response = ClientBuilder.newClient()
                 .target(context.getBaseUri())
-                .path(LRA_CONTROLLER_PATH)
+                .path(LRA_RESOURCE_PATH)
                 .path(path)
                 .request()
                 .header(LRA_HTTP_CONTEXT_HEADER, lraURI)

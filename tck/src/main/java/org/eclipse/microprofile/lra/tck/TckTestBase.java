@@ -21,7 +21,7 @@ package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
-import org.eclipse.microprofile.lra.tck.participant.api.LraController;
+import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -72,7 +72,7 @@ public class TckTestBase {
             .create(WebArchive.class, archiveName + ".war")
             .addPackages(false, TckTestBase.class.getPackage(),
                 Activity.class.getPackage(),
-                LraController.class.getPackage(),
+                LraResource.class.getPackage(),
                 LRAMetricService.class.getPackage())
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }

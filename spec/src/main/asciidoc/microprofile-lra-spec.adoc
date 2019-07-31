@@ -755,7 +755,7 @@ annotations when associated with JAX-RS resource methods:
 
 [[jaxrs-response-table]]
 |===
-| Annotation | Prefered HTTP method | Expected status codes | Response
+| Annotation | Required HTTP method | Expected status codes | Response
 
 | `@Compensate`
 | PUT
@@ -786,9 +786,6 @@ annotations when associated with JAX-RS resource methods:
 
 Please refer to the javadoc for each annotation for the description of the
 conditions under which the various JAX-RS response codes are returned.
-
-The presented HTTP methods SHOULD be applied at individual JAX-RS methods
-but they are not enforced by the specification. 
 
 If the method annotated with `@AfterLRA` returns an unexpected HTTP status
 or never reaches the caller then the implementation MUST invoke the same method again.
@@ -911,7 +908,15 @@ is still in progress using one of the following options:
   it exists, and if there is no such method it will reinvoke the `@Compensate`
   method). Please refer to the section
   <<reactive-support,about reactive support>> for more details.
-- A JAX-RS method can return a `202 Accepted` HTTP status code
+- A JAX-RS method can return a `202 Accepted` HTTP status code.
+  If there is no `@Status` method then the response MAY provide
+  a status URL in the `HTTP Location` header field so that the
+  implementation can discover the final outcome.
+  This URL, if present, MUST obey the requirements specificed in
+  the javadoc for the <<source-Status,Status annotation>>.
+  If the developer has not provided an `@Status` method nor a status
+  URL then the implementation MUST reinvoke the `@Compensate` method
+  (ie it MUST be idempotent).
 - A non JAX-RS method can return `ParticipantStatus.Compensating`.
 
 The `@Status` method, if present, MUST report the progress of the compensation.
@@ -1270,6 +1275,13 @@ include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Compensate.java[Com
 [[source-Complete]]
 ----
 include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Complete.java[Leave]
+----
+<<<
+
+=== Status Annotation
+[[source-Status]]
+----
+include::{sourcedir}/org/eclipse/microprofile/lra/annotation/Status.java/[Status]
 ----
 <<<
 

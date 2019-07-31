@@ -33,6 +33,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -280,8 +281,7 @@ public class ContextTckResource {
         return Response.ok().entity(lraId.toASCIIString()).build();
     }
 
-    // Compensate methods SHOULD use @PUT but to verify that other HTTP methods are also supported use here HTTP GET
-    @GET
+    @PUT
     @Path("/compensate")
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
@@ -294,8 +294,7 @@ public class ContextTckResource {
         return getEndPhaseResponse(false);
     }
 
-    // Complete methods SHOULD use @PUT but to verify that other HTTP methods are also supported use here HTTP POST
-    @POST
+    @PUT
     @Path("/complete")
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
@@ -308,8 +307,7 @@ public class ContextTckResource {
         return getEndPhaseResponse(true);
     }
 
-    // Status methods SHOULD use @GET but to verify that other HTTP methods are also supported use HTTP PUT
-    @PUT
+    @GET
     @Path(STATUS_PATH)
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
@@ -322,8 +320,7 @@ public class ContextTckResource {
         return Response.status(endPhaseStatus).entity(status.name()).build();
     }
 
-    // Forget methods SHOULD use @DELETE but to verify that other HTTP methods are also supported use HTTP PUT
-    @PUT
+    @DELETE
     @Path("/forget")
     @Forget
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,

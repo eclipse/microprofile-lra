@@ -100,7 +100,7 @@ public class TckContextTests extends TckTestBase {
         URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202));
 
         // verify that the resource was asked to complete and is in the state Completing
-        String status = invoke(true, STATUS_PATH, HttpMethod.PUT, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
+        String status = invoke(true, STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completing", ParticipantStatus.Completing.name(), status);
 
         // clear the EndPhase override data so that the next status request returns completed or compensated
@@ -110,7 +110,7 @@ public class TckContextTests extends TckTestBase {
         replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
 
         // and verify that the resource was asked to complete
-        status = invoke(false, STATUS_PATH, HttpMethod.PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
         assertEquals(testName.getMethodName() + ": participant is not completed", ParticipantStatus.Completed.name(), status);
     }
 
@@ -119,7 +119,7 @@ public class TckContextTests extends TckTestBase {
         // call a resource that begins but does not end an LRA
         URI lra = URI.create(invoke(false, NEW_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.SUCCESS, 200));
         // verify that the resource is active
-        String status = invoke(false, STATUS_PATH, HttpMethod.PUT, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+        String status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         assertEquals(testName.getMethodName() + ": participant is not active", ParticipantStatus.Active.name(), status);
 

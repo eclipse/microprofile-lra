@@ -39,14 +39,14 @@ state LRAContext {
   ActiveLRA --> Cancelling : cancel
   state "FailedToCancel" as FailedToCancel
   FailedToCancel : "One or more participants\ndid not compensate"
-  state "FailedToClose" as FailedToClose
-  FailedToClose : "One or more participants\ndid not complete"
   state "Cancelling" as Cancelling
   Cancelling : "One or more participants\nare still compensating"
   state "Closing" as Closing
   Closing : "One or more participants\nare still completing"
   state "Closed" as Closed
   Closed : "All participants\nhave completed"
+  state "FailedToClose" as FailedToClose
+  FailedToClose : "One or more participants\ndid not complete"
   state "Cancelled" as Cancelled
   Cancelled : "All participants\nhave compensated"
 
@@ -56,6 +56,8 @@ state LRAContext {
   ActiveLRA --> Closing : close
   Closing --> Closed
   Closing --> FailedToClose
+
+  Closed --> Cancelling : cancel (transition is only allowed if LRA is nested)
 }
 @enduml
 

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A simple DTO that provides information about
- * the work processed in the TCK suite controllers.
+ * the work processed in the TCK suite resources.
  */
 public class Activity implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * A similar remark applies if the participant was enlisted in a
+ * Similar remarks apply if the participant was enlisted in a
  * nested LRA {@link LRA.Type#NESTED}. Actions performed in the context
  * of a nested LRA must remain compensatable until the participant
  * is explicitly told it can clean up using this <code>&#64;Forget</code>

@@ -933,7 +933,9 @@ will start a new LRA whose behaviour is as follows:
 1. A nested LRA can close or cancel independently of its parent.
 2. A nested LRA which has closed must retain the ability to cancel the
    effects if the the parent cancels. This requirement must be enforced
-   by participants.
+   by participants. If the participant has a Forget method then it MUST
+   be invoked if the parent LRA is closed. The Forget method is described
+   in the section <<forgetting-an-lra,Forgetting an LRA>>.
 3. If a nested LRA cancels then all of its children must cancel (even if
    they closed - see 2).
 4. If a nested LRA closes then it, and all of its children, must close
@@ -1067,6 +1069,12 @@ the expectations of the LRA protocol under various failure conditions.
 Only when the implementation is certain that participant has finished
 will it tell it that it is okay to release any resources it associated
 with the LRA.
+
+If a participant is enlisted in a nested LRA then it can ask to be notified
+when the parent LRA closes using this `@Forget` annotation. This feature is
+useful since a nested LRA can be closed independantly from its parent but
+it must retain the ability to compensate until the parent has finished.
+Typically a participant would perform clean up actions in this method.
 
 [[reactive-support]]
 ==== Reactive Support

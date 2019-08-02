@@ -72,7 +72,7 @@ public class LRAUnknownStatusResource {
 
         scenarioMap.put(lraId.toASCIIString(), scenario);
         // scenario.pathResponseCode determines if /complete or /compensate will be called.
-        return Response.status(scenario.pathResponseCode).entity(lraId).build();
+        return Response.status(scenario.getPathResponseCode()).entity(lraId).build();
     }
 
     @PUT
@@ -159,20 +159,6 @@ public class LRAUnknownStatusResource {
                 return Response.ok().build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-    }
-
-    public enum Scenario {
-        COMPENSATE_IMMEDIATE(500), COMPENSATE_RETRY(500), COMPLETE_IMMEDIATE(200), COMPLETE_RETRY(200);
-
-        private int pathResponseCode;
-
-        Scenario(int pathResponseCode) {
-            this.pathResponseCode = pathResponseCode;
-        }
-
-        public int getPathResponseCode() {
-            return pathResponseCode;
         }
     }
 }

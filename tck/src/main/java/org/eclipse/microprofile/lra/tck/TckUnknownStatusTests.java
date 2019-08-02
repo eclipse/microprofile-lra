@@ -65,10 +65,12 @@ public class TckUnknownStatusTests extends TckTestBase {
 
         applyConsistencyDelay();
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
+        int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals(2, compensated);
+        assertEquals(1, compensated);
+        assertEquals(1, status);
         assertEquals(1, afterLRA);
         assertEquals(1, cancelled);
     }
@@ -80,10 +82,12 @@ public class TckUnknownStatusTests extends TckTestBase {
 
         applyConsistencyDelay();
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
+        int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals(2, completed);
+        assertEquals(1, completed);
+        assertEquals(1, status);
         assertEquals(1, afterLRA);
         assertEquals(1, closed);
     }

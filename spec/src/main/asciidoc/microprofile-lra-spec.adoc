@@ -807,8 +807,9 @@ Users are allowed to reuse existing JAX-RS endpoints for participant method defi
 In this case the LRA implementation MUST ensure that invoking these methods outside of the 
 implementation of the LRA specification will not influence any running LRA.
 
-Specifically, developers should NEVER call any JAX-RS endpoint for participant methods where they
-added a `Context Header` (specified by the Java constant `LRA_HTTP_CONTEXT_HEADER`)
+Specifically, developers should NEVER call any JAX-RS endpoint for participant callback methods
+(@Compensate, @Complete, @Status, @Forget, and @AfterLRA) where they
+add a header defined by the Java constant `LRA_HTTP_RECOVERY_HEADER`.
 This way, a developer can distinguish if the call is made by an end-user or the implementation and
 make sure that it will not influence the participant of the LRA when called directly.
 

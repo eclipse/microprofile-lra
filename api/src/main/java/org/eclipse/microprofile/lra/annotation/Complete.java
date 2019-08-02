@@ -144,6 +144,15 @@ import java.time.temporal.ChronoUnit;
  * </table>
  *
  * <p>
+ * The implementation will handle the return code 410 in the same way
+ * as the return code 200. Specifically, when the implementation calls the Complete method
+ * as a result of the LRA being closed, and the participant returns the code
+ * 410, the implementation assumes that the action is completed and participant returns
+ * a 410 since participant is allowed to forget about an action which is completely
+ * handled by the participant.
+ * </p>
+ *
+ * <p>
  * If any other code is returned (or, in the 500 case, the body does not
  * correspond to a valid state)  then the implementation SHOULD either keep
  * retrying or attempt to discover the status by calling the

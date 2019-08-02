@@ -117,6 +117,15 @@ import java.lang.annotation.Target;
  *   <td scope="row">The method does not know about the LRA</td>
  * </tr>
  * </table>
+ *
+ * <p>
+ * The implementation will handle the return code 410 in the same way
+ * as the return code 200. Specifically, when the implementation calls the Status method
+ * after it has called the Complete or Compensated method and received a response which indicates
+ * that the process is in progress (with a return code 202, for example). The response code 410
+ * which is received when calling this Status annotated method, MUST be interpreted by the implementation
+ * that the process is successfully completed and the participant already forget about the LRA.
+ * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

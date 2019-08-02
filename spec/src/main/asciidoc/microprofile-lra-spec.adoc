@@ -787,6 +787,12 @@ annotations when associated with JAX-RS resource methods:
 Please refer to the javadoc for each annotation for the description of the
 conditions under which the various JAX-RS response codes are returned.
 
+Returning the status code 410, when appropriate - see the above table, has the same effect
+as status 200. The participant indicates with this response that it is no longer aware of the
+LRA identification but the implementation MUST assume that all required actions are performed
+, which is equivalent with return status 200, and that the participant already forgot about it
+(participant is allowed to forget about a LRA identification when completely handled)
+
 If the method annotated with `@AfterLRA` returns an unexpected HTTP status
 or never reaches the caller then the implementation MUST invoke the same method again.
 
@@ -800,6 +806,12 @@ not see the correct code].
 Users are allowed to reuse existing JAX-RS endpoints for participant method definitions.
 In this case the LRA implementation MUST ensure that invoking these methods outside of the 
 implementation of the LRA specification will not influence any running LRA.
+
+Specifically, developers should NEVER call any JAX-RS endpoint for participant callback methods
+(@Compensate, @Complete, @Status, @Forget, and @AfterLRA) where they
+add a header defined by the Java constant `LRA_HTTP_RECOVERY_HEADER`.
+This way, a developer can distinguish if the call is made by an end-user or the implementation and
+make sure that it will not influence the participant of the LRA when called directly.
 
 ===== Non-JAX-RS afterLRA method
 

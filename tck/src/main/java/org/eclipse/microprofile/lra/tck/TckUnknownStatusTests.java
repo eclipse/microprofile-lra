@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * TCK Tests related to the 410 status code handling. Version with a Status method.
@@ -71,8 +72,8 @@ public class TckUnknownStatusTests extends TckTestBase {
 
         assertEquals(1, compensated);
         assertEquals(1, status);
-        assertEquals(1, afterLRA);
-        assertEquals(1, cancelled);
+        assertTrue(afterLRA >= 1);
+        assertTrue(cancelled >= 1);
     }
 
     @Test
@@ -88,8 +89,8 @@ public class TckUnknownStatusTests extends TckTestBase {
 
         assertEquals(1, completed);
         assertEquals(1, status);
-        assertEquals(1, afterLRA);
-        assertEquals(1, closed);
+        assertTrue(afterLRA >= 1);
+        assertTrue(closed >= 1);
     }
 
     private String invoke(Scenario scenario) {

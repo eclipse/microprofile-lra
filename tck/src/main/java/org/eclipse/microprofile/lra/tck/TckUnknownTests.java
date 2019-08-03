@@ -39,6 +39,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * TCK Tests related to the 410 status code handling. Version without a Status method.
@@ -70,8 +71,8 @@ public class TckUnknownTests extends TckTestBase {
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
         assertEquals(1, compensated);
-        assertEquals(1, afterLRA);
-        assertEquals(1, cancelled);
+        assertTrue(afterLRA >= 1);
+        assertTrue(cancelled >= 1);
     }
 
     @Test
@@ -85,8 +86,8 @@ public class TckUnknownTests extends TckTestBase {
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
         assertEquals(2, compensated);
-        assertEquals(1, afterLRA);
-        assertEquals(1, cancelled);
+        assertTrue(afterLRA >= 1);
+        assertTrue(cancelled >= 1);
     }
 
     @Test
@@ -100,8 +101,8 @@ public class TckUnknownTests extends TckTestBase {
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
         assertEquals(1, completed);
-        assertEquals(1, afterLRA);
-        assertEquals(1, closed);
+        assertTrue(afterLRA >= 1);
+        assertTrue(closed >= 1);
     }
 
     @Test
@@ -115,8 +116,8 @@ public class TckUnknownTests extends TckTestBase {
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
         assertEquals(2, completed);
-        assertEquals(1, afterLRA);
-        assertEquals(1, closed);
+        assertTrue(afterLRA >= 1);
+        assertTrue(closed >= 1);
     }
 
     private String invoke(Scenario scenario) {

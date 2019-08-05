@@ -350,8 +350,8 @@ overwrite whatever the implementation has set.
 The life cycle of an LRA is controlled via the <<source-LRA,LRA annotation>>
 (https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java#L30[@LRA]).
 
-The annotation SHOULD be applied to JAX-RS annotated methods otherwise
-it MAY have no effect. It determines whether or not the annotated method
+The annotation MUST be applied to JAX-RS annotated methods, classes, superclasses or interface methods otherwise
+it has no effect. It determines whether or not the JAX-RS method
 will run in the context of an LRA and controls whether or not:
 
 - any incoming context should be suspended and if so if a new one should be started.
@@ -360,6 +360,16 @@ will run in the context of an LRA and controls whether or not:
 - to throw an exception if there should be an LRA present on method entry.
 - to throw an exception if the method returns particular HTTP status codes.
 - to enlist the class as a participant of the LRA.
+
+When the @LRA annotation is defined multiple times, this is the order of precedence
+
+- On the JAX-RS method itself.
+- On the class declaration containing the JAX-RS method.
+- On the method declaration of a superclass.
+- On the method declaration of an interface.
+
+More specifically, when the JAX-RS method and the class containing the JAX-RS method both have the
+`@LRA` annotation, the one from the JAX-RS method should be used.
 
 If the method is to run in the context of an LRA and the annotated class
 also contains a method annotated with `@Compensate` then the class

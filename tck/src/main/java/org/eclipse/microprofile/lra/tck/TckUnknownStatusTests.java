@@ -50,7 +50,7 @@ public class TckUnknownStatusTests extends TckTestBase {
 
     @Deployment(name = "tckunkownstatus")
     public static WebArchive deploy() {
-        return TckUnknownStatusTests.deploy(TckTests.class.getSimpleName().toLowerCase());
+        return TckUnknownStatusTests.deploy(TckUnknownStatusTests.class.getSimpleName().toLowerCase());
     }
 
     @Before
@@ -69,10 +69,10 @@ public class TckUnknownStatusTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals(1, compensated);
-        assertEquals(1, status);
-        assertEquals(1, afterLRA);
-        assertEquals(1, cancelled);
+        assertEquals("Number of calls to @Compensate incorrect",1, compensated);
+        assertEquals("Number of calls to @Status incorrect",1, status);
+        assertEquals("Number of calls to @AfterLRA incorrect",1, afterLRA);
+        assertEquals("Final LRA status of Cancelled incorrect",1, cancelled);
     }
 
     @Test
@@ -86,10 +86,10 @@ public class TckUnknownStatusTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals(1, completed);
-        assertEquals(1, status);
-        assertEquals(1, afterLRA);
-        assertEquals(1, closed);
+        assertEquals("Number of calls to @Complete incorrect",1, completed);
+        assertEquals("Number of calls to @Status incorrect",1, status);
+        assertEquals("Number of calls to @AfterLRA incorrect",1, afterLRA);
+        assertEquals("Final LRA status of Closed incorrect",1, closed);
     }
 
     private String invoke(Scenario scenario) {

@@ -154,8 +154,7 @@ public class LRAUnknownStatusResource {
             case FailedToClose:
                 lraMetricService.incrementMetric(
                         LRAMetricType.valueOf(status.name()),
-                        lraId,
-                        LRAUnknownStatusResource.class.getName());
+                        lraId);
                 return Response.ok().build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).build();

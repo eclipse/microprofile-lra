@@ -50,7 +50,6 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_C
  */
 @ApplicationScoped
 @Path(LRAUnknownResource.LRA_CONTROLLER_PATH)
-@LRA
 public class LRAUnknownResource {
     public static final String LRA_CONTROLLER_PATH = "lraUnknownController";
     public static final String TRANSACTIONAL_WORK_PATH = "work";
@@ -65,6 +64,7 @@ public class LRAUnknownResource {
 
     @PUT
     @Path(TRANSACTIONAL_WORK_PATH)
+    @LRA
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId
             , @QueryParam("scenario") Scenario scenario) {
 

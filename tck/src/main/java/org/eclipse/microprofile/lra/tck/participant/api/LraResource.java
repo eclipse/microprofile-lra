@@ -96,7 +96,12 @@ public class LraResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     @LRA(value = LRA.Type.NOT_SUPPORTED)
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
+
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Completed methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Completed methods
+
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity.getStatus() == null) {
@@ -135,10 +140,13 @@ public class LraResource {
     @Path("/complete")
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                                 @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                 String userData) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class.getName());
 
-        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Completed methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Completed methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Completed methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -163,9 +171,12 @@ public class LraResource {
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
     @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)  // O and ChronoUnit.SECONDS are the default, just to be explicit here.
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                                   @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
+                                   String userData) {
 
-        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Compensated methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Compensated methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Compensated methods
 
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName());
 
@@ -192,10 +203,12 @@ public class LraResource {
     @Path("/forget")
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
-    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+    public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                               @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
         lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class.getName());
 
-        assertHeaderPresent(lraId); // the TCK expects the coordinator to invoke @Forget methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Forget methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Forget methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -219,7 +232,8 @@ public class LraResource {
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
 
-        assertHeaderPresent(lraId);
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
         Activity activity = storeActivity(lraId, recoveryId);
 
@@ -231,7 +245,7 @@ public class LraResource {
     @Path("/supports")
     @LRA(value = LRA.Type.SUPPORTS, end = false)
     public Response supportsLRACall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        assertHeaderPresent(lraId);
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
 
         storeActivity(lraId, null);
 
@@ -278,7 +292,8 @@ public class LraResource {
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
                                     @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        assertHeaderPresent(lraId);
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
         Activity activity = storeActivity(lraId, recoveryId);
 
@@ -329,7 +344,8 @@ public class LraResource {
     @LRA(value = LRA.Type.NESTED, end = true)
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId) {
-        assertHeaderPresent(nestedLRAId);
+        assertHeaderPresent(nestedLRAId, LRA_HTTP_CONTEXT_HEADER);
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
         storeActivity(nestedLRAId, recoveryId);
 
@@ -343,7 +359,8 @@ public class LraResource {
             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId,
             @QueryParam("nestedCnt") @DefaultValue("1") Integer nestedCnt) {
-        assertHeaderPresent(nestedLRAId);
+        assertHeaderPresent(nestedLRAId, LRA_HTTP_CONTEXT_HEADER);
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
         storeActivity(nestedLRAId, recoveryId);
 
@@ -381,7 +398,7 @@ public class LraResource {
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        assertHeaderPresent(lraId);
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
 
         activityStore.add(new Activity(lraId));
 
@@ -466,9 +483,9 @@ public class LraResource {
         return ParticipantStatus.Compensated.name();
     }
 
-    private void assertHeaderPresent(URI lraId) {
+    private void assertHeaderPresent(URI lraId, String headerName) {
         if (lraId == null) {
-            throw new WrongHeaderException(String.format("%s: missing '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
+            throw new WrongHeaderException(String.format("%s: missing '%s' header", context.getPath(), headerName));
         }
     }
 

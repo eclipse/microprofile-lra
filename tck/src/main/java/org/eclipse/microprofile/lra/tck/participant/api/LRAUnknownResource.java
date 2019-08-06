@@ -103,7 +103,7 @@ public class LRAUnknownResource {
     @PUT
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    @Compensate()
+    @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
             throws NotFoundException {
 

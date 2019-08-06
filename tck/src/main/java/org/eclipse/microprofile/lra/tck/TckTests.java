@@ -233,9 +233,8 @@ public class TckTests extends TckTestBase {
                 lraClient.isLRAFinished(lra, lraMetricService, AfterLRAParticipant.class.getName()));
 
         // verify that the resource was notified of the final state of the LRA
-        assertEquals("testAfterLRAParticipant: end synchronization was not invoked on resource " + resourcePath.getUri(),
-                1,
-                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAParticipant.class.getName()));
+        assertTrue("testAfterLRAParticipant: end synchronization was not invoked on resource " + resourcePath.getUri(),
+                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAParticipant.class.getName()) >= 1);
     }
 
     /**
@@ -256,9 +255,8 @@ public class TckTests extends TckTestBase {
                 lraClient.isLRAFinished(lra, lraMetricService, AfterLRAListener.class.getName()));
 
         // verify that the resource was notified of the final state of the LRA
-        assertEquals("testAfterLRAListener: end synchronization was not invoked on resource " + resourcePath.getUri(),
-                1,
-                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()));
+        assertTrue("testAfterLRAListener: end synchronization was not invoked on resource " + resourcePath.getUri(),
+                lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()) >= 1);
     }
 
     @Test

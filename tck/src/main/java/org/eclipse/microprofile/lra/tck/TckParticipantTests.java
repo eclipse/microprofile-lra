@@ -37,6 +37,7 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * TCK to verify that valid non-JAX-RS participant method signatures are respected
@@ -49,7 +50,7 @@ public class TckParticipantTests extends TckTestBase {
     @Inject
     private LRAMetricService lraMetricService;
 
-    @Deployment(name = VALID_DEPLOYMENT)
+    @Deployment
     public static WebArchive deployValidParticipant() {
         return TckTestBase.deploy(VALID_DEPLOYMENT)
             .addPackage(ValidLRAParticipant.class.getPackage());
@@ -79,8 +80,8 @@ public class TckParticipantTests extends TckTestBase {
          * the {@link org.eclipse.microprofile.lra.annotation.AfterLRA} annotation on
          * a non JAX-RS method
          */
-        assertEquals("@AfterLRA method should have been called",
-                1, lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId));
+        assertTrue("@AfterLRA method should have been called",
+                lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId) >= 1);
     }
 
     /**

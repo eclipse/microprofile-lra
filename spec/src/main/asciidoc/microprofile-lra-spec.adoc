@@ -381,12 +381,13 @@ implementation must durably record that the participant is enlisted before
 letting the business invocation proceed.
 Enlisting with an LRA means that the bean will be notified when the current LRA is
 subsequently cancelled or closed (if the class also contains a method
-annotated with `@Complete`). In addition the implementation should generate a
-URI for this participant and make it available to the business logic via a JAX-RS
+annotated with `@Complete`). In addition the implementation MUST generate a
+URI for this participant and make it available to the business method (on which
+the LRA annotation is defined) via a JAX-RS
 header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` as defined
 <<source-LRA, in the LRA annotation>>
 (https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java[github link]).
-The header should also be made available to the application whenever any
+The header MUST also be made available to the application whenever any
 of the participant callbacks are invoked. The application is free to ignore
 this header.
 Enlisting in an LRA is explained in more detail

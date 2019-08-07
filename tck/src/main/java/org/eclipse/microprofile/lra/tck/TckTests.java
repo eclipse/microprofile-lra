@@ -185,7 +185,7 @@ public class TckTests extends TckTestBase {
 
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
-        // validate that the LRA coordinator still knows about lraId
+        // validate that the implementation still knows about lraId
         assertFalse("LRA '" + lra + "' should be active as it is not closed yet.",
                 lraClient.isLRAFinished(lra));
 
@@ -198,7 +198,7 @@ public class TckTests extends TckTestBase {
                 + "after joining the existing LRA " + lra, 
                 1, lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName()));
         
-        // check that LRA coordinator no longer knows about lraId
+        // check that implementation no longer knows about lraId
         assertTrue("LRA '" + lra + "' should not be active anymore as it was closed yet.",
                 lraClient.isLRAFinished(lra));
     }
@@ -316,9 +316,9 @@ public class TckTests extends TckTestBase {
         URI lraId = URI.create(response.readEntity(String.class));
         response.close();
 
-        // Note that the timeout firing will cause the coordinator to compensate
+        // Note that the timeout firing will cause the implementation to compensate
         // the LRA so it may no longer exist
-        // (depends upon how long the coordinator keeps a record of finished LRAs
+        // (depends upon how long the implementation keeps a record of finished LRAs
 
         // check that participant was invoked
         applyConsistencyDelay();

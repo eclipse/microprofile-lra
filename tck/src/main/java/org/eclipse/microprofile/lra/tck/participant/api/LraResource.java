@@ -99,8 +99,8 @@ public class LraResource {
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Completed methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Completed methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Status methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Status methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -145,8 +145,8 @@ public class LraResource {
                                  String userData) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class.getName());
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Completed methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Completed methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Complete methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Complete methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -175,8 +175,8 @@ public class LraResource {
                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
                                    String userData) {
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Compensated methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Compensated methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Compensate methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Compensate methods
 
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName());
 
@@ -207,8 +207,8 @@ public class LraResource {
                                @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
         lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class.getName());
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the coordinator to invoke @Forget methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the coordinator to invoke @Forget methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Forget methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Forget methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 

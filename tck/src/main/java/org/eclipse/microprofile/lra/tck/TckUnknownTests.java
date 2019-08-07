@@ -35,7 +35,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
@@ -70,9 +69,9 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals(1, compensated);
-        assertTrue(afterLRA >= 1);
-        assertTrue(cancelled >= 1);
+        assertEquals("Number of calls to @Compensate incorrect", 1, compensated);
+        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
+        assertTrue("Final LRA status of Cancelled incorrect", cancelled >= 1);
     }
 
     @Test
@@ -85,9 +84,9 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals(2, compensated);
-        assertTrue(afterLRA >= 1);
-        assertTrue(cancelled >= 1);
+        assertEquals("Number of calls to @Compensate incorrect", 2, compensated);
+        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
+        assertTrue("Final LRA status of Cancelled incorrect", cancelled >= 1);
     }
 
     @Test
@@ -100,9 +99,9 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals(1, completed);
-        assertTrue(afterLRA >= 1);
-        assertTrue(closed >= 1);
+        assertEquals("Number of calls to @Complete incorrect", 1, completed);
+        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
+        assertTrue("Final LRA status of Closed incorrect",closed >= 1);
     }
 
     @Test
@@ -115,9 +114,9 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals(2, completed);
-        assertTrue(afterLRA >= 1);
-        assertTrue(closed >= 1);
+        assertEquals("Number of calls to @Complete incorrect", 2, completed);
+        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
+        assertTrue("Final LRA status of Closed incorrect",closed >= 1);
     }
 
     private String invoke(Scenario scenario) {

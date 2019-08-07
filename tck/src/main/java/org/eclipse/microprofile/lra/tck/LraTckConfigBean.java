@@ -65,6 +65,9 @@ public class LraTckConfigBean {
      *     milliseconds that a test will wait for before it checks if a complete
      *     or compensate method has been called.
      *
+     *     There are two properties for configuring delays. The long version should be
+     *     used when multiple calls to these participant methods needs to be performed.
+     *
      *     The default is set to zero which implies that the implementation will
      *     notify participants as soon as the LRA enters the
      *     {@link LRAStatus#Closing} or {@link LRAStatus#Cancelling}
@@ -74,8 +77,20 @@ public class LraTckConfigBean {
      *     states first if a participant cannot clean up or compensate immediately.
      * </p>
      */
-    @Inject @ConfigProperty(name = "lra.tck.consistency.delay", defaultValue = "0")
-    long consistencyDelay;
+    @Inject @ConfigProperty(name = "lra.tck.consistency.longDelay", defaultValue = "0")
+    long longConsistencyDelay;
+
+    /**
+     * <p>
+     *     An alternative to @see LraTckConfigBean#longConsistencyDelay
+     *     This can be useful if the consistency delay needs to be changed for some tests
+     *
+     *     There are two properties for configuring delays. The short version should be
+     *     used when we just need to wait for the implementation to call the participant methods
+     * </p>
+     */
+    @Inject @ConfigProperty(name = "lra.tck.consistency.shortDelay", defaultValue = "0")
+    long shortConsistencyDelay;
 
     /**
      * <p>
@@ -116,8 +131,12 @@ public class LraTckConfigBean {
         return timeoutFactor;
     }
 
-    long getConsistencyDelay() {
-        return consistencyDelay;
+    long getLongConsistencyDelay() {
+        return longConsistencyDelay;
+    }
+
+    long getShortConsistencyDelay() {
+        return shortConsistencyDelay;
     }
 
     public Long recoveryTimeout() {

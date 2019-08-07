@@ -191,7 +191,7 @@ public class TckTests extends TckTestBase {
 
         // close the LRA
         lraClient.closeLRA(lra);
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
         
         // check that participant was told to complete
         assertEquals("Wrong completion count for call " + resourcePath.getUri() + ". Expecting the method LRA was completed "
@@ -278,7 +278,7 @@ public class TckTests extends TckTestBase {
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         lraClient.closeLRA(lra);
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
 
         // check that participant was not told to complete
         assertEquals("Wrong completion count when participant left the LRA. "
@@ -321,7 +321,7 @@ public class TckTests extends TckTestBase {
         // (depends upon how long the coordinator keeps a record of finished LRAs
 
         // check that participant was invoked
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
         
         /*
          * The call to activities/timeLimit should have started an LRA which should have timed out
@@ -365,7 +365,7 @@ public class TckTests extends TckTestBase {
         }
 
         replayEndPhase(null);
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
 
         int completionCount = lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName());
         int compensationCount = lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName());
@@ -401,7 +401,7 @@ public class TckTests extends TckTestBase {
                 lraId, lra.toString());
 
         lraClient.cancelLRA(lra);
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
 
         // check that second service (the LRA aware one), namely
         // {@link org.eclipse.microprofile.lra.tck.participant.api.LraResource#activityWithMandatoryLRA(String, String)}
@@ -496,14 +496,14 @@ public class TckTests extends TckTestBase {
 
         if (close) {
             lraClient.closeLRA(lra);
-            applyConsistencyDelay();
+            applyShortConsistencyDelay();
             
             assertTrue(methodName + ": resource should have completed once with no compensations",
                     1 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
                     0 == lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()));
         } else {
             lraClient.cancelLRA(lra);
-            applyConsistencyDelay();
+            applyShortConsistencyDelay();
 
             assertTrue(methodName + ":: resource should have compensated once with no completions",
                     0 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
@@ -526,14 +526,14 @@ public class TckTests extends TckTestBase {
 
         if (close) {
             lraClient.closeLRA(lra);
-            applyConsistencyDelay();
+            applyShortConsistencyDelay();
 
             assertTrue("joinWithTwoResourcesWithClose: both resources should have completed",
                     lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName()) == 1 &&
                     lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) == 1);
         } else {
             lraClient.cancelLRA(lra);
-            applyConsistencyDelay();
+            applyShortConsistencyDelay();
 
             assertTrue("joinWithTwoResourcesWithCancel: both resources should have compensated",
                     lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName()) == 1 &&
@@ -581,7 +581,7 @@ public class TckTests extends TckTestBase {
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
                 lraClient.isLRAFinished(URI.create( lraArray[0])));
 
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
         int inMiddleCompletedCount = lraMetricService.getMetric(LRAMetricType.Completed);
         int inMiddleCompensatedCount = lraMetricService.getMetric(LRAMetricType.Compensated);
 
@@ -622,7 +622,7 @@ public class TckTests extends TckTestBase {
                         (i == 0 ? "top level" : "nested"), resourcePath.getUri()),
                 lraClient.isLRAFinished(URI.create(lraArray[i]))));
 
-        applyConsistencyDelay();
+        applyShortConsistencyDelay();
         int afterCompletedCount = lraMetricService.getMetric(LRAMetricType.Completed);
         int afterCompensatedCount = lraMetricService.getMetric(LRAMetricType.Compensated);
 

@@ -64,7 +64,7 @@ public class TckUnknownStatusTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPENSATE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
@@ -81,7 +81,7 @@ public class TckUnknownStatusTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);

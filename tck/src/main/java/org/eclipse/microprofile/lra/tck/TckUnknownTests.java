@@ -64,7 +64,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPENSATE_IMMEDIATE);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
@@ -79,7 +79,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPENSATE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
@@ -94,7 +94,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_IMMEDIATE);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
@@ -109,7 +109,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyConsistencyDelay();
+        applyLongConsistencyDelay();
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);

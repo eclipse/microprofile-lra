@@ -134,12 +134,25 @@ public class TckTestBase {
     }
 
     /**
-     * @see LraTckConfigBean#consistencyDelay
+     * @see LraTckConfigBean#shortConsistencyDelay
      */
-    void applyConsistencyDelay() {
-        if (config.getConsistencyDelay() > 0) {
+    void applyShortConsistencyDelay() {
+        if (config.getShortConsistencyDelay() > 0) {
             try {
-                Thread.sleep(config.getConsistencyDelay());
+                Thread.sleep(config.getShortConsistencyDelay());
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * @see LraTckConfigBean#longConsistencyDelay
+     */
+    void applyLongConsistencyDelay() {
+        if (config.getLongConsistencyDelay() > 0) {
+            try {
+                Thread.sleep(config.getLongConsistencyDelay());
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

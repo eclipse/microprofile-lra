@@ -271,7 +271,7 @@ public class TckContextTests extends TckTestBase {
         }
 
         if (delay) {
-            applyConsistencyDelay();
+            applyShortConsistencyDelay();
         }
 
         switch (method) {

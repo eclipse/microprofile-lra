@@ -19,10 +19,10 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
@@ -83,7 +83,12 @@ public class AfterLRAParticipant {
     @PUT
     @Path(AFTER_LRA)
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
-    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
+    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+                             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoverId,
+                             LRAStatus status) {
+
+        assertHeaderPresent(recoverId, LRA_HTTP_RECOVERY_HEADER);
+
         switch (status) {
             case Closed:
                 // FALLTHRU
@@ -101,4 +106,11 @@ public class AfterLRAParticipant {
                 return Response.status(Response.Status.BAD_REQUEST).build();
         }
     }
+
+    private void assertHeaderPresent(URI lraId, String headerName) {
+        if (lraId == null) {
+            throw new WrongHeaderException(String.format("%s: missing '%s' header", AFTER_LRA_PARTICIPANT_PATH + AFTER_LRA, headerName));
+        }
+    }
+
 }

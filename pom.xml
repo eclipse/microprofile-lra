@@ -34,6 +34,8 @@
         <checkstyle.version>3.0.0</checkstyle.version>
         <checkstyle.methodNameFormat>^_?[a-z][a-zA-Z0-9]*$</checkstyle.methodNameFormat>
         <autorelease>false</autorelease>
+        <!-- keeping closed repos with failure - default is false because the errors are visible in the maven output, but true will leave the repo open for investigation in Sonatype Nexus -->
+        <keepStagingReposOnFailure>false</keepStagingReposOnFailure>
     </properties>
 
     <licenses>
@@ -55,6 +57,13 @@
         <url>https://github.com/eclipse/microprofile-lra/issues</url>
     </issueManagement>
     
+    <developers>
+        <developer>
+            <name>MicroProfile Community</name>
+            <url>https://groups.google.com/forum/#!forum/microprofile</url>
+        </developer>
+    </developers>
+
     <scm>
         <connection>scm:git:https://github.com/eclipse/microprofile-lra.git</connection>
         <developerConnection>scm:git:https://github.com/eclipse/microprofile-lra.git</developerConnection>
@@ -109,6 +118,11 @@
             <name>Project Repository - Releases</name>
             <url>https://repo.eclipse.org/content/groups/cbi/</url>
         </pluginRepository>
+        <pluginRepository>
+            <id>microprofile.repo.eclipse.org</id>
+            <name>Microprofile Project Repository - Releases</name>
+            <url>https://repo.eclipse.org/content/groups/microprofile/</url>
+        </pluginRepository>
     </pluginRepositories>
 
     <build>
@@ -126,18 +140,35 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.10.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
                     <version>2.5.3</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                         <pushChanges>false</pushChanges>
                         <localCheckout>true</localCheckout>
+                        <useReleaseProfile>false</useReleaseProfile>
+                        <arguments>${arguments} -Prelease -Drevremark=${revremark}</arguments>
                     </configuration>
                 </plugin>
                 <plugin>
                     <groupId>org.eclipse.cbi.maven.plugins</groupId>
                     <artifactId>eclipse-jarsigner-plugin</artifactId>
                     <version>1.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -247,7 +278,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
 
@@ -275,6 +305,19 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                   <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

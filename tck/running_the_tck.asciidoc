@@ -34,6 +34,8 @@ The LRA TCK suite can be parametrized by following properties, handled in the su
 `lra.http.recovery.host`, `lra.http.recovery.port`, `lra.http.recovery.path`::
   Hostname, port and path for the recovery endpoint that will be contacted in tests checking recovery capabilities.
 
+The configuration parameter `mp.lra.header.propagation` needs to be set to `true` in order to pass the test `org.eclipse.microprofile.lra.tck.TckTests.noLRATest`.
+
 == Prerequisites for the MicroProfile LRA TCK implementation
 
 * `pom.xml` dependencies are set-up

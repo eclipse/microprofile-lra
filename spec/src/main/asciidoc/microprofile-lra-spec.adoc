@@ -326,7 +326,13 @@ requests.
 If an LRA is propagated to a resource that is not annotated with any of the
 annotations defined in this specification then the LRA will not be made
 available to the invoked method. However, any outgoing JAX-RS invocations
-made during the execution of the method will still carry the original context.
+made during the execution of the method will still carry the original headers
+only when the configuration parameter `mp.lra.header.propagation` is set to `true`.
+
+By default, this configuration parameter `mp.lra.header.propagation` has the value `false` so that
+only an `active context` is propagated on outgoing JAX-RS requests.
+
+This configuration parameter is retrieved using the MicroProfile Config specification rules.
 
 The user is allowed to manually assign the `context header` on JAX-RS requests
 and responses:

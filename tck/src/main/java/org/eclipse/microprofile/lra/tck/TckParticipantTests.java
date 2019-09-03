@@ -124,7 +124,7 @@ public class TckParticipantTests extends TckTestBase {
      * {@link Void} as valid non-JAX-RS participant method return type
      */
     @Test
-    public void testNonJaxRsCompletionStageVoid() {
+    public void testNonJaxRsCompletionStageVoid() throws InterruptedException {
         WebTarget resourcePath = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
             .path(ValidLRACSParticipant.ENLIST_WITH_COMPENSATE);
 
@@ -136,6 +136,8 @@ public class TckParticipantTests extends TckTestBase {
             1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
         assertEquals("Non JAX-RS @Complete method should have not been called",
             0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
+
+        replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
     }
 
     /**
@@ -163,5 +165,7 @@ public class TckParticipantTests extends TckTestBase {
 
         assertEquals("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
             1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
+        
+        replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
     }
 }

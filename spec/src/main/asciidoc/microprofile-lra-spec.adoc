@@ -1010,13 +1010,16 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
 ----
 
 Furthermore, the ability to compensate or complete may be transient capabilities of a
-service so participants can also be timed out. When the time limit is reached
+service so participants can also be timed out. When the time limit is reached of the participant,
 the LRA is cancelled and participants will be notified via their compensation
 (i.e. the method annotated with `@Compensate`). To set such a time limit add the
-`timeLimit` and `timeUnit` element to the `@Compensate` and `@Complete`
+`timeLimit` and `timeUnit` element to the `@Compensate` and/or `@Complete`
 annotations. If different time limits are set on these two methods then the
-earliest of the two will take effect. An example of how a participant could
-indicate that its' ability to compensate is limited to 100 milliseconds could be:
+earliest of the two will take effect. The time limits of the participants and the LRA are
+unrelated and thus the time period for Participant will start from the moment the participant
+is enlisted with the LRA.
+
+An example of how a participant could indicate that its' ability to compensate is limited to 100 milliseconds could be:
 
 [source,java]
 ----

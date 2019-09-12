@@ -95,7 +95,6 @@ public class LraResource {
     @Path("/status")
     @Produces(MediaType.APPLICATION_JSON)
     @Status
-    @LRA(value = LRA.Type.NOT_SUPPORTED)
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
 

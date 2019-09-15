@@ -172,23 +172,5 @@ import java.time.temporal.ChronoUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Compensate {
-    /**
-     * The period for which the participant will guarantee it will be able
-     * to compensate for any work that it performed during the associated LRA.
-     * When this period elapses the LRA that it joined becomes eligible for
-     * cancellation. The units are specified in the {@link #timeUnit()}
-     * attribute.
-     *
-     * A value of zero indicates that it will always be able to compensate.
-     *
-     * @return the period for which the participant can guarantee it
-     * will be able to compensate when asked to do so
-     */
-    long timeLimit() default 0;
 
-    /**
-     * @return the unit of time that the {@link #timeLimit()} attribute is
-     * measured in.
-     */
-    ChronoUnit timeUnit() default ChronoUnit.SECONDS;
 }

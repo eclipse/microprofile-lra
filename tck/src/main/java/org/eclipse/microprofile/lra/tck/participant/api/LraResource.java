@@ -169,7 +169,7 @@ public class LraResource {
     @PUT
     @Path("/compensate")
     @Produces(MediaType.APPLICATION_JSON)
-    @Compensate(timeLimit = 0, timeUnit = ChronoUnit.SECONDS)  // O and ChronoUnit.SECONDS are the default, just to be explicit here.
+    @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                    @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
                                    String userData) {

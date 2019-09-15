@@ -992,10 +992,10 @@ for the duration of the bookFlight method.
 Note that the mechanics of cancelling nested and top level LRAs is the same.
 
 [[timing-out-lras-and-compensators]]
-==== Timing out LRAs and Participants
+==== Timing out LRAs
 
 The business logic may wish to control how long an LRA should remain active
-for before it becomes eligible for automatic cancellation by providing values
+before it becomes eligible for automatic cancellation by providing values
 for the `timeLimit` and `timeUnit` element of the `@LRA` annotation. For
 example, to indicate that an LRA should automatically cancel after 100 milliseconds:
 
@@ -1009,26 +1009,36 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
       @HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {...}
 ----
 
-Furthermore, the ability to compensate or complete may be transient capabilities of a
-service so participants can also be timed out. When the time limit is reached
-the LRA is cancelled and participants will be notified via their compensation
-(i.e. the method annotated with `@Compensate`). To set such a time limit add the
-`timeLimit` and `timeUnit` element to the `@Compensate` and `@Complete`
-annotations. If different time limits are set on these two methods then the
-earliest of the two will take effect. An example of how a participant could
-indicate that its' ability to compensate is limited to 100 milliseconds could be:
+When the timeout is reached, the LRA moves to the state `Cancelling` and all registered participants receive a `Compensate`
+call. Just as if the Long Running Action would be closed due to an error.
+
+When a participant joins an existing transaction using the `@LRA(value = LRA.Type.MANDATORY)` annotation, the timeout of
+the already active Long Running Action can be influenced by the `timeLimit` and `timeUnit` defined on this annotation.
+The implementation should calculate the moment in time the LRAs would become eligible for cancellation based on the time
+the request enters the JAX-RS method and the timeout information found on the `@LRA`.  When this moment is earlier than
+the moment calculated for the LRA at that time, this new moment becomes the time out moment for the LRA.
+
+An example to illustrate this, suppose you have the following endpoint definitions
 
 [source,java]
 ----
-    @Compensate(timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
-    @Path("/compensate")
-    @PUT
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 String userData) { ... }
+  @LRA(timeLimit = 1, timeUnit = ChronoUnit.HOURS, end = false)
+  @Path("/someService")
+  @GET
+  public Response someService(...) {...}
+
+  @LRA(value = LRA.Type.MANDATORY, timeLimit = 1, timeUnit = ChronoUnit.MINUTES, end = false)
+  @Path("/anotherService")
+  @GET
+  public Response anotherService(...) {...}
+
 ----
 
-In this example after 100 milliseconds has passed the implementation SHOULD
-automatically cancel the LRA which will result in this method being invoked.
+Suppose you have a call to the `someService` endpoint at 10h25, the time out is at that moment calculated at 11h25.
+Suppose that `anotherService` is called for the same Long Running Action, this is the LRAid is in the header for
+the call at the endpoint, at 10h27. The timeout related to this call is 10h28. Since these 2 calls share the same
+Long Running action, the LRA will be eligible for automatic cancellation from 10h28 on although the time out was initially 1 hour,
+it can be cancelled already after 3 minutes.
 
 [[leaving-an-lra]]
 ==== Leaving an LRA

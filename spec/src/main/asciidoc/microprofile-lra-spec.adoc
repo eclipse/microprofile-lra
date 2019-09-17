@@ -1012,7 +1012,7 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
 When the timeout is reached, the LRA moves to the state `Cancelling` and all registered participants receive a `Compensate`
 call. Just as if the Long Running Action would be closed due to an error.
 
-When a participant joins an existing transaction using the `@LRA(value = LRA.Type.MANDATORY)` annotation, the timeout of
+When a participant joins an existing transaction using the `@LRA(value = ...)` annotation, the timeout of
 the already active Long Running Action can be influenced by the `timeLimit` and `timeUnit` defined on this annotation.
 The implementation should calculate the moment in time the LRAs would become eligible for cancellation based on the time
 the request enters the JAX-RS method and the timeout information found on the `@LRA`.  When this moment is earlier than

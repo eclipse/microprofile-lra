@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSPar
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -49,6 +50,9 @@ public class TckParticipantTests extends TckTestBase {
 
     @Inject
     private LRAMetricService lraMetricService;
+
+    @Inject
+    private LraRecoveryService lraRecoveryService;
 
     @Deployment
     public static WebArchive deployValidParticipant() {
@@ -110,7 +114,7 @@ public class TckParticipantTests extends TckTestBase {
         assertEquals("@Complete method should not have been called as LRA compensated",
             0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
 
-        replayEndPhase(ValidLRAParticipant.RESOURCE_PATH);
+        lraRecoveryService.triggerRecovery(lraId);
 
         assertEquals("Non JAX-RS @Status method should have been called", 
             1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
@@ -137,7 +141,7 @@ public class TckParticipantTests extends TckTestBase {
         assertEquals("Non JAX-RS @Complete method should have not been called",
             0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
 
-        replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
+        lraRecoveryService.triggerRecovery(lraId);
     }
 
     /**
@@ -161,11 +165,11 @@ public class TckParticipantTests extends TckTestBase {
         assertEquals("Non JAX-RS @Compensate method should have not been called",
             0, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
 
-        replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
+        lraRecoveryService.triggerRecovery(lraId);
 
         assertEquals("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
             1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
         
-        replayEndPhase(ValidLRACSParticipant.ROOT_PATH);
+        lraRecoveryService.triggerRecovery(lraId);
     }
 }

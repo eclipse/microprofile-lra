@@ -57,6 +57,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -69,6 +70,9 @@ public class TckTests extends TckTestBase {
 
     @Inject
     private LRAMetricService lraMetricService;
+
+    @Inject
+    private LraRecoveryService lraRecoveryService;
     
     private enum CompletionType {
         complete, compensate, mixed
@@ -364,7 +368,7 @@ public class TckTests extends TckTestBase {
             lraClient.cancelLRA(lra);
         }
 
-        replayEndPhase(null);
+        lraRecoveryService.triggerRecovery();
         applyShortConsistencyDelay();
 
         int completionCount = lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName());

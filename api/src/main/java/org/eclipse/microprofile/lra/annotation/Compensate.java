@@ -24,7 +24,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.time.temporal.ChronoUnit;
 
 /**
  * <p>
@@ -35,6 +34,13 @@ import java.time.temporal.ChronoUnit;
  * If the annotation is present on more than one method then an arbitrary one
  * will be chosen. The LRA specification makes no guarantees about when
  * Compensate method will be invoked, just that it will eventually be called.
+ * </p>
+ *
+ * <p>
+ * In the case the ability to compensate the Long Running Action is time bounded, this is, the action can only be
+ * undone within a certain time limit when the action has started, you can limit the lifespan of the
+ * Long Running action with the {@see LRA.timeLimit} and {@see LRA.timeUnit}. With these parameters you can define
+ * The maximum lifetime of the Long Running Actions and makes it eligible for automatic cancellation.
  * </p>
  *
  * <p>

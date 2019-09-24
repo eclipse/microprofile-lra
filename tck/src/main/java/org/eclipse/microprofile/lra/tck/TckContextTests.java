@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -71,6 +72,9 @@ public class TckContextTests extends TckTestBase {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    private LraRecoveryService lraRecoveryService;
+
     @Deployment(name = "TckContextTests")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckContextTests.class.getSimpleName().toLowerCase());
@@ -107,7 +111,7 @@ public class TckContextTests extends TckTestBase {
         invoke(false, CLEAR_STATUS_PATH, HttpMethod.POST, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
 
         // trigger a replay of the end phase
-        replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
+        lraRecoveryService.triggerRecovery(lra);
 
         // and verify that the resource was asked to complete
         status = invoke(false, STATUS_PATH, HttpMethod.GET, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
@@ -143,7 +147,7 @@ public class TckContextTests extends TckTestBase {
         URI lra = URI.create(invoke(false, REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 503));
 
         // trigger a replay attempt
-        replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
+        lraRecoveryService.triggerRecovery(lra);
 
         // the implementation should have called status which will have returned 500
         count = lraMetricService.getMetric(LRAMetricType.Status, lra);
@@ -157,7 +161,7 @@ public class TckContextTests extends TckTestBase {
         invoke(false, CLEAR_STATUS_PATH, HttpMethod.POST, lra, 200, ContextTckResource.EndPhase.FAILED, 200);
 
         // trigger a replay of the end phase
-        replayEndPhase(TCK_CONTEXT_RESOURCE_PATH);
+        lraRecoveryService.triggerRecovery(lra);
 
         // the implementation should have called status again which will have returned 200
         count = lraMetricService.getMetric(LRAMetricType.Status, lra);

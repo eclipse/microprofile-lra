@@ -78,11 +78,7 @@ public class ValidLRACSParticipant {
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
         
-        return CompletableFuture.runAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
-            
-            simulateLongRunningCompensation();
-        });
+        return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
     }
 
     @Complete
@@ -92,7 +88,6 @@ public class ValidLRACSParticipant {
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
             
-            simulateLongRunningCompensation();
             return Response.accepted().build(); // Completing
         });
     }
@@ -104,17 +99,8 @@ public class ValidLRACSParticipant {
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
             
-            simulateLongRunningCompensation();
             return ParticipantStatus.Completed;
         });
-    }
-
-    private void simulateLongRunningCompensation() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
     
     @PUT

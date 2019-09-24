@@ -17,6 +17,12 @@
 
 The TCK uses `JUnit 4` and `Arquillian`.
 
+== SPI
+
+In order to run TCK, the implementors must provide an implementation of
+`org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService` and declare
+it as a CDI bean so it can be used in the TCK environment.
+
 == Configuration
 
 The LRA TCK suite can be parametrized by following properties, handled in the suite with MicroProfile Config

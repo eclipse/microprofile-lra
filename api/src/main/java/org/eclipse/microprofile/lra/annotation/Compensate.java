@@ -24,7 +24,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.time.temporal.ChronoUnit;
 
 /**
  * <p>
@@ -35,6 +34,12 @@ import java.time.temporal.ChronoUnit;
  * If the annotation is present on more than one method then an arbitrary one
  * will be chosen. The LRA specification makes no guarantees about when
  * Compensate method will be invoked, just that it will eventually be called.
+ * </p>
+ *
+ * <p>
+ * In the case where the ability to compensate the Long Running Action is time bounded, you can limit the lifespan
+ * of the Long Running action by providing values for the {@see LRA.timeLimit} and {@see LRA.timeUnit} attributes.
+ * When the time limit is reached the LRA becomes eligible for automatic cancellation.
  * </p>
  *
  * <p>
@@ -172,23 +177,5 @@ import java.time.temporal.ChronoUnit;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Compensate {
-    /**
-     * The period for which the participant will guarantee it will be able
-     * to compensate for any work that it performed during the associated LRA.
-     * When this period elapses the LRA that it joined becomes eligible for
-     * cancellation. The units are specified in the {@link #timeUnit()}
-     * attribute.
-     *
-     * A value of zero indicates that it will always be able to compensate.
-     *
-     * @return the period for which the participant can guarantee it
-     * will be able to compensate when asked to do so
-     */
-    long timeLimit() default 0;
 
-    /**
-     * @return the unit of time that the {@link #timeLimit()} attribute is
-     * measured in.
-     */
-    ChronoUnit timeUnit() default ChronoUnit.SECONDS;
 }

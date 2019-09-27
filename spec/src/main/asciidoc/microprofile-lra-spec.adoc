@@ -1018,29 +1018,8 @@ the already active Long Running Action can be influenced by the `timeLimit` and 
 The implementation should calculate the moment in time the LRAs would become eligible for cancellation based on the time
 the request enters the JAX-RS method and the timeout information found on the `@LRA`.  When this moment is earlier than
 the moment calculated for the LRA at that time, this new moment becomes the time out moment for the LRA.
+So when multiple participants define a timeout period, the earliest one will trigger the cancellation of the LRA.
 
-An example to illustrate this, suppose you have the following endpoint definitions
-
-[source,java]
-----
-  @LRA(timeLimit = 1, timeUnit = ChronoUnit.HOURS, end = false)
-  @Path("/someService")
-  @GET
-  public Response someService(...) {...}
-
-  @LRA(value = LRA.Type.MANDATORY, timeLimit = 1, timeUnit = ChronoUnit.MINUTES, end = false)
-  @Path("/anotherService")
-  @GET
-  public Response anotherService(...) {...}
-
-----
-
-Suppose you have a call to the `someService` endpoint at 10h25, the time out is at that moment calculated at 11h25.
-In case `anotherService` is called within the same Long Running Action, this is the LRAid is in the header for
-the call at the endpoint, at 10h27, the timeout related to this call is 10h28. Since there are 2 timeouts available
-for the Long Running Action, the earliest one is chosen.
-The LRA will be eligible for automatic cancellation from 10h28 onwards although the time out was initially 1 hour,
-it can be cancelled already after 3 minutes.
 
 [[leaving-an-lra]]
 ==== Leaving an LRA

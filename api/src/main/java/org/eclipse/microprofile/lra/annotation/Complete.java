@@ -39,10 +39,9 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * In the case the ability to complete the Long Running Action is time bounded, this is, the action can only be
- * confirmed within a certain time limit when the action has started, you can limit the lifespan of the
- * Long Running action with the {@see LRA.timeLimit} and {@see LRA.timeUnit}. With these parameters you can define
- * The maximum lifetime of the Long Running Actions and makes it eligible for automatic cancellation.
+ * In the case where the ability to complete the Long Running Action is time bounded, you can limit the lifespan
+ * of the Long Running action by providing values for the {@see LRA.timeLimit} and {@see LRA.timeUnit} attributes.
+ * When the time limit is reached the LRA becomes eligible for automatic cancellation.
  * </p>
  *
  * <p>

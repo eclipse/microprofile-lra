@@ -20,6 +20,8 @@
 
 package org.eclipse.microprofile.lra.annotation;
 
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -40,7 +42,7 @@ import java.lang.annotation.Target;
  *
  * <p>
  * In the case where the ability to complete the Long Running Action is time bounded, you can limit the lifespan
- * of the Long Running action by providing values for the {@see LRA.timeLimit} and {@see LRA.timeUnit} attributes.
+ * of the Long Running action by providing values for the {@link LRA#timeLimit()} and {@link LRA#timeUnit()} timeUnit} attributes.
  * When the time limit is reached the LRA becomes eligible for automatic cancellation.
  * </p>
  *

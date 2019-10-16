@@ -231,12 +231,13 @@ public @interface LRA {
 
         /**
          * <p>
-         *     If called outside an LRA context the resource method execution
-         *     must then continue outside an LRA context.
+         *     If called outside an LRA context, this is no {@link #LRA_HTTP_CONTEXT_HEADER} at all present,
+         *     the resource method execution must then continue outside an LRA context.
          * </p>
          *
          * <p>
-         *     If called inside an LRA context the method is not executed and a
+         *     If called inside an LRA context, this is {@link #LRA_HTTP_CONTEXT_HEADER} is present and it doesn't
+         *     matter if the LRAId refers to an active, inactive or non-existent LRA, the method is not executed and a
          *     <code>412 Precondition Failed</code> HTTP status code is returned
          *     to the caller.
          * </p>

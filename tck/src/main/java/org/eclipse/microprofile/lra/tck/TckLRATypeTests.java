@@ -34,8 +34,23 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.*;
-import static org.junit.Assert.*;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.TCK_LRA_TYPE_RESOURCE_PATH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * <p>

@@ -24,25 +24,21 @@ import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
 import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
@@ -62,9 +58,10 @@ public class TckTestBase {
     @Inject
     private LRAMetricService lraMetricService;    
 
-    LRAClientOps lraClient;
+    @Inject
+    private LRATestService lraTestService;
 
-    private static Client tckSuiteClient;
+    LRAClientOps lraClient;
 
     WebTarget tckSuiteTarget;
 
@@ -79,26 +76,18 @@ public class TckTestBase {
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
     
-    @AfterClass
-    public static void afterClass() {
-        if(tckSuiteClient != null) {
-            tckSuiteClient.close();
-        }
+    @After
+    public void after() {
+        lraTestService.stop();
     }
 
     @Before
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
         
-        tckSuiteClient = ClientBuilder.newClient();
-        lraMetricService.clear();
-
-        try {
-            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
-            lraClient = new LRAClientOps(tckSuiteTarget);
-        } catch (MalformedURLException mfe) {
-            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
-        }
+        lraTestService.start();
+        this.lraClient = lraTestService.getLRAClient();
+        this.tckSuiteTarget = lraTestService.getTCKSuiteTarget();
     }
 
     void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {
@@ -135,30 +124,12 @@ public class TckTestBase {
         return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
     }
 
-    /**
-     * @see LraTckConfigBean#shortConsistencyDelay
-     */
     void applyShortConsistencyDelay() {
-        if (config.getShortConsistencyDelay() > 0) {
-            try {
-                Thread.sleep(config.getShortConsistencyDelay());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        lraTestService.applyShortConsistencyDelay();
     }
 
-    /**
-     * @see LraTckConfigBean#longConsistencyDelay
-     */
-    void applyLongConsistencyDelay() {
-        if (config.getLongConsistencyDelay() > 0) {
-            try {
-                Thread.sleep(config.getLongConsistencyDelay());
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+    void  applyLongConsistencyDelay() {
+        lraTestService.applyLongConsistencyDelay();
     }
 
     /**

@@ -78,7 +78,7 @@ public class LraTckConfigBean {
      * </p>
      */
     @Inject @ConfigProperty(name = "lra.tck.consistency.longDelay", defaultValue = "0")
-    long longConsistencyDelay;
+    private long longConsistencyDelay;
 
     /**
      * <p>
@@ -90,7 +90,7 @@ public class LraTckConfigBean {
      * </p>
      */
     @Inject @ConfigProperty(name = "lra.tck.consistency.shortDelay", defaultValue = "0")
-    long shortConsistencyDelay;
+    private long shortConsistencyDelay;
 
     /**
      * <p>
@@ -131,11 +131,11 @@ public class LraTckConfigBean {
         return timeoutFactor;
     }
 
-    long getLongConsistencyDelay() {
+    public long getLongConsistencyDelay() {
         return longConsistencyDelay;
     }
 
-    long getShortConsistencyDelay() {
+    public long getShortConsistencyDelay() {
         return shortConsistencyDelay;
     }
 

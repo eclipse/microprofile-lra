@@ -151,7 +151,7 @@ public class TckContextTests extends TckTestBase {
 
         // the implementation should have called status which will have returned 500
         count = lraMetricService.getMetric(LRAMetricType.Status, lra);
-        assertEquals(testName.getMethodName() + " resource status should have been called", 1, count);
+        assertTrue(testName.getMethodName() + " resource status should have been called", count >= 1);
 
         // the implementation should not call forget until it knows the participant status
         count = lraMetricService.getMetric(LRAMetricType.Forget, lra);

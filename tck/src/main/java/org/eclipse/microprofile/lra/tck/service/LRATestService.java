@@ -45,6 +45,9 @@ public class LRATestService {
     private static Client tckSuiteClient;
 
     private WebTarget tckSuiteTarget;
+    
+    private long shortDelay;
+    private long longDelay;
 
     public void start() {
         tckSuiteClient = ClientBuilder.newClient();
@@ -56,6 +59,9 @@ public class LRATestService {
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
+
+        shortDelay = config.getShortConsistencyDelay();
+        longDelay = config.getLongConsistencyDelay();
     }
 
     public void stop() {
@@ -76,9 +82,9 @@ public class LRATestService {
      * @see LraTckConfigBean#getShortConsistencyDelay() 
      */
     public void applyShortConsistencyDelay() {
-        if (config.getShortConsistencyDelay() > 0) {
+        if (shortDelay > 0) {
             try {
-                Thread.sleep(config.getShortConsistencyDelay());
+                Thread.sleep(shortDelay);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -89,9 +95,9 @@ public class LRATestService {
      * @see LraTckConfigBean#getLongConsistencyDelay() 
      */
     public void applyLongConsistencyDelay() {
-        if (config.getLongConsistencyDelay() > 0) {
+        if (longDelay > 0) {
             try {
-                Thread.sleep(config.getLongConsistencyDelay());
+                Thread.sleep(longDelay);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

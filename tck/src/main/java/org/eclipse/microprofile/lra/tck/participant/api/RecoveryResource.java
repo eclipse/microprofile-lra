@@ -43,7 +43,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
-import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
@@ -57,11 +56,10 @@ public class RecoveryResource {
     public static final String LRA_HEADER = "LRA";
     public static final String TRIGGER_RECOVERY = "triggerRecovery";
     public static final String TIMEOUT_HEADER = "timeout-millis";
+    public static final long LRA_TIMEOUT = 500;
     private static final String REQUIRED_PATH = "required";
     private static final String REQUIRED_TIMEOUT_PATH = "required-timeout";
 
-    private static final Logger LOGGER = Logger.getLogger(RecoveryResource.class.getName());
-    
     @Inject
     LRAMetricService lraMetricService;
 
@@ -160,7 +158,7 @@ public class RecoveryResource {
 
     @PUT
     @Path(REQUIRED_TIMEOUT_PATH)
-    @LRA(value = LRA.Type.REQUIRED, end = false, timeLimit = 500, timeUnit = ChronoUnit.MILLIS)
+    @LRA(value = LRA.Type.REQUIRED, end = false, timeLimit = LRA_TIMEOUT, timeUnit = ChronoUnit.MILLIS)
     public Response requiredTimeoutLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
@@ -169,7 +167,6 @@ public class RecoveryResource {
     @Path("/compensate")
     @Compensate
     public Response compensate(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        LOGGER.info("RecoveryResource compensating " + lraId);
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName());
 
         return Response.ok().build();
@@ -179,7 +176,6 @@ public class RecoveryResource {
     @Path("/after")
     @AfterLRA
     public Response afterLRA(@HeaderParam(LRA.LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus lraStatus) {
-        LOGGER.info(String.format("RecoveryResource afterLRA %s with status %s", lraId, lraStatus));
         lraMetricService.incrementMetric(LRAMetricType.valueOf(lraStatus.name()), lraId,
             RecoveryResource.class.getName());
 

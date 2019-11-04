@@ -166,7 +166,7 @@ public class TckRecoveryTests {
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
         try {
-            Thread.sleep(500);
+            Thread.sleep(RecoveryResource.LRA_TIMEOUT);
         } catch (InterruptedException e) {
             Assert.fail(e.getMessage());
         }

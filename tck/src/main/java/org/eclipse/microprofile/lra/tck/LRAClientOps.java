@@ -174,7 +174,7 @@ public class LRAClientOps {
         return toURI(lra);
     }
 
-    void cancelLRA(URI lraId) throws GenericLRAException {
+    public void cancelLRA(URI lraId) throws GenericLRAException {
         cancelCancelation(lraId);
 
         invokeRestEndpointAndReturnLRA(lraId, TCK_NON_PARTICIPANT_RESOURCE_PATH, END_PATH, 500);
@@ -186,7 +186,7 @@ public class LRAClientOps {
         throw new IllegalArgumentException("LRA timed out prematurely");
     }
 
-    void closeLRA(URI lraId) throws GenericLRAException {
+    public void closeLRA(URI lraId) throws GenericLRAException {
         cancelCancelation(lraId);
 
         invokeRestEndpointAndReturnLRA(lraId, TCK_NON_PARTICIPANT_RESOURCE_PATH, END_PATH, 200);

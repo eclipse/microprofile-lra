@@ -20,6 +20,9 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
+import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
+import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -62,6 +65,8 @@ public class TckRecoveryTests {
     
     @ArquillianResource
     private URL deploymentURL;
+
+    private LRARecoveryService lraRecoveryService;
     
     private Client deployementClient;
     private WebTarget deployementTarget;
@@ -75,6 +80,7 @@ public class TckRecoveryTests {
         
         deployementClient = ClientBuilder.newClient();
         deployementTarget = deployementClient.target(deploymentURL.toURI());
+        lraRecoveryService = LRATestService.loadService(LRARecoveryService.class);
     }
     
     @After
@@ -171,12 +177,11 @@ public class TckRecoveryTests {
             Assert.fail(e.getMessage());
         }
         
-        if (response1.getHeaderString(RecoveryResource.TIMEOUT_HEADER) != null) {
-            try {
-                Thread.sleep(Integer.parseInt(response1.getHeaderString(RecoveryResource.TIMEOUT_HEADER)));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+        // wait for the Compensate call to be delivered
+        try {
+            lraRecoveryService.waitForCallbacks(lra);
+        } catch (LRACallbackException e) {
+            Assert.fail(e.getMessage());
         }
 
         // start the test service again

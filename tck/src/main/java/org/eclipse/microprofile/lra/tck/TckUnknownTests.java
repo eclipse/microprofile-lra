@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -49,6 +50,9 @@ public class TckUnknownTests extends TckTestBase {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    private LRATestService lraTestService;
+
     @Deployment(name = "tckunkown")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckUnknownTests.class.getSimpleName().toLowerCase());
@@ -64,7 +68,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPENSATE_IMMEDIATE);
         URI lraId = URI.create(lraIdString);
 
-        applyLongConsistencyDelay();
+        lraTestService.waitForRecovery(lraId);
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
@@ -78,8 +82,9 @@ public class TckUnknownTests extends TckTestBase {
     public void compensate_retry() throws WebApplicationException {
         String lraIdString = invoke(Scenario.COMPENSATE_RETRY);
         URI lraId = URI.create(lraIdString);
-
-        applyLongConsistencyDelay();
+        
+        lraTestService.waitForRecovery(lraId);
+        
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
@@ -94,7 +99,7 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_IMMEDIATE);
         URI lraId = URI.create(lraIdString);
 
-        applyLongConsistencyDelay();
+        lraTestService.waitForRecovery(lraId);
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
@@ -109,7 +114,8 @@ public class TckUnknownTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyLongConsistencyDelay();
+        lraTestService.waitForRecovery(lraId);
+        
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);

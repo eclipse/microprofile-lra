@@ -89,6 +89,7 @@ public class LraResource {
      * participant {@link ParticipantStatus}, or 410 if the participant does no longer know about this LRA.
      *
      * @param lraId the id of the LRA
+     * @param recoveryId the recovery id of this enlistment
      * @return the status of the LRA
      */
     @GET

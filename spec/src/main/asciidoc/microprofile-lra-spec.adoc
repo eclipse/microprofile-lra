@@ -1028,7 +1028,7 @@ example, to indicate that an LRA should automatically cancel after 100 milliseco
 
 Furthermore, the ability to compensate or complete may be transient capabilities of a service so participants can also be timed out.
 When the timeout is reached, the LRA moves to the state `Cancelling` and all registered participants receive a `Compensate`
-call. The same actions are performed then the case where the LRA is canceled.
+call. The same actions are performed then the case where the LRA is cancelled.
 
 When a participant joins an existing transaction using the `@LRA(value = ...)` annotation, the timeout of
 the already active Long Running Action can be influenced by the `timeLimit` and `timeUnit` defined on this annotation.
@@ -1037,6 +1037,51 @@ the request enters the JAX-RS method and the timeout information found on the `@
 the moment calculated for the LRA at that time, this new moment becomes the time out moment for the LRA.
 So when multiple participants define a timeout period, the earliest one will trigger the cancellation of the LRA.
 
+Since the specification targets microservices running in different JVM's there are
+potential issues around how timing constraints are handled:
+
+A timeout is a duration which results in some calculated end time. If different systems
+use different timezones or clock granularity then there is potential for different parts
+of the system to have different views of the current time.  Therefore implementations
+must be careful to avoid using absolute times and be aware that absolute synchronisation
+between clocks is not possible, and therefore, where possible, rely on a duration instead.
+If an absolute time is required then the recommendation is to use UTC which is a universal
+time standard to which all timezones can be canonically converted. This will provide some
+degree of alignment between clocks (where alignment means that clocks are only
+approximately globally synchronised).
+
+Potential reasons for requiring absolute time values, as opposed to durations, include:
+
+1. When a failed server is restarted the implementation [of this specification] needs to
+   calculate how long is left for timed LRA's to become eligible for cancellation based on 
+   on how much time elapsed before the server failed and how much time elapsed before the
+   failed server was restarted. Such calculations can only be made if the absolute time of
+   expiry of the LRA is known.
+2. In a centralised coordinator based system, if another server takes control of the LRA
+   then the absolute time would be required.
+3. One could envisage a non centralised implementation that relies on absolute time values
+   to determine when LRA's may be cancelled. In such an approach it is even more important
+   that different clocks are aligned. Failure to align clocks in such a system would
+   result in higher failure rates for LRA's.
+
+
+If there are edge cases around timing of actions or if local clocks
+cannot be relied upon then there are risks that different parts of the system may
+perform conflicting actions. The implementation must strive to minimise these risks
+but if they do occur then it MUST detect the conflict and force the LRA into
+<<lra-state-model,one of the failure states>> and it MUST report the conflict
+(the actual mechanism by which it does so is unspecified).
+
+Also note that time limits are never absolute with respect to when LRA's are actually
+cancelled: they are hints to the system that if the time limit is breached then
+compensation may not be possible and an implementation should move the state of the
+LRA to cancelling. It is also possible for an implementation to miss a deadline
+(for whatever reason) and some other part of the system cancels the LRA before it
+notices. In this scenario there would be a potential conflict since one of the
+participants is no longer able to compensate. But as mentioned in the introduction to
+this specification, failure states are permissible but "they must be logged or
+flagged for the administrator and manual intervention may be necessary to restore
+an application’s consistency".
 
 [[leaving-an-lra]]
 ==== Leaving an LRA

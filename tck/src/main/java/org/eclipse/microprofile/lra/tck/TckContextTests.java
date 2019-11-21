@@ -52,6 +52,7 @@ import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResourc
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.LRA_TCK_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.METRIC_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.NESTED_LRA_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.NESTED_LRA_PATH_WITH_CLOSE;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.NEW_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.REQUIRED_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.RESET_PATH;
@@ -94,7 +95,7 @@ public class TckContextTests extends TckTestBase {
         // verify that the resource was asked to complete
         int completions = lraMetricService.getMetric(LRAMetricType.Completed, lra);
 
-        assertEquals(testName.getMethodName() + ": Resource was not asked to complete", 
+        assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
                 1, completions);
     }
 
@@ -212,6 +213,41 @@ public class TckContextTests extends TckTestBase {
                 1, endCallsWithParentContextHeaderPresent);
     }
 
+    @Test
+    public void testForgetCalledForNestedParticipantsWhenParentIsClosed() {
+        // start an LRA
+        URI topLevelLRA = URI.create(invoke(NEW_LRA_PATH, PUT, null));
+        // start a nested LRA
+        String result = invoke(NESTED_LRA_PATH_WITH_CLOSE, PUT, topLevelLRA);
+        // the resource method should return the nested LRA and the top level LRA separated by a comma
+        assertTrue(result.contains(","));
+        assertEquals(testName.getMethodName() + ": wrong parent LRA", topLevelLRA, URI.create(result.split(",")[1]));
+
+        URI nestedLRA = URI.create(result.split(",")[0]);
+        lraTestService.waitForCallbacks(nestedLRA);
+
+        // nested LRA should be closed
+        assertEquals(testName.getMethodName() + ": resource should have completed for the nested LRA",
+            1, lraMetricService.getMetric(LRAMetricType.Completed, nestedLRA));
+
+        // end the top level LRA
+        invoke(REQUIRED_LRA_PATH, PUT, topLevelLRA);
+        lraTestService.waitForCallbacks(topLevelLRA);
+
+        assertEquals(testName.getMethodName() + ": resource should have completed for the top level LRA",
+            1, lraMetricService.getMetric(LRAMetricType.Completed, topLevelLRA));
+        // nested LRA Complete method should not be replayed when parent is closed
+        assertEquals(testName.getMethodName() + ": resource should not have completed for the nested LRA again",
+            1, lraMetricService.getMetric(LRAMetricType.Completed, nestedLRA));
+        // nested LRA Forget should be called when parent is closed
+        assertEquals(testName.getMethodName() + ": resource should have called forget for the nested LRA",
+            1, lraMetricService.getMetric(LRAMetricType.Forget, nestedLRA));
+        // nested is incremented twice: once for repeated Complete and once for Forget
+        assertEquals(testName.getMethodName() + ": parent context not included in complete or forget callbacks",
+            2, lraMetricService.getMetric(LRAMetricType.Nested, topLevelLRA));
+
+    }
+
     // invoke a method in an LRA context which performs various outgoing calls checking that the notion of active context
     // conforms with what is written in the specification
     @Test
@@ -244,7 +280,7 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testAsync3Support() {
         // invoke an async resource that throws an exception which cancels the LRA
-        URI lra = URI.create(invoke(ASYNC_LRA_PATH3, PUT, null, 404, 
+        URI lra = URI.create(invoke(ASYNC_LRA_PATH3, PUT, null, 404,
             ContextTckResource.EndPhase.SUCCESS, 200));
         lraTestService.waitForCallbacks(lra);
 

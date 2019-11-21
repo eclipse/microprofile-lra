@@ -70,6 +70,7 @@ public class ContextTckResource {
     public static final String NEW_LRA_PATH = "/new-lra";
     public static final String REQUIRED_LRA_PATH = "/required-lra";
     public static final String NESTED_LRA_PATH = "/nested-lra";
+    public static final String NESTED_LRA_PATH_WITH_CLOSE = "/nested-lra-with-close";
     // resource path for testing that context on outbound and inbound calls made from an
     // method annotated with @LRA are spec compliant
     public static final String CONTEXT_CHECK_LRA_PATH = "/context-check-lra";
@@ -194,6 +195,14 @@ public class ContextTckResource {
     @PUT
     @Path(NESTED_LRA_PATH)
     public Response nestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRA,
+                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        return Response.ok().entity(nestedLRA.toASCIIString() + "," + parentLRA.toASCIIString()).build();
+    }
+
+    @LRA(value = LRA.Type.NESTED)
+    @PUT
+    @Path(NESTED_LRA_PATH_WITH_CLOSE)
+    public Response nestedLRAWithClose(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRA,
                               @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
         return Response.ok().entity(nestedLRA.toASCIIString() + "," + parentLRA.toASCIIString()).build();
     }

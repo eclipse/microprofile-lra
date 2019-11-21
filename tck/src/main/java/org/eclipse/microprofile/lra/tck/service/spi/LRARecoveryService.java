@@ -50,10 +50,11 @@ public interface LRARecoveryService {
 
     /**
      * Wait for all participants to reach an end state and for all
-     * {@link org.eclipse.microprofile.lra.annotation.AfterLRA} notifications to be successfully delivered.
-     * 
+     * {@link org.eclipse.microprofile.lra.annotation.AfterLRA} notifications to be successfully delivered
+     * (AfterLRA methods return HTTP 200).
+     *
      * The default implementation iterates {@link LRARecoveryService#waitForEndPhaseReplay(URI)} until
-     * all participants reach a final state and for all listeners notifications to be successfully delivered.
+     * all participants reach a final state and all AfterLRA listeners notifications are successfully delivered.
      *
      * @param lraId the LRA context
      * @throws LRACallbackException the implementation was unable to determine whether
@@ -71,15 +72,19 @@ public interface LRARecoveryService {
     }
 
     /**
-     * Wait for one replay of the end phase of the LRA (the calls to Status, Complete, Compensate, and Forget
+     * Wait for one replay of the end phase of the LRA (the callback calls to Status, Complete, Compensate, and Forget
      * methods of all Compensating/Completing participants. If the LRA is finished as a result of this call
-     * all listeners must also be successfully notified before this method returns.
-     * 
+     * all listeners must also be successfully notified before this method returns. The callback calls must be attempted
+     * but do not have to be successful (e.g. implementation tries to call Compensate which returns connection refused
+     * is a valid invocation of this method).
+     *
      * @param lraId the LRA context
-     * @return true if after the recovery all participants reached an end state and all AfterLRA listeners were
-     * successfully notified, false otherwise
-     * @throws LRACallbackException the implementation was unable to determine whether
-     * or not the callbacks were received by all participants
+     * @return true if the implementation successfully issued callback requests and received responses that indicate
+     * that final state was achieved and all AfterLRA listeners were successfully notified (AfterLRA methods returned
+     * HTTP 200), or false if the implementation successfully issued callback requests but it did not receive all
+     * responses or the received responses indicate that the final state is not reached yet
+     * @throws LRACallbackException the implementation has no knowledge of this LRA or it was unable to retry
+     * the requests to all participants so it does not make sense to trigger this method with the same argument again
      */
     boolean waitForEndPhaseReplay(URI lraId) throws LRACallbackException;
 }

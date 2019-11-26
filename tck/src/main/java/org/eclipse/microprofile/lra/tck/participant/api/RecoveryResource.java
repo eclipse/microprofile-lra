@@ -27,7 +27,6 @@ import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
-import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -55,16 +54,12 @@ public class RecoveryResource {
     public static final String PHASE_2 = "phase-2";
     public static final String LRA_HEADER = "LRA";
     public static final String TRIGGER_RECOVERY = "triggerRecovery";
-    public static final String TIMEOUT_HEADER = "timeout-millis";
     public static final long LRA_TIMEOUT = 500;
     private static final String REQUIRED_PATH = "required";
     private static final String REQUIRED_TIMEOUT_PATH = "required-timeout";
 
     @Inject
     LRAMetricService lraMetricService;
-
-    @Inject
-    private LraRecoveryService lraRecoveryService;
 
     @Inject
     LRATestService lraTestService;
@@ -102,9 +97,6 @@ public class RecoveryResource {
         lra = URI.create(response.readEntity(String.class));
 
         Response.ResponseBuilder responseBuilder = Response.ok(lra);
-        if (timeout) {
-            responseBuilder.header(TIMEOUT_HEADER, lraTckConfigBean.getShortConsistencyDelay());
-        }
         
         return responseBuilder.build();
     }
@@ -119,7 +111,7 @@ public class RecoveryResource {
     @Path(PHASE_2)
     public Response phase2(@HeaderParam(LRA_HEADER) URI lraId) {
         lraTestService.getLRAClient().cancelLRA(lraId);
-        lraTestService.applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lraId);
 
         // assert compensate has been called
         int compensations = lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName());
@@ -143,7 +135,7 @@ public class RecoveryResource {
     @GET
     @Path(TRIGGER_RECOVERY)
     public Response triggerRecovery(@HeaderParam(LRA_HEADER) URI lraId) {
-        lraRecoveryService.triggerRecovery(lraId);
+        lraTestService.waitForRecovery(lraId);
         return Response.ok().build();
     } 
 

@@ -21,6 +21,9 @@ package org.eclipse.microprofile.lra.tck.service;
 
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
 import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
+import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
+import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
+import org.junit.Assert;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -30,6 +33,8 @@ import javax.ws.rs.client.WebTarget;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 @ApplicationScoped
 public class LRATestService {
@@ -45,9 +50,8 @@ public class LRATestService {
     private static Client tckSuiteClient;
 
     private WebTarget tckSuiteTarget;
-    
-    private long shortDelay;
-    private long longDelay;
+
+    private LRARecoveryService lraRecoveryService = loadService(LRARecoveryService.class);
 
     public void start() {
         tckSuiteClient = ClientBuilder.newClient();
@@ -59,9 +63,6 @@ public class LRATestService {
         } catch (MalformedURLException mfe) {
             throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
         }
-
-        shortDelay = config.getShortConsistencyDelay();
-        longDelay = config.getLongConsistencyDelay();
     }
 
     public void stop() {
@@ -78,29 +79,39 @@ public class LRATestService {
         return tckSuiteTarget;
     }
 
-    /**
-     * @see LraTckConfigBean#getShortConsistencyDelay() 
-     */
-    public void applyShortConsistencyDelay() {
-        if (shortDelay > 0) {
-            try {
-                Thread.sleep(shortDelay);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    public void waitForCallbacks(URI lraId) {
+        try {
+            lraRecoveryService.waitForCallbacks(lraId);
+        } catch (LRACallbackException e) {
+            Assert.fail(e.getMessage());
         }
     }
 
-    /**
-     * @see LraTckConfigBean#getLongConsistencyDelay() 
-     */
-    public void applyLongConsistencyDelay() {
-        if (longDelay > 0) {
-            try {
-                Thread.sleep(longDelay);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+    public void waitForRecovery(URI lraId) {
+        try {
+            lraRecoveryService.waitForRecovery(lraId);
+        } catch (LRACallbackException e) {
+            Assert.fail(e.getMessage());
         }
+    }
+
+    public void waitForEndPhaseReplay(URI lraId) {
+        try {
+            lraRecoveryService.waitForEndPhaseReplay(lraId);
+        } catch (LRACallbackException e) {
+            Assert.fail(e.getMessage());
+        }
+    }
+
+    public static <T> T loadService(Class<T> type) {
+        ServiceLoader<T> serviceLoader = ServiceLoader.load(type);
+        Iterator<T> iterator = serviceLoader.iterator();
+
+        if (!iterator.hasNext()) {
+            throw new IllegalStateException(String.format("No implementation of %s which is required for the " +
+                "TCK run was found with the service loader", type.getName()));
+        }
+
+        return iterator.next();
     }
 }

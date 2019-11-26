@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownStatusResource
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -49,6 +50,9 @@ public class TckUnknownStatusTests extends TckTestBase {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    private LRATestService lraTestService;
+
     @Deployment(name = "tckunkownstatus")
     public static WebArchive deploy() {
         return TckUnknownStatusTests.deploy(TckUnknownStatusTests.class.getSimpleName().toLowerCase());
@@ -64,7 +68,7 @@ public class TckUnknownStatusTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPENSATE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyLongConsistencyDelay();
+        lraTestService.waitForRecovery(lraId);
         int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
         int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
@@ -81,7 +85,7 @@ public class TckUnknownStatusTests extends TckTestBase {
         String lraIdString = invoke(Scenario.COMPLETE_RETRY);
         URI lraId = URI.create(lraIdString);
 
-        applyLongConsistencyDelay();
+        lraTestService.waitForRecovery(lraId);
         int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
         int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);

@@ -57,7 +57,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
-import org.eclipse.microprofile.lra.tck.service.spi.LraRecoveryService;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -72,7 +72,7 @@ public class TckTests extends TckTestBase {
     private LRAMetricService lraMetricService;
 
     @Inject
-    private LraRecoveryService lraRecoveryService;
+    private LRATestService lraTestService;
     
     private enum CompletionType {
         complete, compensate, mixed
@@ -195,7 +195,7 @@ public class TckTests extends TckTestBase {
 
         // close the LRA
         lraClient.closeLRA(lra);
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lra);
         
         // check that participant was told to complete
         assertEquals("Wrong completion count for call " + resourcePath.getUri() + ". Expecting the method LRA was completed "
@@ -231,6 +231,7 @@ public class TckTests extends TckTestBase {
                 .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
+        lraTestService.waitForCallbacks(lra);
 
         // verify that the LRA is now in one of the terminal states
         assertTrue("testAfterLRAParticipant: LRA did not finish",
@@ -246,13 +247,14 @@ public class TckTests extends TckTestBase {
      * are notified correctly when an LRA terminates
      */
     @Test
-    public void testAfterLRAListener() throws WebApplicationException, InterruptedException {
+    public void testAfterLRAListener() {
         URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
         WebTarget resourcePath = tckSuiteTarget.path(AFTER_LRA_LISTENER_PATH).path(AFTER_LRA_LISTENER_WORK);
         Response response = resourcePath
                 .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
+        lraTestService.waitForCallbacks(lra);
 
         // verify that the LRA is now in one of the terminal states
         assertTrue("testAfterLRAListener: LRA did not finish",
@@ -282,7 +284,7 @@ public class TckTests extends TckTestBase {
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
         lraClient.closeLRA(lra);
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lra);
 
         // check that participant was not told to complete
         assertEquals("Wrong completion count when participant left the LRA. "
@@ -325,7 +327,7 @@ public class TckTests extends TckTestBase {
         // (depends upon how long the implementation keeps a record of finished LRAs
 
         // check that participant was invoked
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lraId);
         
         /*
          * The call to activities/timeLimit should have started an LRA which should have timed out
@@ -368,8 +370,7 @@ public class TckTests extends TckTestBase {
             lraClient.cancelLRA(lra);
         }
 
-        lraRecoveryService.triggerRecovery();
-        applyShortConsistencyDelay();
+        lraTestService.waitForRecovery(lra);
 
         int completionCount = lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName());
         int compensationCount = lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName());
@@ -405,7 +406,7 @@ public class TckTests extends TckTestBase {
                 lraId, lra.toString());
 
         lraClient.cancelLRA(lra);
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lra);
 
         // check that second service (the LRA aware one), namely
         // {@link org.eclipse.microprofile.lra.tck.participant.api.LraResource#activityWithMandatoryLRA(String, String)}
@@ -500,14 +501,14 @@ public class TckTests extends TckTestBase {
 
         if (close) {
             lraClient.closeLRA(lra);
-            applyShortConsistencyDelay();
+            lraTestService.waitForCallbacks(lra);
             
             assertTrue(methodName + ": resource should have completed once with no compensations",
                     1 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
                     0 == lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()));
         } else {
             lraClient.cancelLRA(lra);
-            applyShortConsistencyDelay();
+            lraTestService.waitForCallbacks(lra);
 
             assertTrue(methodName + ":: resource should have compensated once with no completions",
                     0 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
@@ -530,14 +531,14 @@ public class TckTests extends TckTestBase {
 
         if (close) {
             lraClient.closeLRA(lra);
-            applyShortConsistencyDelay();
+            lraTestService.waitForCallbacks(lra);
 
             assertTrue("joinWithTwoResourcesWithClose: both resources should have completed",
                     lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName()) == 1 &&
                     lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) == 1);
         } else {
             lraClient.cancelLRA(lra);
-            applyShortConsistencyDelay();
+            lraTestService.waitForCallbacks(lra);
 
             assertTrue("joinWithTwoResourcesWithCancel: both resources should have compensated",
                     lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName()) == 1 &&
@@ -585,7 +586,7 @@ public class TckTests extends TckTestBase {
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
                 lraClient.isLRAFinished(URI.create( lraArray[0])));
 
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lra);
         int inMiddleCompletedCount = lraMetricService.getMetric(LRAMetricType.Completed);
         int inMiddleCompensatedCount = lraMetricService.getMetric(LRAMetricType.Compensated);
 
@@ -626,7 +627,7 @@ public class TckTests extends TckTestBase {
                         (i == 0 ? "top level" : "nested"), resourcePath.getUri()),
                 lraClient.isLRAFinished(URI.create(lraArray[i]))));
 
-        applyShortConsistencyDelay();
+        lraTestService.waitForCallbacks(lra);
         int afterCompletedCount = lraMetricService.getMetric(LRAMetricType.Completed);
         int afterCompensatedCount = lraMetricService.getMetric(LRAMetricType.Compensated);
 

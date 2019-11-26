@@ -19,24 +19,21 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service.spi;
 
-import java.net.URI;
-
 /**
- * This interface is providing the implementation with the ability to trigger recovery (replay of the Compensate,
- * Complete or Status) calls when the TCK requires to perform such action. This allows to not wait for the periodic
- * recovery and thus it makes the TCK runs faster.
+ * Generic exception for any failures that occures during the invocations of methods in
+ * {@link LRARecoveryService}.
  */
-public interface LraRecoveryService {
+public class LRACallbackException extends Exception {
 
-    /**
-     * Triggers the recovery of all active LRAs in the system.
-     */
-    void triggerRecovery();
+    public LRACallbackException() {
+        super();
+    }
 
-    /**
-     * Triggers the recovery of a single LRA passed as an argument.
-     *
-     * @param lraId the LRA context of the LRA to be recovered
-     */
-    void triggerRecovery(URI lraId);
+    public LRACallbackException(String message) {
+        super(message);
+    }
+
+    public LRACallbackException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

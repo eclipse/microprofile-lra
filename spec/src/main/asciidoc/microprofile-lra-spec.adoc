@@ -308,22 +308,19 @@ If multiple methods are annotated with the same annotation an arbitrary one will
 [[config-parameters]]
 ==== Configuration parameters
 
-This specification has 1 configuration parameter which is retrieved using the MicroProfile Config principals.
+This specification has 1 configuration parameter which is retrieved using the MicroProfile Config principles.
 
-     mp.lra.LRA.value=SUPPORTS
+     mp.lra.propagation.active=true
 
-The allowed values for the configuration parameter are `SUPPORTS`, the default value, and `NOT_SUPPORTED`.
-When an invalid value is defined, the implementation MUST prohibit the successful startup of the application
-(e.g. through a runtime exception).
+The allowed values for the configuration parameter are defined by the https://github.com/eclipse/microprofile-config/blob/master/spec/src/main/asciidoc/converters.asciidoc[MicroProfile Config converter for boolean]:
+`values for true (case insensitive) "true", "1", "YES", "Y" "ON". Any other value will be interpreted as false.
 
 When a JAX-RS endpoint, or the containing class, is not annotated with @LRA, but it is called on a MicroProfile LRA compliant runtime,
-the system behaves as if there is an annotation present with the `type()` value taken from the configuration parameter.
-
-Note however that these values, which correspond to the enum values of `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type`
-only define how the LRA header information is propagated when an outgoing request is performed from such a JAX-RS resource.
+the system will propagate the LRA related HTTP headers when this parameter resolves to true. The behavior is similar to the
+LRA.Type SUPPORTS (when true) and NOT_SUPPORTED (when false) values but only defines the propagation aspect.
 
 Also, there is no validation performed in any form of the LRA related HTTP headers. They are just propagated on an outgoing
-request in the case the configuration value `SUPPORTS` is specified. All values for the headers defined in `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER`
+request in the case the configuration value resolves to `true`. All values for the headers defined in `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER`
 and `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER` needs to be propagated.
 
 [[lra-context]]

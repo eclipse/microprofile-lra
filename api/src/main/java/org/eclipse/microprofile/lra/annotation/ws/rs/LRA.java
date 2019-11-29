@@ -72,8 +72,8 @@ import java.time.temporal.ChronoUnit;
  *
  * <p>
  * If an LRA is propagated to a resource that is not annotated with any
- * particular LRA behavior, then the value of the <code>mp.lra.LRA.value</code> configuration parameter
- * determines how the LRA is propagated. The default of this parameter is <code>SUPPORTS</code> which
+ * particular LRA behavior, then the value of the <code>mp.lra.propagation.active</code> configuration parameter
+ * determines how the LRA is propagated. The default of this parameter is <code>true</code> which
  * means that the LRA must be propagated to outgoing requests.
  * For example, suppose resource <code>A</code>
  * starts an LRA and then performs a JAX-RS request to resource <code>B</code> which

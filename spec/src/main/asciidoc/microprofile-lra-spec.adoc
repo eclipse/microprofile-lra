@@ -341,10 +341,9 @@ this identifier is passed as a method parameter.
 The implementation MUST propagate the `active context` on outgoing JAX-RS
 requests.
 
-If an LRA is propagated to a resource that is not annotated with `@LRA` then the implementation behaves
-as if there is an annotation present on the resource with the `type()` defined by the configuration parameter
-`mp.lra.LRA.value`. From a functional point of view, there is no difference notable except for the different
-default for `end()` which is false when there is no `@LRA` defined.
+If an LRA is propagated to a resource that is not annotated with `@LRA` then the implementation looks at the
+configuration parameter `mp.lra.propagation.active` to decide if the LRA context information in the header must
+be propagated with the outgoing requests (value evaluates to `true`, the default) or not (value evaluates to `false`).
 
 The user is allowed to manually assign the `context header` on JAX-RS requests
 and responses:

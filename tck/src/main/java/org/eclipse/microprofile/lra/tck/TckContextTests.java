@@ -20,6 +20,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
@@ -94,7 +95,7 @@ public class TckContextTests extends TckTestBase {
         // verify that the resource was asked to complete
         int completions = lraMetricService.getMetric(LRAMetricType.Completed, lra);
 
-        assertEquals(testName.getMethodName() + ": Resource was not asked to complete", 
+        assertEquals(testName.getMethodName() + ": Resource was not asked to complete",
                 1, completions);
     }
 
@@ -244,7 +245,7 @@ public class TckContextTests extends TckTestBase {
     @Test
     public void testAsync3Support() {
         // invoke an async resource that throws an exception which cancels the LRA
-        URI lra = URI.create(invoke(ASYNC_LRA_PATH3, PUT, null, 404, 
+        URI lra = URI.create(invoke(ASYNC_LRA_PATH3, PUT, null, 404,
             ContextTckResource.EndPhase.SUCCESS, 200));
         lraTestService.waitForCallbacks(lra);
 
@@ -256,6 +257,42 @@ public class TckContextTests extends TckTestBase {
                 0, completions);
         assertEquals(testName.getMethodName() + ": Resource was not asked to compensate",
                 1, compensations);
+    }
+
+    @Test
+    public void testAfterLRAEnlistmentDuringClosingPhase() {
+        // call a resource that begins and ends an LRA and coerces the resource to return ACCEPTED when asked to complete
+        URI lra = URI.create(invoke(REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202));
+
+        // verify that the resource was asked to complete and is in the state Completing
+        String status = invoke(STATUS_PATH, HttpMethod.GET, lra, 202, ContextTckResource.EndPhase.SUCCESS, 200);
+        lraTestService.waitForCallbacks(lra);
+        assertEquals(testName.getMethodName() + ": participant is not completing", ParticipantStatus.Completing.name(), status);
+
+        // enlist an LRA listener
+        Response enlistResponse = tckSuiteTarget.path(AfterLRAListener.AFTER_LRA_LISTENER_PATH)
+            .path(AfterLRAListener.AFTER_LRA_LISTENER_WORK)
+            .request()
+            .header(LRA_HTTP_CONTEXT_HEADER, lra)
+            .put(null);
+
+        assertEquals("AfterLRA listener hasn't been enlisted for the notification",
+            200, enlistResponse.getStatus());
+        enlistResponse.close();
+
+        // clear the EndPhase override data so that the next status request returns completed or compensated
+        invoke(CLEAR_STATUS_PATH, HttpMethod.POST, lra, 200, ContextTckResource.EndPhase.SUCCESS, 200);
+
+        // trigger a replay of the end phase
+        lraTestService.waitForRecovery(lra);
+
+        // verify that the resource was asked to complete
+        assertEquals(testName.getMethodName() + ": participant is not completed", 1,
+            lraMetricService.getMetric(LRAMetricType.Completed, lra));
+
+        // and that afterLRA listener was notified
+        assertEquals("AfterLRA listener registered during the Closing phase was not notified about the LRA close",
+            1, lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()));
     }
 
     private String invoke(String where, HttpMethod method, URI lraContext) {

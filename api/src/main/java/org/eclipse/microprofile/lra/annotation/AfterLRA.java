@@ -36,6 +36,19 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
+ * The listener can register interest in the final outcome of an LRA at
+ * any time up until the LRA has closed or cancelled. In other words,
+ * if an LRA is closing or cancelling then listener registrations
+ * should be allowed. This is in contrast to registering for participant
+ * callbacks which are only allowed if the LRA is active.
+ * A consequence of this statement is that if a class is annotated with
+ * both the AfterLRA and the Compensate annotations and the LRA has
+ * already started closing or cancelling then the method invocation
+ * will fail with a <code>412 PreCondition Failed</code> JAX-RS response
+ * code.
+ * </p>
+ *
+ * <p>
  * If the <code>AfterLRA</code> method is also a JAX-RS resource method
  * then it MUST use the {@link javax.ws.rs.PUT} request method. In this
  * case the LRA context is made available to the annotated method

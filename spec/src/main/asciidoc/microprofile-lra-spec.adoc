@@ -1,11 +1,11 @@
 //   Copyright (c) 2018 Contributors to the Eclipse Foundation
-// 
+//
 //    Licensed under the Apache License, Version 2.0 (the "License");
 //    you may not use this file except in compliance with the License.
 //    You may obtain a copy of the License at
-// 
+//
 //        http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 //    Unless required by applicable law or agreed to in writing, software
 //    distributed under the License is distributed on an "AS IS" BASIS,
 //    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,7 @@ in microservice based architectures.
 In the LRA model, an activity reflects business interactions: all work
 performed within the scope of an activity is required to be
 compensatable and the protocol ensures that when the activity terminates
-then either all work will be accepted or will be compensated, ie
+then either all work will be accepted or will be compensated, i.e.
 the activity’s work is either performed successfully or undone. For
 example, when a user reserves a seat on a flight, the airline
 reservation centre may take an optimistic approach and actually book the
@@ -186,7 +186,7 @@ compensate
 
 Note that the model also allows parties to be reliably notified when
 <<after-lra,LRAs reach one of the final states>>. Such parties are
-referred to as LRA listeners (in contrast to a participants).
+referred to as LRA listeners (in contrast to participants).
 
 :imagesdir: images
 [[lra-state-model]]
@@ -210,7 +210,7 @@ tidying up.
 * `FailedToComplete`: the participant was unable to tidy-up some resources
 it allocated during the LRA.
 
-When a participant joins an LRA it is said to be enlisted and enter the state
+When a participant joins an LRA it is said to be enlisted and enters the state
 model in the `Active` state.
 
 :imagesdir: images
@@ -251,7 +251,7 @@ controlling the life cycle of and participation in LRAs:
 === Java Annotations for LRAs
 
 Support for the proposal in MicroProfile is primarily based upon the use
-of Java annotations for controlling the life cycle of LRAs and of participants, ie
+of Java annotations for controlling the life cycle of LRAs and of participants, i.e.
 the service developer annotates JAX-RS resources to specify how
 LRAs should be controlled and when to _enlist a class_ as a participant.
 
@@ -286,7 +286,7 @@ Briefly, these annotations are used as follows:
 The application annotates some JAX-RS resource method with `@LRA` which determines whether the
 method will run in the context of an LRA. Generally, if a method starts a new LRA it will
 be closed when the method finishes execution (but elements of the annotation facilitate
-full control over the LRA lifecycle).
+full control over the LRA life cycle).
 
 If execution is to run with an active LRA and the associated class contains other methods
 annotated with `@Compensate` and `@Complete` then these methods will be associated with
@@ -320,7 +320,7 @@ The allowed values for the configuration parameter are defined by the https://gi
 `values for true (case insensitive) "true", "1", "YES", "Y" "ON". Any other value will be interpreted as false.
 
 When a JAX-RS endpoint, or the containing class, is not annotated with @LRA, but it is called on a MicroProfile LRA compliant runtime,
-the system will propagate the LRA related HTTP headers when this parameter resolves to true. The behavior is similar to the
+the system will propagate the LRA related HTTP headers when this parameter resolves to true. The behaviour is similar to the
 LRA.Type SUPPORTS (when true) and NOT_SUPPORTED (when false) values but only defines the propagation aspect.
 In other words the class does not have to be a participant in order for the LRA context to propagate, i.e. such propagation of
 the header does not imply that the LRA is in any particular state, and in fact the LRA may not even correspond to a valid LRA.
@@ -329,8 +329,8 @@ Also, there is no validation performed in any form of the LRA related HTTP heade
 request in the case the configuration value resolves to `true`. All values for the headers defined in `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER`
 and `org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER` needs to be propagated.
 
-Because of this last statement an implementaton does not need to guard against "spoofing of LRA ids":
-security is specifically not defined in the specification and it is up to implementors to define the security elements of their approach.
+Because of this last statement an implementation does not need to guard against "spoofing of LRA ids":
+security is specifically not defined in the specification and it is up to implementers to define the security elements of their approach.
 
 [[lra-context]]
 ==== The LRA Context
@@ -340,7 +340,7 @@ available to the business logic. This LRA is referred to as the `active context`
 
 For JAX-RS resource methods, the identifier is made available via request and
 response headers which the business method can obtain using standard JAX-RS mechanisms,
-ie `@Context` or by injecting a JAX-RS header param with the name specified by
+i.e. `@Context` or by injecting a JAX-RS header param with the name specified by
 the Java constant `LRA_HTTP_CONTEXT_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
 This header is referred to as the `context header`.
 
@@ -402,7 +402,7 @@ MUST either contain a method annotated with `@Compensate` or `@AfterLRA`.
 If the `@Compensate` annotation is present then the class
 (aka participant or compensator) will be enlisted with the LRA.
 If the `@AfterLRA` annotation is present then the class will be notified
-when the LRA reaches one of <<lra-state-model,the final states>>.
+when the LRA reaches one of <<lra-state-model,the final LRA states>>.
 In the `@Compensate` case this means that before starting the method the implementation must
 be able to guarantee that the participant has been or will eventually be registered
 with the LRA. This implies that the LRA is effectively validated as being active (since
@@ -446,7 +446,7 @@ be closed when the method finishes (see the javadoc for the `LRA#end()`
 element for details.
 
 The LRA annotation can be used to control whether or not the LRA context should
-be cancleed when the method finishes (see the javadoc for the `LRA#cancelOn()`
+be cancelled when the method finishes (see the javadoc for the `LRA#cancelOn()`
 and `cancelOnFamily` elements for details).
 
 When an LRA is present its identifier MUST be made available to
@@ -586,7 +586,7 @@ public class BusinessResource {
         switch (status) {
             case Closed:
                 // the LRA was successfully closed
-            ...    
+            ...   
         }
     }
 }
@@ -661,7 +661,7 @@ atomic outcomes so the participant is responsible for reporting when it has
 finished compensating: it may do this by allowing the compensation method
 to be called multiple times in the context of the same LRA until the final state
 is known. But if the method `compensatePreviousAction` should not be called a
-second time (ie it is not idempotent) then the participant has the option of
+second time (i.e. it is not idempotent) then the participant has the option of
 reporting its` progress using the `@Status` annotation:
 
 [source,java]
@@ -733,16 +733,16 @@ it is explicitly told that it can clean up via the `@Forget` method:
     }
 ----
 
-The resource class MAY also contain a method marked with the `@Complete` annotation. 
-If such a method is present then the method MUST be invoked when the associated LRA 
-is closed. Again, the specification does not MANDATE when the method is called, 
-just that it will eventually be invoked. Typically the resource would use this call 
-to perform any clean up actions. The method is optional since such clean up actions 
-may not be necessary, for example consider a system that just tracks hotel reservations 
-and has operations for booking a room or cancelling the reservation (`@Compensate`). 
-Since this system is passive, once a room is booked, it does not make any difference 
-if the LRA is completed or not: the room will be unavailable for others. If it receives 
-a call to `@Compensate` then it will free the room. But it won't do anything on 
+The resource class MAY also contain a method marked with the `@Complete` annotation.
+If such a method is present then the method MUST be invoked when the associated LRA
+is closed. Again, the specification does not MANDATE when the method is called,
+just that it will eventually be invoked. Typically the resource would use this call
+to perform any clean up actions. The method is optional since such clean up actions
+may not be necessary, for example consider a system that just tracks hotel reservations
+and has operations for booking a room or cancelling the reservation (`@Compensate`).
+Since this system is passive, once a room is booked, it does not make any difference
+if the LRA is completed or not: the room will be unavailable for others. If it receives
+a call to `@Compensate` then it will free the room. But it won't do anything on
 `@Complete`.
 
 If the participant successfully compensates or completes then it may forget about
@@ -766,25 +766,25 @@ If there is no `@Status` then the `@Compensate` or `@Complete` methods will cont
 to be invoked until the implementation knows it has the final status.
 
 If the `@Compensate` or `@Complete` annotation is present on multiple methods
-then an arbitrary one is chosen. 
+then an arbitrary one is chosen.
 
 The javadoc for the <<source-Compensate,Compensate annotation>> provides
-more details about this annotation. 
+more details about this annotation.
 
 Similarly, the javadoc for the <<source-Complete,Complete annotation>>
-provides details about the `@Complete` annotation. 
+provides details about the `@Complete` annotation.
 
 ==== Participant marker annotations method signatures
 
-The participant marker annotations are annotations that allow users to mark a method 
+The participant marker annotations are annotations that allow users to mark a method
 for the execution by the LRA implementation according to the <<participant-state-model,
-the participant state model>>. These annotations are: 
+the participant state model>>. These annotations are:
 
 * `@Compensate` -- a method to be executed when the LRA is cancelled
 * `@Complete` -- a method to be executed when the LRA is closed
-* `@Status` -- a method that allow user to state status of the participant with regards 
+* `@Status` -- a method that allow user to state status of the participant with regards
 to a particular LRA
-* `@Forget` -- a method to be executed when the LRA allows participant to 
+* `@Forget` -- a method to be executed when the LRA allows participant to
 clear all associated information
 
 There is also a listener marker annotation:
@@ -792,9 +792,9 @@ There is also a listener marker annotation:
 * `@AfterLRA` -- a method that will be reliably invoked when the LRA enters one of
 the final states
 
-This specification differentiates two types of participant method definitions -- 
-methods associated with the JAX-RS resource method or the methods which are not 
-bound to JAX-RS. 
+This specification differentiates two types of participant method definitions --
+methods associated with the JAX-RS resource method or the methods which are not
+bound to JAX-RS.
 
 [[jaxrs-participant-methods]]
 ===== JAX-RS methods
@@ -831,7 +831,7 @@ annotations when associated with JAX-RS resource methods:
 | 200
 | no expectations
 
-|=== 
+|===
 
 Please refer to the javadoc for each annotation for the description of the
 conditions under which the various JAX-RS response codes are returned.
@@ -853,7 +853,7 @@ this caveat applies to the situation where the response is lost since the caller
 not see the correct code].
 
 Users are allowed to reuse existing JAX-RS endpoints for participant method definitions.
-In this case the LRA implementation MUST ensure that invoking these methods outside of the 
+In this case the LRA implementation MUST ensure that invoking these methods outside of the
 implementation of the LRA specification will not influence any running LRA.
 
 Specifically, developers should NEVER call any JAX-RS endpoint for participant callback methods
@@ -885,26 +885,26 @@ public void onLRAEnd(URI lraId, LRAStatus status)
 When the participant annotations are applied to the non-JAX-RS resource methods they
 MUST adhere to these predefined signatures:
 
-* *Return type*: 
-** `void`: successfull execution is mapped to `Compensated` or `Completed` participant statuses, 
+* *Return type*:
+** `void`: successful execution is mapped to `Compensated` or `Completed` participant statuses,
  error execution is handled by <<non-jax-rs-exceptions, exceptions>> thrown in the participant method
 *** not applicable for `@Status` participant methods
 ** <<source-ParticipantStatus,ParticipantStatus>>
-** `javax.ws.rs.core.Response`: handled similarly as for 
+** `javax.ws.rs.core.Response`: handled similarly as for
 <<jaxrs-participant-methods, JAX-RS participant methods>>
-** `java.util.concurrent.CompletionStage`: with the parameter of any of the previously 
+** `java.util.concurrent.CompletionStage`: with the parameter of any of the previously
 defined types
 * *Arguments*: up to 2 arguments of types in this order:
 ** `java.net.URI`: representing current LRA context identification
-** `java.net.URI`: representing potentional parent LRA context identification
+** `java.net.URI`: representing potential parent LRA context identification
 
-Declaring more than two arguments, different types of arguments or different return type 
-for any non-JAX-RS method annotatated with the participant marker annotation MUST result 
+Declaring more than two arguments, different types of arguments or different return type
+for any non-JAX-RS method annotated with the participant marker annotation MUST result
 in the prohibition of the successful application startup (e.g. through the startup
-time runtime exception). 
+time runtime exception).
 
-Please note that both arguments are optional but the order is required. This means that 
-if only one argument is provided this argument will contain the value of the current 
+Please note that both arguments are optional but the order is required. This means that
+if only one argument is provided this argument will contain the value of the current
 active LRA context (not the parent LRA context in case of nested LRA).
 
 Examples of valid signatures:
@@ -936,22 +936,22 @@ public void forget(URI lraId, URI parentId, String additional) // too many argum
 ----
 
 [[non-jax-rs-exceptions]]
-If any of the described methods throws an exception, we distinguish two cases depending 
+If any of the described methods throws an exception, we distinguish two cases depending
 on the exception type:
 
-* `WebApplicationException` -- the exception is mapped to the HTTP response it carries 
-and then handled as defined in the section 
+* `WebApplicationException` -- the exception is mapped to the HTTP response it carries
+and then handled as defined in the section
 <<jaxrs-participant-methods, JAX-RS participant methods>>
-* any other exception 
-** @Compensate and @Complete - results into `FailedToCompensate` or `FailedToComplete`  
+* any other exception
+** @Compensate and @Complete - results into `FailedToCompensate` or `FailedToComplete` 
 participant states
-** @Status and @Forget - as the participant may have already compensated (or completed) 
-or may in the process of compensation (completion) the exception in these methods should 
-result into failure condition (in JAX-RS this condition is represented by 
+** @Status and @Forget - as the participant may have already compensated (or completed)
+or may in the process of compensation (completion) the exception in these methods should
+result into failure condition (in JAX-RS this condition is represented by
 500 return HTTP status code) which individual interpretation is left further unspecified.
 
-In case the implementation of this specification exposes non-JAX-RS participant methods 
-to be able to call them externally (e.g. the HTTP proxy) then it MUST protect every 
+In case the implementation of this specification exposes non-JAX-RS participant methods
+to be able to call them externally (e.g. the HTTP proxy) then it MUST protect every
 exposed method from unauthorized access. The specific security details are not specified.
 
 [[eventual-compensations]]
@@ -973,11 +973,11 @@ is still in progress using one of the following options:
   If there is no `@Status` method then the response MAY provide
   a status URL in the `HTTP Location` header field so that the
   implementation can discover the final outcome.
-  This URL, if present, MUST obey the requirements specificed in
+  This URL, if present, MUST obey the requirements specified in
   the javadoc for the <<source-Status,Status annotation>>.
   If the developer has not provided an `@Status` method nor a status
   URL then the implementation MUST reinvoke the `@Compensate` method
-  (ie it MUST be idempotent).
+  (i.e. it MUST be idempotent).
 - A non JAX-RS method can return `ParticipantStatus.Compensating`.
 
 The `@Status` method, if present, MUST report the progress of the compensation.
@@ -1074,16 +1074,16 @@ approximately globally synchronised).
 Potential reasons for requiring absolute time values, as opposed to durations, include:
 
 1. When a failed server is restarted the implementation [of this specification] needs to
-   calculate how long is left for timed LRA's to become eligible for cancellation based on 
+   calculate how long is left for timed LRAs to become eligible for cancellation based on
    on how much time elapsed before the server failed and how much time elapsed before the
    failed server was restarted. Such calculations can only be made if the absolute time of
    expiry of the LRA is known.
 2. In a centralised coordinator based system, if another server takes control of the LRA
    then the absolute time would be required.
 3. One could envisage a non centralised implementation that relies on absolute time values
-   to determine when LRA's may be cancelled. In such an approach it is even more important
+   to determine when LRAs may be cancelled. In such an approach it is even more important
    that different clocks are aligned. Failure to align clocks in such a system would
-   result in higher failure rates for LRA's.
+   result in higher failure rates for LRAs.
 
 
 If there are edge cases around timing of actions or if local clocks
@@ -1093,7 +1093,7 @@ but if they do occur then it MUST detect the conflict and force the LRA into
 <<lra-state-model,one of the failure states>> and it MUST report the conflict
 (the actual mechanism by which it does so is unspecified).
 
-Also note that time limits are never absolute with respect to when LRA's are actually
+Also note that time limits are never absolute with respect to when LRAs are actually
 cancelled: they are hints to the system that if the time limit is breached then
 compensation may not be possible and an implementation should move the state of the
 LRA to cancelling. It is also possible for an implementation to miss a deadline
@@ -1115,7 +1115,7 @@ subsequently ended). Even though the method runs without an LRA context
 the implementation MUST still make the context available via a JAX-RS header.
 
 The javadoc for the <<source-Leave,Leave annotation>> provides greater detail
-about this annotation. 
+about this annotation.
 
 An example of this annotation is shown next:
 
@@ -1147,8 +1147,8 @@ report the status according to the
 
 If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `410 Gone`
-HTTP status code or in the case of non-JAX-RS method returning 
-<<source-ParticipantStatus,ParticipantStatus>> `null`. 
+HTTP status code or in the case of non-JAX-RS method returning
+<<source-ParticipantStatus,ParticipantStatus>> `null`.
 This enables the participant to free up resources.
 
 [[forgetting-an-lra]]
@@ -1169,7 +1169,7 @@ with the LRA.
 
 If a participant is enlisted in a nested LRA then it can ask to be notified
 when the parent LRA closes using this `@Forget` annotation. This feature is
-useful since a nested LRA can be closed independantly from its parent but
+useful since a nested LRA can be closed independently from its parent but
 it must retain the ability to compensate until the parent has finished.
 Typically a participant would perform clean up actions in this method.
 

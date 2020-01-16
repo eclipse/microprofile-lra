@@ -31,6 +31,7 @@ import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -69,9 +70,11 @@ public class LraResource {
     public static final String LRA_RESOURCE_PATH = "lraresource";
     public static final String TRANSACTIONAL_WORK_PATH = "work";
     public static final String ACCEPT_WORK = "acceptWork";
-    private static final Logger LOGGER = Logger.getLogger(LraResource.class.getName());
-
+    public static final String TIME_LIMIT = "/timeLimit";
+    public static final String TIME_LIMIT_HALF_SEC = "/timeLimit2";
     static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
+
+    private static final Logger LOGGER = Logger.getLogger(LraResource.class.getName());
 
     private static final String MISSING_LRA_DATA = "Missing LRA data";
 
@@ -84,6 +87,8 @@ public class LraResource {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    LRATestService lraTestService;
     /**
      * Performing a GET on the participant URL will return the current status of the
      * participant {@link ParticipantStatus}, or 410 if the participant does no longer know about this LRA.
@@ -394,7 +399,7 @@ public class LraResource {
     }
 
     @GET
-    @Path("/timeLimit")
+    @Path(TIME_LIMIT)
     @Produces(MediaType.APPLICATION_JSON)
     @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
     public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
@@ -407,6 +412,34 @@ public class LraResource {
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }
+        return Response.status(Response.Status.OK).entity(lraId.toASCIIString()).build();
+    }
+
+    /**
+     * @see org.eclipse.microprofile.lra.tck.TckTests#timeLimitWithPreConditionFailed
+     */
+    @GET
+    @Path(TIME_LIMIT_HALF_SEC)
+    @Produces(MediaType.APPLICATION_JSON)
+    @LRA(value = LRA.Type.REQUIRED, timeLimit = 500, timeUnit = ChronoUnit.MILLIS)
+    public Response timeLimitTest2(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
+
+        activityStore.add(new Activity(lraId));
+
+        try {
+            Thread.sleep(1000); // sleep for longer than specified in the timeLimit annotation attribute
+            // force the implementation to notice that the LRA should have timed out
+            lraTestService.waitForCallbacks(lraId);
+            // the next request should fail with a 412 code since the LRA should no longer be active
+            restPutInvocation(lraId, MANDATORY_LRA_RESOURCE_PATH, "");
+        } catch (WebApplicationException wae) {
+            return Response.status(wae.getResponse().getStatus()).build();
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.FINE, "timeLimitTest2: Interrupted because time limit elapsed", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+
         return Response.status(Response.Status.OK).entity(lraId.toASCIIString()).build();
     }
 

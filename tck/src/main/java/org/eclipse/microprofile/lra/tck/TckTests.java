@@ -23,6 +23,8 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT_HALF_SEC;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TRANSACTIONAL_WORK_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH2;
@@ -314,7 +316,7 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void timeLimit() {
-        WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path("timeLimit");
+        WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TIME_LIMIT);
         Response response = resourcePath
                 .request()
                 .get();
@@ -342,6 +344,31 @@ public class TckTests extends TckTestBase {
                 + "Expecting the number of compensate call before test is one less lower than the ones after LRA timed out. "
                 + "The test call went to " + resourcePath.getUri(), 
                 1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName()));
+    }
+
+    /**
+     * Service A - Timeout 500 ms
+     * Service B - Type.MANDATORY
+     *
+     * Service A calls Service B after it has waited 1 sec.
+     * Service A returns http Status from the call to Service B.
+     *
+     * test calls A and verifies if return is status 412 (precondition failed) since LRA
+     * is not active when Service B endpoint is called.
+     */
+    @Test
+    public void timeLimitWithPreConditionFailed() {
+        WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TIME_LIMIT_HALF_SEC);
+        Response response = resourcePath
+                .request()
+                .get();
+
+        // verify that a 412 response code was generated
+        assertEquals("Expected 412 response",
+                Response.Status.PRECONDITION_FAILED.getStatusCode(),
+                response.getStatus());
+
+        response.close();
     }
 
     @Test

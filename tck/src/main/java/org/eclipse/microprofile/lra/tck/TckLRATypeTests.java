@@ -233,30 +233,6 @@ public class TckLRATypeTests extends TckTestBase {
         resourceRequest(NEVER_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
     
-    @Test
-    public void requiredWithClosedLRA() {
-        String lraId = resourceRequest(REQUIRED_PATH, false, 200, MethodLRACheck.NONE, false);
-     
-        // manually call REQUIRED LRA endpoint with the id of already finished LRA
-        Response response = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH).path(REQUIRED_PATH).request()
-            .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId).get();
-
-        Assert.assertNotEquals("REQUIRED LRA endpoint called with inactive LRA context should " +
-            "start a new LRA", lraId, response.readEntity(String.class));
-    }
-    
-    @Test
-    public void mandatoryWithClosedLRA() {
-        String lraId = resourceRequest(REQUIRED_PATH, false, 200, MethodLRACheck.NONE, false);
-        
-        // manually call MANDATORY LRA endpoint with the id of already finished LRA
-        Response response = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH).path(MANDATORY_PATH).request()
-            .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId).get();
-        
-        Assert.assertEquals("MANDATORY LRA method should return 412 when called with inactive LRA context",
-            Response.Status.PRECONDITION_FAILED.getStatusCode(), response.getStatus());
-    }
-
     /**
      * Perform a JAX-RS resource request and check the resulting status and whether or not it ran with
      * the correct LRA context.

@@ -122,8 +122,8 @@ service to attempt to compensate in some other manner.
 === The Model
 
 The model concerns participants (aka compensators), a logical coordinator
-and a client. A client starts a new LRA via an annotation
-or an API call which results in the creation of a new LRA.
+and a client. A client starts a new LRA via an annotation which results
+in the creation of a new LRA.
 When a business service does work that may have to be later compensated
 it enlists a participant with the LRA which, when the client later closes
 or cancels the LRA, operates on behalf of the service to undo the work
@@ -519,7 +519,7 @@ returns the particular HTTP status codes identified in the `cancelOn` and
   @POST
   public Response bookTrip(...) { ... }
 
-  @LRA(LRA.Type.SUPPORTS, // if there is an incoming context then it used as the active context
+  @LRA(LRA.Type.MANDATORY, // requires an active context before method can be executed
        end = true) // end the LRA started by the bookTrip method
   @Path("/confirm")
   @PUT

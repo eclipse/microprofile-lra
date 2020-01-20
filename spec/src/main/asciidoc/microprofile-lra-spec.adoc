@@ -398,21 +398,24 @@ More specifically, when the JAX-RS method and the class containing the JAX-RS me
 `@LRA` annotation, the one from the JAX-RS method should be used.
 
 If the method is to run in the context of an LRA then the annotated class
-MUST either contain a method annotated with `@Compensate` or `@AfterLRA`.
+MUST also contain a method annotated with one or both of `@Compensate` and `@AfterLRA`.
 If the `@Compensate` annotation is present then the class
 (aka participant or compensator) will be enlisted with the LRA.
 If the `@AfterLRA` annotation is present then the class will be notified
 when the LRA reaches one of <<lra-state-model,the final LRA states>>.
-In the `@Compensate` case this means that before starting the method the implementation must
-be able to guarantee that the participant has been or will eventually be registered
-with the LRA. This implies that the LRA is effectively validated as being active (since
+In the case that the class contains a `@Compensate` annotated method, this means that before
+executing the `@LRA` annotated method, the implementation must be able to guarantee that the
+participant has been or will eventually be registered with the LRA.
+This implies that the LRA is effectively validated as being active (since
 it is not possible to enlist with an inactive LRA).
-In the `@AfterLRA` case the implementation must be able to guarantee that the
-listener will be notified when the LRA finishes. The practical consequence of this requirement
-is that the implementation must durably record that the participant/listener is associated
-with the LRA before letting the business invocation proceed.
+In the case that the class contains a `@AfterLRA` annotated method, this means that before
+executing the `@LRA` annotated method, the implementation must be able to guarantee that the
+listener will be notified about the outcome of the LRA.
+The practical consequence of these requirements is that the implementation must durably record
+that the participant/listener is associated with the LRA before allowing the business invocation
+to proceed.
 
-Enlisting with an LRA means that the bean will be notified when the current LRA is
+Enlisting with an LRA means that the instance will be notified when the current LRA is
 subsequently cancelled or closed (if the class also contains a method
 annotated with `@Complete`). In addition the implementation MUST generate a
 URI for this participant and make it available to the business method (on which

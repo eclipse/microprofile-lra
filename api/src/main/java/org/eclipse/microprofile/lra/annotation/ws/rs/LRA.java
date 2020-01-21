@@ -41,6 +41,11 @@ import java.time.temporal.ChronoUnit;
  * </p>
  *
  * <p>
+ * This annotation MUST be combined with either the {@link Compensate} or the
+ * {@link AfterLRA} annotation otherwise the deployment will be rejected.
+ * </p>
+ *
+ * <p>
  * The annotation <b>SHOULD</b> be applied to JAX-RS annotated methods otherwise
  * it <b>MAY</b> have no effect. The annotation determines whether or not the
  * annotated method will run in the context of an LRA and controls whether or not:

@@ -519,7 +519,7 @@ returns the particular HTTP status codes identified in the `cancelOn` and
   @POST
   public Response bookTrip(...) { ... }
 
-  @LRA(LRA.Type.SUPPORTS, // if there is an incoming context then it is used as the active context
+  @LRA(LRA.Type.MANDATORY, // requires an active context before method can be executed
        end = true) // end the LRA started by the bookTrip method
   @Path("/confirm")
   @PUT

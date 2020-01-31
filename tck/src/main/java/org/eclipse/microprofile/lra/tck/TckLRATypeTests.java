@@ -20,6 +20,9 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckInterface;
+import org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource;
+import org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckSuperclass;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -33,19 +36,9 @@ import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.logging.Logger;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.MANDATORY_WITH_END_FALSE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NEVER_WITH_END_FALSE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.NOT_SUPPORTED_WITH_END_FALSE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRED_WITH_END_FALSE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.REQUIRES_NEW_WITH_END_FALSE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.SUPPORTS_WITH_END_FALSE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckInterfaceResource.TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckResource.TCK_LRA_TYPE_RESOURCE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRATypeTckSuperclassResource.TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -77,7 +70,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class TckLRATypeTests extends TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
-    
+
     @Deployment(name = "lra-type-tck-tests")
     public static WebArchive deploy() {
         return deploy(TckLRATypeTests.class.getSimpleName().toLowerCase());
@@ -93,68 +86,465 @@ public class TckLRATypeTests extends TckTestBase {
         NONE, NOT_PRESENT, EQUALS, NOT_EQUALS
     }
 
+    // LRA annotations placed on the resource class (see LRATypeTckResource)
+
     @Test
     public void requiredWithLRA() {
-        resourceRequest(REQUIRED_PATH, true, 200, MethodLRACheck.EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRED_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
     }
 
     @Test
     public void requiredWithoutLRA() {
-        resourceRequest(REQUIRED_PATH, false, 200, MethodLRACheck.NOT_EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRED_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
     }
 
     @Test
     public void requiresNewWithLRA() {
-        resourceRequest(REQUIRES_NEW_PATH, true, 200, MethodLRACheck.NOT_EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRES_NEW_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, false);
     }
 
     @Test
     public void requiresNewWithoutLRA() {
-        resourceRequest(REQUIRES_NEW_PATH, false, 200, MethodLRACheck.NOT_EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRES_NEW_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
     }
 
     @Test
     public void mandatoryWithLRA() {
-        resourceRequest(MANDATORY_PATH, true, 200, MethodLRACheck.EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.MANDATORY_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
     }
 
     @Test
     public void mandatoryWithoutLRA() {
-        resourceRequest(MANDATORY_PATH, false, 412, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.MANDATORY_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void supportsWithLRA() {
-        resourceRequest(SUPPORTS_PATH, true, 200, MethodLRACheck.EQUALS, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.SUPPORTS_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
     }
 
     @Test
     public void supportsWithoutLRA() {
-        resourceRequest(SUPPORTS_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.SUPPORTS_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void notSupportedWithRA() {
-        resourceRequest(NOT_SUPPORTED_PATH, true, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NOT_SUPPORTED_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void notSupportedWithoutLRA() {
-        resourceRequest(NOT_SUPPORTED_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NOT_SUPPORTED_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void neverWithLRA() {
-        resourceRequest(NEVER_PATH, true, 412, MethodLRACheck.NOT_PRESENT, false);
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NEVER_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
     }
 
     @Test
     public void neverWithInvalidLRA() {
+        neverWithInvalidLRA(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NEVER_PATH);
+    }
 
-        resourceRequest(NEVER_PATH, true, 412, MethodLRACheck.NOT_PRESENT, false);
+    @Test
+    public void neverWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NEVER_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
 
-        Invocation.Builder target = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH)
-                .path(NEVER_PATH).request();
+    @Test
+    public void requiredEndWithLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void requiredEndWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.MANDATORY_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.MANDATORY_WITH_END_FALSE_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void supportsEndWithLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.SUPPORTS_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void supportsEndWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.SUPPORTS_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithoutLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithEndLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NEVER_WITH_END_FALSE_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithoutEndLRA() {
+        resourceRequest(TCK_LRA_TYPE_RESOURCE_PATH, LRATypeTckResource.NEVER_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    // LRA annotations placed on the interface (see LRATypeTckInterfaceResource)
+
+    @Test
+    public void requiredWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRED_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void requiredWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRED_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void requiresNewWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRES_NEW_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void requiresNewWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRES_NEW_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void mandatoryWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.MANDATORY_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void mandatoryWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.MANDATORY_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void supportsWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.SUPPORTS_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void supportsWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.SUPPORTS_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedWithRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NOT_SUPPORTED_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NOT_SUPPORTED_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NEVER_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithInvalidLRAAtInterface() {
+        neverWithInvalidLRA(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NEVER_PATH);
+    }
+
+    @Test
+    public void neverWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NEVER_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void requiredEndWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void requiredEndWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.MANDATORY_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.MANDATORY_WITH_END_FALSE_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void supportsEndWithLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.SUPPORTS_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void supportsEndWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.SUPPORTS_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithoutLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithEndLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NEVER_WITH_END_FALSE_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithoutEndLRAAtInterface() {
+        resourceRequest(TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH, LRATypeTckInterface.NEVER_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    // LRA annotations placed on the superclass (see LRATypeTckSuperclassResource)
+
+    @Test
+    public void requiredWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRED_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void requiredWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRED_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void requiresNewWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRES_NEW_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void requiresNewWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRES_NEW_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, false);
+    }
+
+    @Test
+    public void mandatoryWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.MANDATORY_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void mandatoryWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.MANDATORY_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void supportsWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.SUPPORTS_PATH,
+            true, 200, MethodLRACheck.EQUALS, false);
+    }
+
+    @Test
+    public void supportsWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.SUPPORTS_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedWithRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NOT_SUPPORTED_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NOT_SUPPORTED_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NEVER_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithInvalidLRAAtSuperclass() {
+        neverWithInvalidLRA(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NEVER_PATH);
+    }
+
+    @Test
+    public void neverWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NEVER_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void requiredEndWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void requiredEndWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void requiresEndNewWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.REQUIRES_NEW_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.MANDATORY_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void mandatoryEndWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.MANDATORY_WITH_END_FALSE_PATH,
+            false, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void supportsEndWithLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.SUPPORTS_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.EQUALS, true);
+    }
+
+    @Test
+    public void supportsEndWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.SUPPORTS_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            true, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void notSupportedEndWithoutLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NOT_SUPPORTED_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithEndLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NEVER_WITH_END_FALSE_PATH,
+            true, 412, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    @Test
+    public void neverWithoutEndLRAAtSuperclass() {
+        resourceRequest(TCK_LRA_TYPE_SUPERCLASS_RESOURCE_PATH, LRATypeTckSuperclass.NEVER_WITH_END_FALSE_PATH,
+            false, 200, MethodLRACheck.NOT_PRESENT, false);
+    }
+
+    private void neverWithInvalidLRA(String rootPath, String path) {
+
+        resourceRequest(rootPath, path, true, 412, MethodLRACheck.NOT_PRESENT, false);
+
+        Invocation.Builder target = tckSuiteTarget.path(rootPath)
+            .path(path).request();
         // Anything in the header means that Type.NEVER must fail
         target = target.header(LRA.LRA_HTTP_CONTEXT_HEADER, "http://something/like/an/URI");
 
@@ -165,77 +555,11 @@ public class TckLRATypeTests extends TckTestBase {
         response.close();
     }
 
-    @Test
-    public void neverWithoutLRA() {
-        resourceRequest(NEVER_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    // same set of tests except that the invoked method has end = false set on the LRA annotation
-
-    @Test
-    public void requiredEndWithLRA() {
-        resourceRequest(REQUIRED_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
-    }
-
-    @Test
-    public void requiredEndWithoutLRA() {
-        resourceRequest(REQUIRED_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
-    }
-
-    @Test
-    public void requiresEndNewWithLRA() {
-        resourceRequest(REQUIRES_NEW_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.NOT_EQUALS, true);
-    }
-
-    @Test
-    public void requiresEndNewWithoutLRA() {
-        resourceRequest(REQUIRES_NEW_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_EQUALS, true);
-    }
-
-    @Test
-    public void mandatoryEndWithLRA() {
-        resourceRequest(MANDATORY_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
-    }
-
-    @Test
-    public void mandatoryEndWithoutLRA() {
-        resourceRequest(MANDATORY_WITH_END_FALSE_PATH, false, 412, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    @Test
-    public void supportsEndWithLRA() {
-        resourceRequest(SUPPORTS_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.EQUALS, true);
-    }
-
-    @Test
-    public void supportsEndWithoutLRA() {
-        resourceRequest(SUPPORTS_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    @Test
-    public void notSupportedEndWithRA() {
-        resourceRequest(NOT_SUPPORTED_WITH_END_FALSE_PATH, true, 200, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    @Test
-    public void notSupportedEndWithoutLRA() {
-        resourceRequest(NOT_SUPPORTED_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    @Test
-    public void neverWithEndRA() {
-        resourceRequest(NEVER_WITH_END_FALSE_PATH, true, 412, MethodLRACheck.NOT_PRESENT, false);
-    }
-
-    @Test
-    public void neverWithoutEndLRA() {
-        resourceRequest(NEVER_WITH_END_FALSE_PATH, false, 200, MethodLRACheck.NOT_PRESENT, false);
-    }
-    
     /**
      * Perform a JAX-RS resource request and check the resulting status and whether or not it ran with
      * the correct LRA context.
      *
+     * @param rootPath the root path of the JAX-RS resource to invoke
      * @param path the resource path of the JAX-RS method to invoke
      * @param startLRA indicates whether or not an active context should be present on the request
      * @param expectedStatus the expected JAX-RS status code in the response
@@ -244,9 +568,9 @@ public class TckLRATypeTests extends TckTestBase {
      * @param methodLRAShouldBeActive if true the LRA started by the invoked method should still
      *                               be active after the resource invocation completes
      */
-    private String resourceRequest(String path, boolean startLRA, int expectedStatus, MethodLRACheck lraCheckType,
+    private String resourceRequest(String rootPath, String path, boolean startLRA, int expectedStatus, MethodLRACheck lraCheckType,
                                  boolean methodLRAShouldBeActive) {
-        Invocation.Builder target = tckSuiteTarget.path(TCK_LRA_TYPE_RESOURCE_PATH)
+        Invocation.Builder target = tckSuiteTarget.path(rootPath)
                 .path(path).request();
         URI lra = startLRA ? lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS) : null;
 
@@ -302,7 +626,7 @@ public class TckLRATypeTests extends TckTestBase {
             if (lra != null) {
                 lraClient.closeLRA(lra);
             }
-            
+
             return methodLraId;
         } catch (Throwable e) {
             LOGGER.warning(e.getMessage());

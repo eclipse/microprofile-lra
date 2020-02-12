@@ -406,8 +406,17 @@ when the LRA reaches one of <<lra-state-model,the final LRA states>>.
 In the case that the class contains a `@Compensate` annotated method, this means that before
 executing the `@LRA` annotated method, the implementation must be able to guarantee that the
 participant has been or will eventually be registered with the LRA.
-This implies that the LRA is effectively validated as being active (since
-it is not possible to enlist with an inactive LRA).
+This implies that the LRA is effectively validated as being active since it is not possible
+to enlist with an inactive LRA. There is an exception to this statement if the LRA is nested
+and in the `Closed` state (since the transition `Closed` -> `Cancelling` is permitted). In this
+case the method invocation will be allowed to proceed provided that the participant is already
+registered with the LRA (please refer to the <<source-LRA,javadoc>> for the `NESTED`
+value of the `LRA#value()`
+element for more information about this situation, in particular if the method invocation
+causes the LRA to close then the `@Complete` annotated method, if present, *is not* called
+again). And if the participant is not registered with the LRA then the caller of the LRA
+method will receive a `412` status response as described in the javadoc.
+
 In the case that the class contains a `@AfterLRA` annotated method, this means that before
 executing the `@LRA` annotated method, the implementation must be able to guarantee that the
 listener will be notified about the outcome of the LRA.

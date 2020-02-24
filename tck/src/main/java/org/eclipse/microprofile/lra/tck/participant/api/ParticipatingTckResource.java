@@ -126,7 +126,7 @@ public class ParticipatingTckResource {
     // as a participant, the implementation MUST report a PRECONDITION_FAILED status
     @PUT
     @Path(ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH)
-    @LRA(value = LRA.Type.MANDATORY, end = false)
+    @LRA(value = LRA.Type.MANDATORY, end = false, cancelOnFamily = {})
     public Response joinWithExistingLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }

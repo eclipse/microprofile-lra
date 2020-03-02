@@ -353,8 +353,8 @@ public class TckTests extends TckTestBase {
      * Service A calls Service B after it has waited 1 sec.
      * Service A returns http Status from the call to Service B.
      *
-     * test calls A and verifies if return is status 412 (precondition failed) since LRA
-     * is not active when Service B endpoint is called.
+     * test calls A and verifies if return is status 412 (precondition failed)
+     * or 410 (gone) since LRA is not active when Service B endpoint is called.
      */
     @Test
     public void timeLimitWithPreConditionFailed() {
@@ -364,9 +364,10 @@ public class TckTests extends TckTestBase {
                 .get();
 
         // verify that a 412 response code was generated
-        assertEquals("Expected 412 response",
-                Response.Status.PRECONDITION_FAILED.getStatusCode(),
-                response.getStatus());
+        assertTrue("Expected 412 or 410 response",
+                response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode() ||
+                        response.getStatus() == Response.Status.GONE.getStatusCode()
+                );
 
         response.close();
     }

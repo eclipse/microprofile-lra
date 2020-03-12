@@ -169,11 +169,11 @@ public class TckContextTests extends TckTestBase {
         // the implementation should have called status again which will have returned 200
         count = lraMetricService.getMetric(LRAMetricType.Status, lra);
         // the implementation should have called status at least once. Since we have alread called status in this test
-        // check that the stat is at least 2
+        // check that the status count is at least 2
         assertTrue(testName.getMethodName() + " resource status should have been called again", count >= 2);
         // the implementation should call forget since it knows the participant status
         count = lraMetricService.getMetric(LRAMetricType.Forget, lra);
-        assertEquals(testName.getMethodName() + " resource forget should have been called", 1, count);
+        assertTrue(testName.getMethodName() + " resource forget should have been called", count >= 1);
     }
 
     /*
@@ -327,8 +327,8 @@ public class TckContextTests extends TckTestBase {
             lraMetricService.getMetric(LRAMetricType.Completed, lra));
 
         // and that afterLRA listener was notified
-        assertEquals("AfterLRA listener registered during the Closing phase was not notified about the LRA close",
-            1, lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()));
+        assertTrue("AfterLRA listener registered during the Closing phase was not notified about the LRA close",
+            lraMetricService.getMetric(LRAMetricType.Closed, lra, AfterLRAListener.class.getName()) >= 1);
     }
 
     private String invoke(String where, HttpMethod method, URI lraContext) {

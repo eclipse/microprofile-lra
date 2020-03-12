@@ -116,10 +116,10 @@ public class TckParticipantTests extends TckTestBase {
 
         lraTestService.waitForRecovery(lraId);
 
-        assertEquals("Non JAX-RS @Status method should have been called", 
-            1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
-        assertEquals("Non JAX-RS @Forget method should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Forget, lraId));
+        assertTrue("Non JAX-RS @Status method should have been called", 
+            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
+        assertTrue("Non JAX-RS @Forget method should have been called",
+            lraMetricService.getMetric(LRAMetricType.Forget, lraId) >= 1);
 
     }
 
@@ -167,8 +167,8 @@ public class TckParticipantTests extends TckTestBase {
 
         lraTestService.waitForRecovery(lraId);
 
-        assertEquals("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
+        assertTrue("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
+            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
         
         lraTestService.waitForRecovery(lraId);
     }

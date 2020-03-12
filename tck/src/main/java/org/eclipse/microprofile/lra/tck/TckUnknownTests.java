@@ -38,7 +38,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -73,7 +72,7 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals("Number of calls to @Compensate incorrect", 1, compensated);
+        assertTrue("Number of calls to @Compensate incorrect", compensated >= 1);
         assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
         assertTrue("Final LRA status of Cancelled incorrect", cancelled >= 1);
     }
@@ -89,7 +88,7 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals("Number of calls to @Compensate incorrect", 2, compensated);
+        assertTrue("Number of calls to @Compensate incorrect", compensated >= 2);
         assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
         assertTrue("Final LRA status of Cancelled incorrect", cancelled >= 1);
     }
@@ -104,7 +103,7 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals("Number of calls to @Complete incorrect", 1, completed);
+        assertTrue("Number of calls to @Complete incorrect", completed >= 1);
         assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
         assertTrue("Final LRA status of Closed incorrect",closed >= 1);
     }
@@ -120,7 +119,7 @@ public class TckUnknownTests extends TckTestBase {
         int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
         int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals("Number of calls to @Complete incorrect", 2, completed);
+        assertTrue("Number of calls to @Complete incorrect", completed >= 2);
         assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
         assertTrue("Final LRA status of Closed incorrect",closed >= 1);
     }

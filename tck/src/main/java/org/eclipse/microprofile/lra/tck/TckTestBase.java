@@ -21,7 +21,6 @@ package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
-import org.eclipse.microprofile.lra.tck.participant.api.Util;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
@@ -42,16 +41,12 @@ import static org.junit.Assert.assertEquals;
 
 public class TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckTestBase.class.getName());
-    private static final Long RECOVERY_CHECK_INTERVAL = 10L; // check for recovery every 10 seconds
 
     @Rule public TestName testName = new TestName();
 
     @Inject
     private LraTckConfigBean config;
-
-    @Inject
-    private LRAMetricService lraMetricService;    
-
+    
     @Inject
     private LRATestService lraTestService;
 
@@ -115,6 +110,9 @@ public class TckTestBase {
      * which can be defined by user.
      */
     long lraTimeout() {
-        return Util.adjust(LraTckConfigBean.LRA_TIMEOUT_MILLIS, config.timeoutFactor());
+        if(LraTckConfigBean.LRA_TIMEOUT_MILLIS < 0){
+            throw new IllegalArgumentException("value of timeout can't be negative");
+        }
+        return (long) Math.ceil(LraTckConfigBean.LRA_TIMEOUT_MILLIS * config.timeoutFactor());
     }
 }

@@ -27,21 +27,14 @@ public class GenericLRAException extends WebApplicationException {
     private static final long serialVersionUID = 1L;
 
     private URI lraId;
-    private int statusCode;
-
-    public int getStatusCode() {
-        return statusCode;
-    }
 
     public URI getLraId() {
         return lraId;
     }
 
-    public GenericLRAException(URI lraId, int statusCode, String message,
-                               Throwable cause) {
+    public GenericLRAException(URI lraId, String message, Throwable cause) {
         super(String.format("%s: %s", lraId, message), cause);
 
         this.lraId = lraId;
-        this.statusCode = statusCode;
     }
 }

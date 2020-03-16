@@ -19,26 +19,20 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-
 public enum LRAMetricType {
     // LRA statistics
-    Closed(LRAStatus.Closed.name()), // an LRA that closed
-    FailedToClose(LRAStatus.FailedToClose.name()), // an LRA that failed to close
-    Cancelled(LRAStatus.Cancelled.name()), // an LRA that was cancelled
-    FailedToCancel(LRAStatus.FailedToCancel.name()), // an LRA that failed to cancel
+    Closed, // an LRA that closed
+    FailedToClose, // an LRA that failed to close
+    Cancelled, // an LRA that was cancelled
+    FailedToCancel, // an LRA that failed to cancel
 
     // Participant statistics
-    Compensated(ParticipantStatus.Compensated.name()), // a participant that was asked to compensate
-    Completed(ParticipantStatus.Completed.name()), // a participant that was asked to complete
-    Status("Status"), // a participant that was asked for its status
-    Forget("Forget"), // a participant that was told to forget
-    Nested("Nested"), // a participant callback that was invoked in the context of a parent LRA
+    Compensated, // a participant that was asked to compensate
+    Completed, // a participant that was asked to complete
+    Status, // a participant that was asked for its status
+    Forget, // a participant that was told to forget
+    Nested, // a participant callback that was invoked in the context of a parent LRA
 
     // Other statistics
-    AfterLRA("AfterLRA"); // a listener that has received a notification that an LRA finished
-
-    LRAMetricType(String label) {
-    }
+    AfterLRA // a listener that has received a notification that an LRA finished
 }

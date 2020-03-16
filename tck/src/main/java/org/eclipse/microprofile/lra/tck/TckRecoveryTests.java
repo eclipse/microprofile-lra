@@ -68,8 +68,8 @@ public class TckRecoveryTests {
 
     private LRARecoveryService lraRecoveryService;
     
-    private Client deployementClient;
-    private WebTarget deployementTarget;
+    private Client deploymentClient;
+    private WebTarget deploymentTarget;
 
     @Rule
     public TestName testName = new TestName();
@@ -78,14 +78,14 @@ public class TckRecoveryTests {
     public void before() throws URISyntaxException {
         LOGGER.info("Running test: " + testName.getMethodName());
         
-        deployementClient = ClientBuilder.newClient();
-        deployementTarget = deployementClient.target(deploymentURL.toURI());
+        deploymentClient = ClientBuilder.newClient();
+        deploymentTarget = deploymentClient.target(deploymentURL.toURI());
         lraRecoveryService = LRATestService.loadService(LRARecoveryService.class);
     }
     
     @After
     public void after() {
-        deployementClient.close();
+        deploymentClient.close();
     }
 
     @Deployment(name = DEPLOYMENT_NAME, managed = false)
@@ -111,7 +111,7 @@ public class TckRecoveryTests {
         deployer.deploy(DEPLOYMENT_NAME);
         
         // invoke phase 1 inside the container (start new LRA and enlist resource)
-        Response response1 = deployementTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+        Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.PHASE_1).request().get();
         
         Assert.assertEquals(200, response1.getStatus());
@@ -125,7 +125,7 @@ public class TckRecoveryTests {
 
         // invoke phase 2 inside the container (cancel the LRA and verify that the
         // @Compensate method was called on the enlisted resource)
-        Response response2 = deployementTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+        Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.PHASE_2)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
@@ -157,7 +157,7 @@ public class TckRecoveryTests {
         deployer.deploy(DEPLOYMENT_NAME);
 
         // invoke phase 1 inside the container (start new LRA and enlist resource) which cancels after 500 millis
-        Response response1 = deployementTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+        Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.PHASE_1)
             .queryParam("timeout", true)
             .request().get();
@@ -188,14 +188,14 @@ public class TckRecoveryTests {
         deployer.deploy(DEPLOYMENT_NAME);
         
         // trigger recovery causing the Compensate call to be replayed
-        deployementTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+        deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.TRIGGER_RECOVERY)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
                 .get();
 
         // invoke phase 2 inside the container (execute checks that verify that callbacks have been called)
-        Response response2 = deployementTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+        Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.PHASE_2)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)

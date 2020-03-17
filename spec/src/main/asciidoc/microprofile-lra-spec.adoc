@@ -1152,7 +1152,8 @@ If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `410 Gone`
 HTTP status code or in the case of non-JAX-RS method returning
 <<source-ParticipantStatus,ParticipantStatus>> `null`.
-This enables the participant to free up resources.
+This enables the participant to free up resources if it
+hasn't done so previously.
 
 [[forgetting-an-lra]]
 ==== Forgetting an LRA

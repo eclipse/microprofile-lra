@@ -19,6 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -137,5 +139,10 @@ public class LRATypeTckResource {
     @LRA(value = LRA.Type.NEVER, end = false)
     public Response neverEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
+    }
+
+    @AfterLRA
+    public void afterLRA(URI lraId, LRAStatus status) {
+        // no-op, required by the specification (see https://github.com/eclipse/microprofile-lra/pull/265)
     }
 }

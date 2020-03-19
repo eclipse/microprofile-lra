@@ -19,6 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.net.URI;
@@ -74,5 +76,9 @@ public class LRATypeTckSuperclassResource extends LRATypeTckSuperclass {
 
     public Response neverEndLRA(URI lraId) {
         return Response.ok(lraId).build();
+    }
+
+    public void afterLRA(URI lraId, LRAStatus status) {
+        // no-op, required by the specification (see https://github.com/eclipse/microprofile-lra/pull/265)
     }
 }

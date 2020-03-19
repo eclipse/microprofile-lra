@@ -64,6 +64,7 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -177,6 +178,7 @@ public class TckTests extends TckTestBase {
     }
 
     @Test
+    @Ignore("https://github.com/eclipse/microprofile-lra/issues/274")
     public void mixedMultiLevelNestedActivity() throws WebApplicationException {
         multiLevelNestedActivity(CompletionType.mixed, 2);
     }

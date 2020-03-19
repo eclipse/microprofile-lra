@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.tck.participant.invalid.LRAResourceWithoutCompensateOrAfteRLRA;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidAfterLRASignatureListener;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidArgumentTypesParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidReturnTypeParticipant;
@@ -55,6 +56,7 @@ public class TckInvalidSignaturesTests {
     private static final String TOO_MANY_ARGS_DEPLOYMENT = "too-many-args-deploy";
     private static final String INVALID_ARGUMENT_TYPE_DEPLOYMENT = "nonjaxrs-argument-type-deploy";
     private static final String INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT = "invalid-after-lra-deploy";
+    private static final String INVALID_LRA_RESOURCE_DEPLOYMENT = "invalid-lra-resource-deploy";
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -83,6 +85,11 @@ public class TckInvalidSignaturesTests {
     @Deployment(name = INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT, managed = false)
     public static WebArchive deployInvalidAfterLRASignatureResource() {
         return createArchive(InvalidAfterLRASignatureListener.class);
+    }
+
+    @Deployment(name = INVALID_LRA_RESOURCE_DEPLOYMENT, managed = false)
+    public static WebArchive deployInvalidLRAResource() {
+        return createArchive(LRAResourceWithoutCompensateOrAfteRLRA.class);
     }
 
     private static WebArchive createArchive(Class<?> resourceClass) {
@@ -128,6 +135,14 @@ public class TckInvalidSignaturesTests {
     @Test
     public void invalidAfterLRASignatureTest() {
         testInvalidDeployment(INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT);
+    }
+
+    /**
+     * Verify that invalid LRA resource which does not contain any of @Compensate or @AfterLRA methods is detected
+     */
+    @Test
+    public void invalidLRAResourceWithoutCompensateOrAfterLRATest() {
+        testInvalidDeployment(INVALID_LRA_RESOURCE_DEPLOYMENT);
     }
 
     private void testInvalidDeployment(String deploymentName) {

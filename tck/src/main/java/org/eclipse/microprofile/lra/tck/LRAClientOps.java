@@ -157,7 +157,7 @@ public class LRAClientOps {
         try {
             return new URI(lra);
         } catch (URISyntaxException e) {
-            throw new GenericLRAException(null, 0, e.getMessage(), e);
+            throw new GenericLRAException(null, e.getMessage(), e);
         }
     }
 

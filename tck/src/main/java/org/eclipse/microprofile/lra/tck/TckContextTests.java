@@ -101,7 +101,7 @@ public class TckContextTests extends TckTestBase {
     }
 
     @Test
-    public void testStatus() throws InterruptedException {
+    public void testStatus() {
         // call a resource that begins and ends an LRA and coerces the resource to return ACCEPTED when asked to complete
         URI lra = URI.create(invoke(REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.ACCEPTED, 202));
 
@@ -144,7 +144,7 @@ public class TckContextTests extends TckTestBase {
     }
 
     @Test
-    public void testForget() throws InterruptedException {
+    public void testForget() {
         int count;
         // call a resource that begins and ends an LRA and coerces the resource to return an invalid HTTP code (503) when asked to complete
         URI lra = URI.create(invoke(REQUIRED_LRA_PATH, PUT, null, 200, ContextTckResource.EndPhase.FAILED, 503));

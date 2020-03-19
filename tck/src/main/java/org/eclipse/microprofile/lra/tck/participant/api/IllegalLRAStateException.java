@@ -24,27 +24,20 @@ import java.net.URI;
 
 public class IllegalLRAStateException extends WebApplicationException {
     private final URI lraId;
-    private final String operation;
 
     /**
      * Creation of LRA state exception.
      *
      * @param lraId  LRA id that is behind this exception
-     * @param operation the java method that generated the exception
      * @param message  error message of this exception
      */
-    public IllegalLRAStateException(URI lraId, String operation, String message) {
+    public IllegalLRAStateException(URI lraId, String message) {
         super(String.format("%s, lra id: %s", message, lraId.toASCIIString()));
 
         this.lraId = lraId;
-        this.operation = operation;
     }
 
     public URI getLraId() {
         return this.lraId;
-    }
-
-    public String getOperation() {
-        return this.operation;
     }
 }

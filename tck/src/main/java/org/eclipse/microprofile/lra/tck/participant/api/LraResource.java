@@ -110,7 +110,7 @@ public class LraResource {
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity.getStatus() == null) {
-            throw new IllegalLRAStateException(lraId, "getStatus", "LRA is not active");
+            throw new IllegalLRAStateException(lraId, "LRA is not active");
         }
 
         if (activity.getAndDecrementAcceptCount() <= 0) {

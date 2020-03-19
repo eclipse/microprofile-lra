@@ -35,8 +35,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
@@ -56,17 +54,6 @@ public class NonParticipatingTckResource {
     public static final String SUPPORTS_PATH = "/supports";
 
 
-    public static final String OK_TEXT = "OK";
-
-    private static final String MISSING_LRA_DATA = "Missing LRA data";
-    public static final String TRANSACTIONAL_WORK_PATH = "work";
-    public static final String ACCEPT_WORK = "acceptWork";
-    private static final Logger LOGGER = Logger.getLogger(NonParticipatingTckResource.class.getName());
-
-    static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
-
-    private static final AtomicInteger COMPLETED_COUNT = new AtomicInteger(0);
-    private static final AtomicInteger COMPENSATED_COUNT = new AtomicInteger(0);
     public static final String STATUS_CODE_QUERY_NAME = "Coerce-Status";
     public static final String START_LRA_VIA_REMOTE_INVOCATION = "/start-via-remote-invocation";
 

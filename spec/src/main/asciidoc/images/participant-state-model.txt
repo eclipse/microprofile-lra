@@ -45,7 +45,7 @@ state Enlisted {
   state "Completing" as Completing
   Completing : "The participant was\nnotified that the\nLRA was closed"
   state "Completed" as Completed
-  Completed : "Participant can now clean up\nand forget the LRA"
+  Completed : "Participant can now clean up and forget\nthe LRA or must wait for forget message\nif enlisted in nested LRA"
   state "Compensated" as Compensated
   Compensated : "Participant can now clean up\nand forget the LRA"
 
@@ -55,5 +55,7 @@ state Enlisted {
   Active --> Completing : complete
   Completing --> Completed
   Completing --> CannotComplete
+  
+  Completed --> Compensating : compensate (transition is only allowed \nif the participant is enlisted in nested LRA)
 }
 @enduml

@@ -267,7 +267,7 @@ package:
 |===
 | Annotation | Description
 
-| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java#L30[@LRA]
+| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ws/rs/LRA.java#L40[@LRA]
   | Controls the life cycle of an LRA.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Compensate.java#L29[@Compensate]
   | Indicates that the method should be invoked if the LRA is cancelled.
@@ -374,7 +374,7 @@ overwrite whatever the implementation has set.
 
 [[controlling-the-life-cycle-of-an-lra]]
 The life cycle of an LRA is controlled via the <<source-LRA,LRA annotation>>
-(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java#L30[@LRA]).
+(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ws/rs/LRA.java#L40[@LRA]).
 
 The annotation MUST be applied to JAX-RS annotated methods, classes, superclasses or interface methods otherwise
 it has no effect. It determines whether or not the JAX-RS method
@@ -422,7 +422,7 @@ URI for this participant and make it available to the business method (on which
 the LRA annotation is defined) via a JAX-RS
 header param with name defined by the Java constant `LRA_HTTP_RECOVERY_HEADER` as defined
 <<source-LRA, in the LRA annotation>>
-(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/LRA.java[github link]).
+(https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/ws/rs/LRA.java[github link]).
 The header MUST also be made available to the application whenever any
 of the participant callbacks are invoked. The application is free to ignore
 this header.

@@ -148,7 +148,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnResource#cancelFromRemoteCall(java.net.URI)}
+     * See {@link LraCancelOnResource#cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)}
      */
     @Test
     public void cancelFromRemoteCall() {

@@ -1152,8 +1152,34 @@ If the participant has already responded successfully to an `@Compensate`
 or `@Complete` method invocation then it MAY report `410 Gone`
 HTTP status code or in the case of non-JAX-RS method returning
 <<source-ParticipantStatus,ParticipantStatus>> `null`.
-This enables the participant to free up resources if it
-hasn't done so previously.
+
+Let's provide some intuition on this matter with the following example.
+
+Let's have an LRA participant containing methods annotated with `@Compensate` and `@Status`.
+The LRA is cancelled and the LRA implementation tries to invoke the participant's `@Compensate` method.
+At that time a network failure happens. The LRA implementation receives a network error as the result of the call.
+Now it cannot be sure if the `@Compensate` call passed through and participant has already compensated the work
+and only the response was lost or if the `@Compensate` call has not reached the participant at all.
+As the participant defines the `@Status` method the LRA implementation MUST invoke it to find the participant's true status
+(invocation can be processed several times until succeeds).
+The participant's `@Status` method is expected to indicate whether the `@Compensate` was successfully processed.
+
+* If the participant processed the `@Compensate` call it may <<jaxrs-participant-methods, has already forgotten about the LRA identification>>.
+  Then for JAX-RS participant, the response is `410 Gone`. For non-JAX-RS participant, the method returns `null`.
+  The implementation MUST assume that all required actions are performed and the implementation MUST NOT repeat the invocation.
+* If the participant compensated successfully but it has not erased the notion of the LRA identity yet it may return
+  <<source-ParticipantStatus,ParticipantStatus>> of `Compensated`. For JAX-RS participant it's a body of the response of return code `200`.
+  For the non-JAX-RS participant case, consult the section <<non-jaxrs-participant-methods>> (one option is to provide `Compensated` as the method return value).
+  The implementation MUST NOT repeat the invocation of the `@Compensate` method.
+* If the `@Compensate` method was invoked initially but the compensation logic failed the participant status is `FailedToCompensate`.
+  The LRA implementation then has to <<the-model,log sufficient information>> in such situation.
+  For JAX-RS participant, the response is `2OO OK` with participant status sent in the response body.
+  For non-JAX-RS participant case consult section <<non-jaxrs-participant-methods>> about return values.
+  The implementation MUST NOT repeat the invocation of the `@Compensate` method.
+* If the participant has not yet compensated (ie. the initial invocation of `@Compensate` did not go through)
+  then the `ParticipantStatus` will indicate the participant status with `Active`.
+  The implementation MUST repeat the invocation of the `@Compensate` method.
+
 
 [[forgetting-an-lra]]
 ==== Forgetting an LRA

@@ -27,8 +27,6 @@ import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -62,16 +60,6 @@ public class RecoveryResource {
 
     @Inject
     LRATestService lraTestService;
-
-    @PostConstruct
-    public void postConstruct() {
-        lraTestService.start();
-    }
-
-    @PreDestroy
-    public void preDestroy() {
-        lraTestService.stop();
-    }
 
     /**
      * Starts a new LRA and enlists an instance of this class with it as a participant

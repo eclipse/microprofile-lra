@@ -21,10 +21,7 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -35,15 +32,16 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
+import javax.ws.rs.core.UriInfo;
 
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
-import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
@@ -52,9 +50,6 @@ import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 public class LraCancelOnResource {
     private static final Logger LOGGER = Logger.getLogger(LraCancelOnResource.class.getName());
     public static final String LRA_CANCEL_ON_RESOURCE_PATH = "lraresource-cancelon";
-
-    @Inject
-    private LraTckConfigBean config;
 
     @Inject
     private LRAMetricService lraMetricService;
@@ -141,7 +136,7 @@ public class LraCancelOnResource {
      * <p>
      * The remote REST call invokes the same resource class {@link LraCancelOnResource}
      * That assumes the call to the representative of the same LRA participant
-     * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI)} invoked by the test.
+     * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)} invoked by the test.
      * Because the specification mandates that the same participant can be enlisted
      * only once per LRA instance then
      * the {@link Compensate} method {@link #compensateWork(URI, String)}
@@ -153,19 +148,16 @@ public class LraCancelOnResource {
     @GET
     @Path(CANCEL_FROM_REMOTE_CALL)
     @LRA(value = Type.REQUIRES_NEW)
-    public Response cancelFromRemoteCall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+    public Response cancelFromRemoteCall(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, @Context UriInfo uriInfo) {
         Client client = ClientBuilder.newClient();
+
         try {
             Response response = client
-                    .target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()))
+                    .target(uriInfo.getBaseUri())
                     .path(LRA_CANCEL_ON_RESOURCE_PATH)
                     .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_5XX)
                     .request().get();
             assert response.getStatus() == 500;
-        } catch (MalformedURLException murle) {
-            LOGGER.log(Level.SEVERE, "Cannot create url from string '"
-                    + config.tckSuiteBaseUrl() + "'", murle);
-            return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
         } finally {
             client.close();
         }

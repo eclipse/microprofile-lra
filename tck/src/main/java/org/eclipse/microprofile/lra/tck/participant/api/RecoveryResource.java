@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.TckRecoveryTests;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
@@ -38,6 +39,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.net.URL;
 import java.time.temporal.ChronoUnit;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
@@ -69,11 +71,16 @@ public class RecoveryResource {
      */
     @GET
     @Path(PHASE_1)
-    public Response phase1(@QueryParam("timeout") @DefaultValue("false") boolean timeout) {
+    public Response phase1(@QueryParam("timeout") @DefaultValue("false") boolean timeout,
+                           @HeaderParam(TckRecoveryTests.LRA_TCK_DEPLOYMENT_URL) URL deploymentURL) {
+        
+        lraTestService.start(deploymentURL);
+        
         // start a new LRA and join it with this resource
         URI lra;
         Response response;
         
+
         response = lraTestService.getTCKSuiteTarget().path(RecoveryResource.RECOVERY_RESOURCE_PATH)
                 .path(timeout ? RecoveryResource.REQUIRED_TIMEOUT_PATH : RecoveryResource.REQUIRED_PATH)
                 .request().put(Entity.text(""));
@@ -93,7 +100,9 @@ public class RecoveryResource {
      */
     @GET
     @Path(PHASE_2)
-    public Response phase2(@HeaderParam(LRA_HEADER) URI lraId) {
+    public Response phase2(@HeaderParam(LRA_HEADER) URI lraId,
+                           @HeaderParam(TckRecoveryTests.LRA_TCK_DEPLOYMENT_URL) URL deploymentURL) {
+        lraTestService.start(deploymentURL);
         lraTestService.getLRAClient().cancelLRA(lraId);
         lraTestService.waitForCallbacks(lraId);
 
@@ -118,7 +127,9 @@ public class RecoveryResource {
 
     @GET
     @Path(TRIGGER_RECOVERY)
-    public Response triggerRecovery(@HeaderParam(LRA_HEADER) URI lraId) {
+    public Response triggerRecovery(@HeaderParam(LRA_HEADER) URI lraId,
+                                    @HeaderParam(TckRecoveryTests.LRA_TCK_DEPLOYMENT_URL) URL deploymentURL) {
+        lraTestService.start(deploymentURL);
         lraTestService.waitForRecovery(lraId);
         return Response.ok().build();
     } 

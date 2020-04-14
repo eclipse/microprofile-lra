@@ -275,10 +275,10 @@ public @interface LRA {
          *     <li>A nested LRA which has closed must retain the ability to cancel the
          *     effects if the the parent cancels. This requirement must be enforced
          *     by participants.
-         *     <li>If a nested LRA cancels then all of its children must cancel (even if
-         *     they closed - see 2).
+         *     <li>If a nested LRA cancels then all of its children must effectively cancel
+         *     (even if they have previously been asked to close - see 2)
          *     <li>If a nested LRA closes then it, and all of its children, must close
-         *     (but retain the ability to later compensate - see 2).
+         *     (but retain the ability to later cancel - see 2).
          * </ol>
          * <p>
          *     Downstream LRAs will only be part of this nesting hierarchy if the
@@ -292,8 +292,18 @@ public @interface LRA {
          *     there is no longer any outstanding work in need of completion.
          * </p>
          * <p>
-         *     On the other hand it does make sense to cancel a closed nested LRA since
-         *     the work has been done so there is something that can be compensated for.
+         *     On the other hand it does make sense to cancel the effects of a
+         *     closed nested LRA since the work has been done and there is
+         *     something that can be compensated for. In this case the LRA
+         *     method invocation is allowed to proceed only if the participant
+         *     is already enlisted with the LRA, otherwise the method invocation
+         *     is rejected using a <code>412 Precondition Failed</code> HTTP
+         *     status code. If the method invocation causes the LRA to close
+         *     then the {@link Complete} annotated method, if present,
+         *     <i>is not</i> called again. If the LRA method causes the LRA
+         *     to cancel then the nested LRA is moved to the
+         *     {@link org.eclipse.microprofile.lra.annotation.LRAStatus#Cancelling}
+         *     state and the {@link Compensate} callback will be invoked.
          * </p>
          * <p>
          *     Therefore, as a consequence of requirement 2, any activities performed in
@@ -304,12 +314,16 @@ public @interface LRA {
          *     will be told to compensate. This implies that the nested participants
          *     must be aware that they are nested and the JAX-RS header with the
          *     name {@value #LRA_HTTP_PARENT_CONTEXT_HEADER} is guaranteed to hold
-         *     the parent context whenever a nested LRA is active.
+         *     the parent context whenever a nested LRA is being propagated.
          * </p>
          *
          * <p>
-         *     A participant which has closed can determine when the top level
+         *     A participant which has completed can determine when the top level
          *     parent has closed by providing a {@link Forget} callback handler.
+         *     When this method is called there is no longer a requirement to
+         *     maintain the ability to reverse the effects of a closed nested LRA.
+         *     This can be used by the participant to clean up any resources it used
+         *     to implement this guarantee.
          * </p>
          *
          * <p>

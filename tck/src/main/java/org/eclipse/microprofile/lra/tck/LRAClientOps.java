@@ -108,13 +108,13 @@ public class LRAClientOps {
      * @return the end status of the LRA (or null if the LRA has not yet finished)
      */
     private LRAStatus getLRAEndStatus(URI lra, LRAMetricService lraMetricService, String resourceName) {
-        if (lraMetricService.getMetric(LRAMetricType.Closed, lra, resourceName) == 1) {
+        if (lraMetricService.getMetric(LRAMetricType.Closed, lra, resourceName) >= 1) {
             return LRAStatus.Closed;
-        } else if (lraMetricService.getMetric(LRAMetricType.FailedToClose, lra, resourceName) == 1) {
+        } else if (lraMetricService.getMetric(LRAMetricType.FailedToClose, lra, resourceName) >= 1) {
             return LRAStatus.FailedToClose;
-        } else if (lraMetricService.getMetric(LRAMetricType.Cancelled, lra, resourceName) == 1) {
+        } else if (lraMetricService.getMetric(LRAMetricType.Cancelled, lra, resourceName) >= 1) {
             return LRAStatus.Cancelled;
-        } else if (lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra, resourceName) == 1) {
+        } else if (lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra, resourceName) >= 1) {
             return LRAStatus.FailedToCancel;
         }
 

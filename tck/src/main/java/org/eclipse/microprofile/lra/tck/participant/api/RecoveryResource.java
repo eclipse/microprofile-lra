@@ -99,13 +99,13 @@ public class RecoveryResource {
 
         // assert compensate has been called
         int compensations = lraMetricService.getMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName());
-        if (compensations != 1) {
+        if (compensations < 1) {
             return assertFailedResponse("Compensate on restarted service should have been called. Was " + compensations);
         }
 
         // assert after LRA has been called
         int afterLRACalls = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId, RecoveryResource.class.getName());
-        if (afterLRACalls != 1) {
+        if (afterLRACalls < 1) {
             return assertFailedResponse("After LRA with Cancelled status should have been called. Was " + afterLRACalls);
         }
 

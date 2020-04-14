@@ -405,12 +405,13 @@ public class TckTests extends TckTestBase {
         int completionCount = lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName());
         int compensationCount = lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName());
 
-        boolean wasCalled = (close ? completionCount > 0 : compensationCount > 0);
+        // Complete or Compensate methods MUST not be repeated as the resource contains a Status method
+        boolean wasCalled = (close ? completionCount == 1 : compensationCount == 1);
         boolean wasNotCalled = (close ? compensationCount == 0 : completionCount == 0);
         String lraMode = (close ? "close" : "cancel");
         String participantMode = (close ? "complete" : "compensate");
 
-        assertTrue(String.format("acceptTest with %s: participant (%s) was not asked to %s",
+        assertTrue(String.format("acceptTest with %s: participant (%s) was not asked to %s (expecting only one call)",
                 lraMode, resourcePath.getUri(), participantMode),
                 wasCalled);
         assertTrue(String.format("acceptTest with %s: participant (%s) was asked to %s",
@@ -533,16 +534,16 @@ public class TckTests extends TckTestBase {
             lraClient.closeLRA(lra);
             lraTestService.waitForCallbacks(lra);
             
-            assertTrue(methodName + ": resource should have completed once with no compensations",
-                    1 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
+            assertTrue(methodName + ": resource should have completed with no compensations",
+                    1 <= lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
                     0 == lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()));
         } else {
             lraClient.cancelLRA(lra);
             lraTestService.waitForCallbacks(lra);
 
-            assertTrue(methodName + ":: resource should have compensated once with no completions",
+            assertTrue(methodName + ":: resource should have compensated with no completions",
                     0 == lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) &&
-                    1 == lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()));
+                    1 <= lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()));
         }
     }
 
@@ -565,14 +566,14 @@ public class TckTests extends TckTestBase {
 
             assertTrue("joinWithTwoResourcesWithClose: both resources should have completed",
                     lraMetricService.getMetric(LRAMetricType.Completed, lra, LraResource.class.getName()) == 1 &&
-                    lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) == 1);
+                    lraMetricService.getMetric(LRAMetricType.Completed, lra, ParticipatingTckResource.class.getName()) >= 1);
         } else {
             lraClient.cancelLRA(lra);
             lraTestService.waitForCallbacks(lra);
 
             assertTrue("joinWithTwoResourcesWithCancel: both resources should have compensated",
                     lraMetricService.getMetric(LRAMetricType.Compensated, lra, LraResource.class.getName()) == 1 &&
-                    lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()) == 1);
+                    lraMetricService.getMetric(LRAMetricType.Compensated, lra, ParticipatingTckResource.class.getName()) >= 1);
         }
     }
 

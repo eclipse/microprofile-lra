@@ -114,7 +114,10 @@ public @interface LRA {
     String LRA_HTTP_ENDED_CONTEXT_HEADER = "Long-Running-Action-Ended";
 
     /**
-     * When a JAX-RS invocation is made with an active LRA which is nested,
+     * When an implementation of the LRA specification invokes any of the participant
+     * callbacks (namely {@link Compensate}, {@link Complete},
+     * {@link org.eclipse.microprofile.lra.annotation.Status} and
+     * {@link Forget}) in the context of a nested LRA it must ensure that
      * the parent LRA is made available via an HTTP header field with the
      * following name. The value contains the parent LRA id associated with
      * the HTTP request/response and is of type {@link java.net.URI}.

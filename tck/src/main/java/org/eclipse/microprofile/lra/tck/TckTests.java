@@ -22,6 +22,7 @@ package org.eclipse.microprofile.lra.tck;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.ACCEPT_WORK;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.CANCEL_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT_HALF_SEC;
@@ -64,7 +65,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -178,7 +178,6 @@ public class TckTests extends TckTestBase {
     }
 
     @Test
-    @Ignore("https://github.com/eclipse/microprofile-lra/issues/274")
     public void mixedMultiLevelNestedActivity() throws WebApplicationException {
         multiLevelNestedActivity(CompletionType.mixed, 2);
     }
@@ -635,11 +634,11 @@ public class TckTests extends TckTestBase {
             lraClient.closeLRA(lra);
         } else {
             /*
-             * The test is calling for a mixed outcome (a top level LRA L! and nestedCnt nested LRAs (L2, L3, ...)::
-             * L1 the mandatory call (PUT "activities/multiLevelNestedActivity") registers participant C1
-             *   the resource makes nestedCnt calls to "activities/nestedActivity" each of which create nested LRAs
+             * The test is calling for a mixed outcome (a top level LRA L1 and nestedCnt nested LRAs (L2, L3, ...)::
+             * L1 the mandatory call (PUT "lraresource/multiLevelNestedActivity") registers participant C1
+             * the resource makes nestedCnt calls to "lraresource/nestedActivity" each of which create nested LRAs
              * L2, L3, ... each of which enlists a participant (C2, C3, ...) which are completed when the call returns
-             * L2 is cancelled  which causes C2 to compensate
+             * L2 is cancelled which causes C2 to compensate
              * L1 is closed which triggers the completion of C1
              *
              * To summarise:
@@ -648,7 +647,14 @@ public class TckTests extends TckTestBase {
              * - C2 is completed and then compensated
              * - C3, ... are completed
              */
-            lraClient.cancelLRA(uris[1]); // compensate the first nested LRA
+
+            // compensate the first nested LRA in the enlisted resource
+            tckSuiteTarget
+                .path(LRA_RESOURCE_PATH).path(CANCEL_PATH)
+                .request()
+                .header(LRA_HTTP_CONTEXT_HEADER, uris[1])
+                .put(Entity.text(""));
+
             lraClient.closeLRA(lra); // should not complete any nested LRAs (since they have already completed via the interceptor)
         }
 

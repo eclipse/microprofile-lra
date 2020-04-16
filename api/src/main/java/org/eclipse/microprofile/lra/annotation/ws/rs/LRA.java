@@ -61,6 +61,13 @@ import java.time.temporal.ChronoUnit;
  *   <li>to cancel the LRA context when the method returns particular HTTP
  *       status codes</li>
  * </ul>
+ * 
+ * Some of the above defined LRA operations are performed before the execution
+ * proceeds to the LRA annotated business method. If any of these LRA operations
+ * cannot complete the implementation MUST return one of the defined HTTP status
+ * codes which means that the business method is not invoked. For the definition of
+ * the allowed status codes and condition in which they are returned please
+ * see the specification document.
  *
  * <p>
  * Newly created LRAs are uniquely identified and the id is referred to as the

@@ -52,6 +52,9 @@ public class TckTestBase {
     
     @Inject
     private LRATestService lraTestService;
+
+    @Inject
+    private LRAMetricService lraMetricService;
     
     @ArquillianResource
     private URL deploymentURL;
@@ -81,6 +84,7 @@ public class TckTestBase {
         LOGGER.info("Running test: " + testName.getMethodName());
         
         lraTestService.start(deploymentURL);
+        lraMetricService.clear();
         this.lraClient = lraTestService.getLRAClient();
         this.tckSuiteTarget = lraTestService.getTCKSuiteTarget();
     }

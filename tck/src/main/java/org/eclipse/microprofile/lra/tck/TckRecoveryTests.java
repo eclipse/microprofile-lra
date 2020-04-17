@@ -56,6 +56,8 @@ import java.util.logging.Logger;
  */
 @RunWith(Arquillian.class)
 public class TckRecoveryTests {
+    
+    public static final String LRA_TCK_DEPLOYMENT_URL = "LRA-TCK-Deployment-URL";
 
     private static final String DEPLOYMENT_NAME = "tck-recovery";
     private static final Logger LOGGER = Logger.getLogger(TckRecoveryTests.class.getName());
@@ -111,8 +113,12 @@ public class TckRecoveryTests {
         deployer.deploy(DEPLOYMENT_NAME);
         
         // invoke phase 1 inside the container (start new LRA and enlist resource)
-        Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_1).request().get();
+        Response response1 = deploymentTarget
+            .path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+            .path(RecoveryResource.PHASE_1)
+            .request()
+            .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
+            .get();
         
         Assert.assertEquals(200, response1.getStatus());
         URI lra = URI.create(response1.readEntity(String.class));
@@ -129,6 +135,7 @@ public class TckRecoveryTests {
             .path(RecoveryResource.PHASE_2)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
+                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
                 .get();
         
         Assert.assertEquals(response2.readEntity(String.class), 200, response2.getStatus());
@@ -160,7 +167,9 @@ public class TckRecoveryTests {
         Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
             .path(RecoveryResource.PHASE_1)
             .queryParam("timeout", true)
-            .request().get();
+            .request()
+            .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
+            .get();
 
         Assert.assertEquals(200, response1.getStatus());
         URI lra = URI.create(response1.readEntity(String.class));
@@ -192,6 +201,7 @@ public class TckRecoveryTests {
             .path(RecoveryResource.TRIGGER_RECOVERY)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
+                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
                 .get();
 
         // invoke phase 2 inside the container (execute checks that verify that callbacks have been called)
@@ -199,6 +209,7 @@ public class TckRecoveryTests {
             .path(RecoveryResource.PHASE_2)
             .request()
                 .header(RecoveryResource.LRA_HEADER, lra)
+                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
                 .get();
 
         Assert.assertEquals(response2.readEntity(String.class), 200, response2.getStatus());

@@ -39,9 +39,6 @@ import java.util.ServiceLoader;
 public class LRATestService {
 
     @Inject
-    LRAMetricService lraMetricService;
-    
-    @Inject
     LraTckConfigBean config;
 
     private LRAClientOps lraClient;
@@ -54,7 +51,6 @@ public class LRATestService {
 
     public void start(URL deploymentURL) {
         tckSuiteClient = ClientBuilder.newClient();
-        lraMetricService.clear();
         tckSuiteTarget = tckSuiteClient.target(URI.create(deploymentURL.toExternalForm()));
         lraClient = new LRAClientOps(tckSuiteTarget);
     }

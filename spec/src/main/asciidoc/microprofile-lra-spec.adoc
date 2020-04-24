@@ -387,6 +387,13 @@ will run in the context of an LRA and controls whether or not:
 - to throw an exception if the method returns particular HTTP status codes.
 - to enlist the class as a participant of the LRA.
 
+If the incoming context has already ended or does not exist the method will 
+immediately return 410 Gone HTTP status code.
+
+Similarly, if any of the preconditions listed in the Type element
+(see <<source-LRA,LRA.Type>>) of the LRA annotation are not met then the method
+will immediately return 412 Precondition Failed HTTP status code.
+
 When the @LRA annotation is defined multiple times, this is the order of precedence
 
 - On the JAX-RS method itself.

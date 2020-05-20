@@ -162,7 +162,7 @@
                     <version>2.5.3</version>
                     <configuration>
                         <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <pushChanges>false</pushChanges>
+                        <pushChanges>true</pushChanges>
                         <localCheckout>true</localCheckout>
                         <useReleaseProfile>false</useReleaseProfile>
                         <arguments>${arguments} -Prelease -Drevremark=${revremark}</arguments>

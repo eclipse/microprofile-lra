@@ -174,7 +174,7 @@ public class LraCancelOnResource {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraCancelOnResource.class);
 
         LOGGER.info(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
         return Response.ok().build();
@@ -188,7 +188,7 @@ public class LraCancelOnResource {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
 
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraCancelOnResource.class);
 
         LOGGER.info(String.format("LRA id '%s' was compensated", lraId.toASCIIString()));
         return Response.ok().build();

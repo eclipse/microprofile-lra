@@ -19,6 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service;
 
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.util.Arrays;
@@ -28,49 +30,107 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Metric service is a storage container that test beans may use to store
+ * data about processing.
+ * It stores number of call types (defined by {@link LRAMetric}) per LRA id per participant.
+ */
 @ApplicationScoped
 public class LRAMetricService {
 
-    private static final String ALL = "all-participants";
-    
-    // maintain metrics on a per LRA basis
-    private Map<URI, Map<String, LRAMetric>> metrics = new HashMap<>();
-    
-    public void incrementMetric(LRAMetricType name, URI lraId) {
-        incrementMetric(name, lraId, ALL);
-    }
-    
-    public void incrementMetric(LRAMetricType name, URI lraId, String participant) {
-        metrics.putIfAbsent(lraId, new HashMap<>());
-        metrics.get(lraId).putIfAbsent(participant, new LRAMetric());
-        metrics.get(lraId).get(participant).increment(name);
+    private Map<URI, Map<String, LRAMetric>> metricsPerLra = new HashMap<>();
+
+    /**
+     * It increments counter of the metric type for particular LRA id and particular participant class
+     * which is translated to fully qualified class name as participant name.
+     *
+     * @param metricType  increment counter of the specific metric type
+     * @param lraId  increment counter of the metric type assigned to this particular lra id
+     * @param participantClazz  the participant class which the metric increment is accounted to
+     */
+    public void incrementMetric(LRAMetricType metricType, URI lraId, Class<?> participantClazz) {
+        String participantName = participantClazz.getName();
+        metricsPerLra.putIfAbsent(lraId, new HashMap<>());
+        metricsPerLra.get(lraId).putIfAbsent(participantName, new LRAMetric());
+        metricsPerLra.get(lraId).get(participantName).increment(metricType);
     }
 
-    public int getMetric(LRAMetricType name) {
+    /**
+     * Returns count number for particular metric type regardless of the LRA id or the participant's name.
+     *
+     * @param metricType  metric type to take sum of the metric counter for
+     * @return sum of metric counters if of the particular metric type
+     */
+    public int getMetricAll(LRAMetricType metricType) {
         AtomicInteger result = new AtomicInteger();
 
-        metrics.values().forEach(participantMap -> 
-            participantMap.values().forEach(metric -> result.addAndGet(metric.get(name))));
+        metricsPerLra.values().forEach(participantMap ->
+            participantMap.values().forEach(metric -> result.addAndGet(metric.get(metricType))));
 
         return result.get();
     }
 
-    public int getMetric(LRAMetricType name, URI lraId) {
-        return getMetric(name, lraId, ALL);
+    /**
+     * Returns count number for particular metric type filtered by LRA id and the participant class
+     * which defines the participant name (the fully qualified class name is used for it).
+     *
+     * @param metricType  counter for which the metric type will be returned
+     * @param lraId  counter for which lra id will be returned
+     * @param participantClazz  counter for which the participant will be returned
+     * @return metric counter defined based on the method parameters
+     */
+    public int getMetric(LRAMetricType metricType, URI lraId, Class<?> participantClazz) {
+        return getMetric(metricType, lraId, participantClazz.getName());
     }
 
-    public int getMetric(LRAMetricType metric, URI lraId, String participant) {
-        if (metrics.containsKey(lraId) && metrics.get(lraId).containsKey(participant)) {
-            return metrics.get(lraId).get(participant).get(metric);
+    /**
+     * Returns count number for particular metric type filtered by LRA id and the participant's name.
+     * It's expected that the participant name is defined as fully qualified participant class name.
+     *
+     * @param metricType  counter for which metric type will be returned
+     * @param lraId  counter for which lra id will be returned
+     * @param participantClassName  counter for which the participant name will be returned
+     * @return metric counter defined based on the method parameters
+     */
+    public int getMetric(LRAMetricType metricType, URI lraId, String participantClassName) {
+        if (metricsPerLra.containsKey(lraId) && metricsPerLra.get(lraId).containsKey(participantClassName)) {
+            return metricsPerLra.get(lraId).get(participantClassName).get(metricType);
         } else {
-            return -1;
+            return 0;
         }
     }
 
+    /**
+     * Clear the metric storage as whole.
+     */
     public void clear() {
-        metrics.clear();
+        metricsPerLra.clear();
     }
-    
+
+    /**
+     * TODO if the current PR is acceptable then delete the old isLRAFinished method
+     * (which tests whether an LRA is active by making an attempt to enlist with it
+     * which some spec implementations report as a stack trace WARNING if the LRA is
+     * no longer active).
+     *
+     * @param lraId the LRA id to test
+     * @param participantClazz class of the participant that the metrics parameter applies to
+     * @return whether or not an LRA has finished
+     */
+    boolean isLRAFinished(URI lraId, Class<?> participantClazz) {
+        LRAStatus metricStatus = null;
+        if (getMetric(LRAMetricType.Closed, lraId, participantClazz) >= 1) {
+            metricStatus = LRAStatus.Closed;
+        } else if (getMetric(LRAMetricType.FailedToClose, lraId, participantClazz) >= 1) {
+            metricStatus = LRAStatus.FailedToClose;
+        } else if (getMetric(LRAMetricType.Cancelled, lraId, participantClazz) >= 1) {
+            metricStatus = LRAStatus.Cancelled;
+        } else if (getMetric(LRAMetricType.FailedToCancel, lraId, participantClazz) >= 1) {
+            metricStatus = LRAStatus.FailedToCancel;
+        }
+        return metricStatus != null;
+    }
+
     /**
      * A class to hold all of the metrics gathered in the context of a single LRA.
      * We need stats per LRA since a misbehaving test may leave an LRA in need of
@@ -79,21 +139,23 @@ public class LRAMetricService {
      * a failing test.
      */
     private static class LRAMetric {
-        Map<LRAMetricType, AtomicInteger> metrics = Arrays.stream(LRAMetricType.values())
+        private Map<LRAMetricType, AtomicInteger> metrics = Arrays.stream(LRAMetricType.values())
             .collect(Collectors.toMap(Function.identity(), t -> new AtomicInteger(0)));
 
-        void increment(LRAMetricType metric) {
-            if (metrics.containsKey(metric)) {
-                metrics.get(metric).incrementAndGet();
+        void increment(LRAMetricType metricType) {
+            if (metrics.containsKey(metricType)) {
+                metrics.get(metricType).incrementAndGet();
+            } else {
+                throw new IllegalArgumentException("Cannot increment metric type " + metricType.name());
             }
         }
 
-        int get(LRAMetricType metric) {
-            if (metrics.containsKey(metric)) {
-                return metrics.get(metric).get();
+        int get(LRAMetricType metricType) {
+            if (metrics.containsKey(metricType)) {
+                return metrics.get(metricType).get();
             }
 
-            return -1;
+            return 0;
         }
     }
 

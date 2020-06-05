@@ -91,9 +91,9 @@ public class ParticipatingTckResource {
         }
 
         if (complete) {
-            lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ParticipatingTckResource.class.getName());
+            lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ParticipatingTckResource.class);
         } else {
-            lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ParticipatingTckResource.class.getName());
+            lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ParticipatingTckResource.class);
         }
 
         return Response.ok().build();

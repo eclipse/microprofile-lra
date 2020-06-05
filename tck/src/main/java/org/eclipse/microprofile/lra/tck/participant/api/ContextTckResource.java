@@ -295,9 +295,9 @@ public class ContextTckResource {
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                    @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ContextTckResource.class);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
         }
 
         return getEndPhaseResponse(false);
@@ -308,9 +308,9 @@ public class ContextTckResource {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                                  @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ContextTckResource.class);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
         }
 
         return getEndPhaseResponse(true);
@@ -321,9 +321,9 @@ public class ContextTckResource {
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ContextTckResource.class);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();
@@ -334,9 +334,9 @@ public class ContextTckResource {
     @Forget
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
-        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, ContextTckResource.class);
         if (parent != null) {
-            lraMetricService.incrementMetric(LRAMetricType.Nested, parent);
+            lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
         }
 
         return Response.status(endPhaseStatus).entity(status.name()).build();

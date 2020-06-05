@@ -21,8 +21,7 @@ package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownStatusResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -38,9 +37,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 /**
  * TCK Tests related to the 410 status code handling. Version with a Status method.
  */
@@ -48,7 +44,7 @@ import static org.junit.Assert.assertTrue;
 public class TckUnknownStatusTests extends TckTestBase {
 
     @Inject
-    private LRAMetricService lraMetricService;
+    private LRAMetricAssertions lraMetric;
 
     @Inject
     private LRATestService lraTestService;
@@ -69,15 +65,12 @@ public class TckUnknownStatusTests extends TckTestBase {
         URI lraId = URI.create(lraIdString);
 
         lraTestService.waitForRecovery(lraId);
-        int compensated = lraMetricService.getMetric(LRAMetricType.Compensated, lraId);
-        int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
-        int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
-        int cancelled = lraMetricService.getMetric(LRAMetricType.Cancelled, lraId);
 
-        assertEquals("Number of calls to @Compensate incorrect",1, compensated);
-        assertTrue("Number of calls to @Status incorrect", status >= 1);
-        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
-        assertTrue("Final LRA status of Cancelled incorrect", cancelled >= 1);
+        lraMetric.assertCompensatedEquals("Number of calls to @Compensate incorrect",
+                1, lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertStatus("Expect @Status was called", lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertAfterLRA("Expect @AfterLRA was called", lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertCancelled("Expect Cancel was called", lraId, LRAUnknownStatusResource.class);
     }
 
     @Test
@@ -86,15 +79,12 @@ public class TckUnknownStatusTests extends TckTestBase {
         URI lraId = URI.create(lraIdString);
 
         lraTestService.waitForRecovery(lraId);
-        int completed = lraMetricService.getMetric(LRAMetricType.Completed, lraId);
-        int status = lraMetricService.getMetric(LRAMetricType.Status, lraId);
-        int afterLRA = lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId);
-        int closed = lraMetricService.getMetric(LRAMetricType.Closed, lraId);
 
-        assertEquals("Number of calls to @Complete incorrect",1, completed);
-        assertTrue("Number of calls to @Status incorrect", status >= 1);
-        assertTrue("Number of calls to @AfterLRA incorrect", afterLRA >= 1);
-        assertTrue("Final LRA status of Closed incorrect", closed >= 1);
+        lraMetric.assertCompletedEquals("Number of calls to @Complete incorrect",
+                1, lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertStatus("Expect @Status was called", lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertAfterLRA("Expect @AfterLRA was called", lraId, LRAUnknownStatusResource.class);
+        lraMetric.assertClosed("Expect Close was called", lraId, LRAUnknownStatusResource.class);
     }
 
     private String invoke(Scenario scenario) {

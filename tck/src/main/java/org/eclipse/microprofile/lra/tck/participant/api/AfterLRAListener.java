@@ -76,7 +76,7 @@ public class AfterLRAListener {
                 lraMetricService.incrementMetric(
                         LRAMetricType.valueOf(status.name()),
                         lraId,
-                        AfterLRAListener.class.getName());
+                        AfterLRAListener.class);
                 return Response.ok().build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).build();

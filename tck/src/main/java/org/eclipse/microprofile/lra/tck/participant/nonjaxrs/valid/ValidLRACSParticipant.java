@@ -78,7 +78,7 @@ public class ValidLRACSParticipant {
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
         
-        return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
+        return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ValidLRACSParticipant.class));
     }
 
     @Complete
@@ -86,7 +86,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
+            lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ValidLRACSParticipant.class);
             
             return Response.accepted().build(); // Completing
         });
@@ -97,7 +97,7 @@ public class ValidLRACSParticipant {
         assert lraId != null;
         
         return CompletableFuture.supplyAsync(() -> {
-            lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
+            lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ValidLRACSParticipant.class);
             
             return ParticipantStatus.Completed;
         });

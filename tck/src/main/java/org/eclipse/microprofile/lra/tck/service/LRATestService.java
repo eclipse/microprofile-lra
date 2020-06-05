@@ -20,13 +20,11 @@
 package org.eclipse.microprofile.lra.tck.service;
 
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
-import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.junit.Assert;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -34,12 +32,12 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.ServiceLoader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class LRATestService {
-
-    @Inject
-    LraTckConfigBean config;
+    private static final Logger LOG = Logger.getLogger(LRATestService.class.getName());
 
     private LRAClientOps lraClient;
 
@@ -73,6 +71,7 @@ public class LRATestService {
         try {
             lraRecoveryService.waitForCallbacks(lraId);
         } catch (LRACallbackException e) {
+            LOG.log(Level.SEVERE, "Fail to 'waitForCallbacks' for LRA " + lraId, e);
             Assert.fail(e.getMessage());
         }
     }
@@ -81,6 +80,7 @@ public class LRATestService {
         try {
             lraRecoveryService.waitForRecovery(lraId);
         } catch (LRACallbackException e) {
+            LOG.log(Level.SEVERE, "Fail to 'waitForRecovery' for LRA " + lraId, e);
             Assert.fail(e.getMessage());
         }
     }
@@ -89,6 +89,7 @@ public class LRATestService {
         try {
             lraRecoveryService.waitForEndPhaseReplay(lraId);
         } catch (LRACallbackException e) {
+            LOG.log(Level.SEVERE, "Fail to 'waitForEndPhaseReplay' for LRA " + lraId, e);
             Assert.fail(e.getMessage());
         }
     }

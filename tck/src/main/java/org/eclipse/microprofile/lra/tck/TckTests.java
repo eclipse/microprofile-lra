@@ -22,8 +22,8 @@ package org.eclipse.microprofile.lra.tck;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.ACCEPT_WORK;
-import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.CANCEL_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.CANCEL_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TIME_LIMIT_HALF_SEC;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TRANSACTIONAL_WORK_PATH;
@@ -64,7 +64,6 @@ import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -84,11 +83,6 @@ public class TckTests extends TckTestBase {
     @Deployment(name = "tcktests")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckTests.class.getSimpleName().toLowerCase());
-    }
-
-    @Before
-    public void before() {
-        super.before();
     }
 
     /**
@@ -225,6 +219,8 @@ public class TckTests extends TckTestBase {
     /**
      * TCK test to verify that methods annotated with {@link AfterLRA}
      * are notified correctly when an LRA terminates
+     *
+     * @throws InterruptedException when waiting for the finishing the callbacks is interrupted
      */
     @Test
     public void testAfterLRAParticipant() throws WebApplicationException, InterruptedException {

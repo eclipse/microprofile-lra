@@ -20,10 +20,10 @@
 
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class LraTckConfigBean {
@@ -32,7 +32,7 @@ public class LraTckConfigBean {
      * Definition of LRA default timeout which should be used
      * by any method which needs to work with timeout
      */
-    public static final Long LRA_TIMEOUT_MILLIS = 50000L;
+    private static final Long LRA_TIMEOUT_MILLIS = 50000L;
 
     /**
      * <p>
@@ -57,9 +57,23 @@ public class LraTckConfigBean {
     @Inject @ConfigProperty(name = "lra.tck.base.url", defaultValue = "http://localhost:8180/")
     private String tckSuiteBaseUrl;
 
-
-    public double timeoutFactor() {
-        return timeoutFactor;
+    /**
+     * Adjusting the default timeout by the specified timeout factor which can be defined by user
+     * when property <code>lra.tck.timeout.factor</code> is defined.
+     *
+     * @return default timeout adjusted with timeout factor
+     */
+    public long getDefaultTimeout() {
+        return adjustTimeout(LraTckConfigBean.LRA_TIMEOUT_MILLIS);
     }
 
+    /**
+     * Adjusting the provided value by timeout factor defined for the TCK suite.
+     *
+     * @param timeout timeout value to be adjusted by 'lra.tck.timeout.factor'
+     * @return value of adjusted timeout
+     */
+    public long adjustTimeout(long timeout) {
+        return (long) Math.ceil(timeout * timeoutFactor);
+    }
 }

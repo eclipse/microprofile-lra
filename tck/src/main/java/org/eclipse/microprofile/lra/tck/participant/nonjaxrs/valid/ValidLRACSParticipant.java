@@ -77,14 +77,14 @@ public class ValidLRACSParticipant {
     @Compensate
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
-        
+
         return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId));
     }
 
     @Complete
     public CompletionStage<Response> complete(URI lraId) {
         assert lraId != null;
-        
+
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
             
@@ -117,5 +117,4 @@ public class ValidLRACSParticipant {
     public Response getAcceptLRA() {
         return Response.ok(this.recoveryPasses).build();
     }
-
 }

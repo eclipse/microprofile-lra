@@ -24,6 +24,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
+import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -35,6 +36,8 @@ import org.junit.rules.TestName;
 import javax.inject.Inject;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+
+import java.net.URL;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
@@ -49,6 +52,12 @@ public class TckTestBase {
     
     @Inject
     private LRATestService lraTestService;
+
+    @Inject
+    private LRAMetricService lraMetricService;
+    
+    @ArquillianResource
+    private URL deploymentURL;
 
     LRAClientOps lraClient;
 
@@ -74,7 +83,8 @@ public class TckTestBase {
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
         
-        lraTestService.start();
+        lraTestService.start(deploymentURL);
+        lraMetricService.clear();
         this.lraClient = lraTestService.getLRAClient();
         this.tckSuiteTarget = lraTestService.getTCKSuiteTarget();
     }

@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.LongBusinessMethodParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
@@ -36,6 +37,15 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
 import java.net.URI;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Logger;
+import javax.ws.rs.client.Entity;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.junit.Assert;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -47,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 public class TckParticipantTests extends TckTestBase {
     
     private static final String VALID_DEPLOYMENT = "valid-deploy";
+    private static final Logger LOGGER = Logger.getLogger(TckParticipantTests.class.getName());
 
     @Inject
     private LRAMetricService lraMetricService;
@@ -116,10 +127,10 @@ public class TckParticipantTests extends TckTestBase {
 
         lraTestService.waitForRecovery(lraId);
 
-        assertEquals("Non JAX-RS @Status method should have been called", 
-            1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
-        assertEquals("Non JAX-RS @Forget method should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Forget, lraId));
+        assertTrue("Non JAX-RS @Status method should have been called", 
+            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
+        assertTrue("Non JAX-RS @Forget method should have been called",
+            lraMetricService.getMetric(LRAMetricType.Forget, lraId) >= 1);
 
     }
 
@@ -167,9 +178,44 @@ public class TckParticipantTests extends TckTestBase {
 
         lraTestService.waitForRecovery(lraId);
 
-        assertEquals("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Status, lraId));
+        assertTrue("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
+            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
         
         lraTestService.waitForRecovery(lraId);
+    }
+
+    @Test
+    public void cancelLraDuringBusinessMethod() throws InterruptedException, ExecutionException {
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        LRAClientOps lraOps = lraTestService.getLRAClient();
+        URI lraId = lraOps.startLRA(null, lraClientId(), 0L, ChronoUnit.MILLIS);
+        LOGGER.info(String.format("Started LRA with URI %s", lraId));
+        // Start business method asynchronously, i.e. return immediately.
+        Future<Response> lraFuture = es.submit(() -> tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
+                .path(LongBusinessMethodParticipant.BUSINESS_METHOD)
+                .request()
+                .header(LRA.LRA_HTTP_CONTEXT_HEADER, lraId)
+                .put(Entity.text("")));
+
+        // Make sure that when we cancel the LRA, the participant is waiting in the business method.
+        Response syncMethodResponse = tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
+                      .path(LongBusinessMethodParticipant.SYNC_METHOD)
+                      .request()
+                      .put(Entity.text(""));
+        Assert.assertEquals(200, syncMethodResponse.getStatus());
+        // -1 indicates that the LRAMetricType.Compensated key is not yet present in the metrics Map.
+        // This in turn means that @Compensate could not have been called yet.
+        Assert.assertEquals(-1, lraMetricService.getMetric(
+                LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()));
+        LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
+        lraOps.cancelLRA(lraId);
+        // waiting for the LRA to be finished
+        lraTestService.waitForRecovery(lraId);
+        // participant has to be compensated
+        Assert.assertEquals(1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()));
+
+        Response response = lraFuture.get();
+        Assert.assertEquals(LongBusinessMethodParticipant.class.getSimpleName() + "'s business method is expected " +
+                "to finish successfully despite the delay.", 200, response.getStatus());
     }
 }

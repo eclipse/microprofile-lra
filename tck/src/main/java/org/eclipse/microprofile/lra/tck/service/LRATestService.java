@@ -30,7 +30,6 @@ import javax.inject.Inject;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
@@ -39,9 +38,6 @@ import java.util.ServiceLoader;
 @ApplicationScoped
 public class LRATestService {
 
-    @Inject
-    LRAMetricService lraMetricService;
-    
     @Inject
     LraTckConfigBean config;
 
@@ -53,16 +49,10 @@ public class LRATestService {
 
     private LRARecoveryService lraRecoveryService = loadService(LRARecoveryService.class);
 
-    public void start() {
+    public void start(URL deploymentURL) {
         tckSuiteClient = ClientBuilder.newClient();
-        lraMetricService.clear();
-
-        try {
-            tckSuiteTarget = tckSuiteClient.target(URI.create(new URL(config.tckSuiteBaseUrl()).toExternalForm()));
-            lraClient = new LRAClientOps(tckSuiteTarget);
-        } catch (MalformedURLException mfe) {
-            throw new IllegalStateException("Cannot create URL for the LRA TCK suite base url " + config.tckSuiteBaseUrl(), mfe);
-        }
+        tckSuiteTarget = tckSuiteClient.target(URI.create(deploymentURL.toExternalForm()));
+        lraClient = new LRAClientOps(tckSuiteTarget);
     }
 
     public void stop() {

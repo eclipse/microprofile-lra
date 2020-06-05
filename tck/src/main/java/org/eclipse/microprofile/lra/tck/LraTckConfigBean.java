@@ -62,7 +62,4 @@ public class LraTckConfigBean {
         return timeoutFactor;
     }
 
-    public String tckSuiteBaseUrl() {
-        return tckSuiteBaseUrl;
-    }
 }

@@ -76,7 +76,6 @@ import java.lang.annotation.Target;
  * of the <code>&#64;Compensate</code> or <code>&#64;Complete</code> method then it may
  * report <code>410 Gone</code> HTTP status code or in case of
  * non-JAX-RS method returning {@link ParticipantStatus} to return <code>null</code>.
- * This enables the participant to free up resources.
  * </p>
  *
  * <p>

@@ -72,6 +72,7 @@ public class LraResource {
     public static final String ACCEPT_WORK = "acceptWork";
     public static final String TIME_LIMIT = "/timeLimit";
     public static final String TIME_LIMIT_HALF_SEC = "/timeLimit2";
+    public static final String CANCEL_PATH = "/cancel";
     static final String MANDATORY_LRA_RESOURCE_PATH = "/mandatory";
 
     private static final Logger LOGGER = Logger.getLogger(LraResource.class.getName());
@@ -355,6 +356,19 @@ public class LraResource {
         storeActivity(nestedLRAId, recoveryId);
 
         return Response.ok(nestedLRAId).build();
+    }
+
+    /**
+     * Used to close nested LRA in which this resource is enlisted
+     *
+     * @see org.eclipse.microprofile.lra.tck.TckTests#mixedMultiLevelNestedActivity
+     */
+    @PUT
+    @Path(CANCEL_PATH)
+    @LRA(value = LRA.Type.MANDATORY,
+        cancelOnFamily = Response.Status.Family.SERVER_ERROR)
+    public Response cancelLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+        return Response.status(500).entity(lraId).build();
     }
 
     @PUT

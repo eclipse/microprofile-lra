@@ -116,13 +116,9 @@ public class TckTestBase {
     }
 
     /**
-     * Adjusting the default timeout by the specified timeout factor
-     * which can be defined by user.
+     * Returning default timeout configured for the TCK tests.
      */
     long lraTimeout() {
-        if(LraTckConfigBean.LRA_TIMEOUT_MILLIS < 0){
-            throw new IllegalArgumentException("value of timeout can't be negative");
-        }
-        return (long) Math.ceil(LraTckConfigBean.LRA_TIMEOUT_MILLIS * config.timeoutFactor());
+        return config.getDefaultTimeout();
     }
 }

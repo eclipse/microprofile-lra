@@ -21,6 +21,7 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
+import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.activity.ActivityStorage;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
@@ -87,6 +88,9 @@ public class LraResource {
 
     @Inject
     private LRAMetricService lraMetricService;
+
+    @Inject
+    private LraTckConfigBean configBean;
 
     @Inject
     LRATestService lraTestService;
@@ -422,7 +426,8 @@ public class LraResource {
         activityStore.add(new Activity(lraId));
 
         try {
-            Thread.sleep(300); // sleep for longer than specified in the timeLimit annotation attribute
+            // sleep longer time than specified in the attribute 'timeLimit'
+            Thread.sleep(configBean.adjustTimeout(300));
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }

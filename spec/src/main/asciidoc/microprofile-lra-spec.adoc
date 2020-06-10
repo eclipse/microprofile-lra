@@ -279,6 +279,8 @@ package:
   | Indicates that this class is no longer interested in this LRA.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Status.java#L30[@Status]
   | When the annotated method is invoked it should report the status.
+| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/AfterLRA.java#L30[@AfterLRA]
+  | When an LRA has reached a final state the annotated method is invoked will be invoked.
 |===
 
 Briefly, these annotations are used as follows:

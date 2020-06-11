@@ -20,11 +20,12 @@
 package org.eclipse.microprofile.lra.tck;
 
 import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricRest;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
-import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
-import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -38,24 +39,30 @@ import org.junit.runner.RunWith;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * <p>
  * Tests for the recovery of failed LRA services. Test that LRA functions properly even in case of service failures.
- * 
- * As this test is not running a managed Arquillian deployment, CDI is not working inside of this class. This is
- * why the test execution is moved into {@link RecoveryResource} in two phases (see {@link RecoveryResource#PHASE_1} and
- * {@link RecoveryResource#PHASE_2}) which also verify the results and pass the results in HTTP response.
- * 
- * Note that this test relies on Arquillian to supply the deployment URL via the {@link ArquillianResource} injection.
+ * </p>
+ * <p>
+ * This test is meant to be run in "run as client mode controlling the behaviour not via CDI injection but via HTTP calls.
+ * The @{@link Deployment} is defined as <code>managed = false</code>
+ * which means that Arquillian does not automatically deploy the deployment at the start of the test
+ * and the test control this step on its own.
+ * </p>
  */
 @RunWith(Arquillian.class)
+@RunAsClient
 public class TckRecoveryTests {
+    private static final Logger LOG = Logger.getLogger(TckRecoveryTests.class.getName());
     
     public static final String LRA_TCK_DEPLOYMENT_URL = "LRA-TCK-Deployment-URL";
 
@@ -68,8 +75,7 @@ public class TckRecoveryTests {
     @ArquillianResource
     private URL deploymentURL;
 
-    private LRARecoveryService lraRecoveryService;
-    
+    private LRATestService lraTestService;
     private Client deploymentClient;
     private WebTarget deploymentTarget;
 
@@ -82,12 +88,20 @@ public class TckRecoveryTests {
         
         deploymentClient = ClientBuilder.newClient();
         deploymentTarget = deploymentClient.target(deploymentURL.toURI());
-        lraRecoveryService = LRATestService.loadService(LRARecoveryService.class);
+        lraTestService = new LRATestService();
+        lraTestService.start(deploymentURL);
     }
     
     @After
     public void after() {
+        try {
+            deployer.undeploy(DEPLOYMENT_NAME);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Cannot undeploy the deployment " + DEPLOYMENT_NAME +
+                    " at the end of the test " + testName, e);
+        }
         deploymentClient.close();
+        lraTestService.stop();
     }
 
     @Deployment(name = DEPLOYMENT_NAME, managed = false)
@@ -111,17 +125,15 @@ public class TckRecoveryTests {
     public void testCancelWhenParticipantIsRestarted() {
         // deploy the test service
         deployer.deploy(DEPLOYMENT_NAME);
-        
-        // invoke phase 1 inside the container (start new LRA and enlist resource)
-        Response response1 = deploymentTarget
-            .path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_1)
-            .request()
-            .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
-            .get();
-        
-        Assert.assertEquals(200, response1.getStatus());
-        URI lra = URI.create(response1.readEntity(String.class));
+
+        // starting and enlisting to LRA
+        Response response = deploymentTarget
+                .path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+                .path(RecoveryResource.REQUIRED_PATH)
+                .request().put(Entity.text(""));
+
+        Assert.assertEquals(200, response.getStatus());
+        URI lra = URI.create(response.readEntity(String.class));
 
         // kill the test service while LRA is still active
         deployer.undeploy(DEPLOYMENT_NAME);
@@ -129,18 +141,13 @@ public class TckRecoveryTests {
         // start the test service again
         deployer.deploy(DEPLOYMENT_NAME);
 
-        // invoke phase 2 inside the container (cancel the LRA and verify that the
-        // @Compensate method was called on the enlisted resource)
-        Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_2)
-            .request()
-                .header(RecoveryResource.LRA_HEADER, lra)
-                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
-                .get();
-        
-        Assert.assertEquals(response2.readEntity(String.class), 200, response2.getStatus());
-        
-        deployer.undeploy(DEPLOYMENT_NAME);
+        // Cancel the LRA and verify that the @Compensate method was called on the enlisted resource
+        lraTestService.getLRAClient().cancelLRA(lra);
+        lraTestService.waitForCallbacks(lra);
+
+        assertMetricCallbackCalled(LRAMetricType.Compensated, lra);
+        assertMetricCallbackCalled(LRAMetricType.Cancelled, lra);
+
     }
 
     /**
@@ -163,16 +170,14 @@ public class TckRecoveryTests {
         // deploy the test service
         deployer.deploy(DEPLOYMENT_NAME);
 
-        // invoke phase 1 inside the container (start new LRA and enlist resource) which cancels after 500 millis
-        Response response1 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_1)
-            .queryParam("timeout", true)
-            .request()
-            .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
-            .get();
+        // starting and enlisting to LRA
+        Response response = deploymentTarget
+                .path(RecoveryResource.RECOVERY_RESOURCE_PATH)
+                .path(RecoveryResource.REQUIRED_TIMEOUT_PATH)
+                .request().put(Entity.text(""));
 
-        Assert.assertEquals(200, response1.getStatus());
-        URI lra = URI.create(response1.readEntity(String.class));
+        Assert.assertEquals(200, response.getStatus());
+        URI lra = URI.create(response.readEntity(String.class));
 
         // kill the test service while LRA is still active
         deployer.undeploy(DEPLOYMENT_NAME);
@@ -183,37 +188,37 @@ public class TckRecoveryTests {
         try {
             Thread.sleep(RecoveryResource.LRA_TIMEOUT);
         } catch (InterruptedException e) {
-            Assert.fail(e.getMessage());
+            LOG.log(Level.SEVERE, "Sleep LRA timeout interrupted", e);
+            Assert.fail("Sleeping LRA timeout " + RecoveryResource.LRA_TIMEOUT + " was interrupted: " + e.getMessage());
         }
-        
         // wait for the Compensate call to be delivered
-        try {
-            lraRecoveryService.waitForCallbacks(lra);
-        } catch (LRACallbackException e) {
-            Assert.fail(e.getMessage());
-        }
+        lraTestService.waitForCallbacks(lra);
 
         // start the test service again
         deployer.deploy(DEPLOYMENT_NAME);
         
         // trigger recovery causing the Compensate call to be replayed
-        deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.TRIGGER_RECOVERY)
-            .request()
-                .header(RecoveryResource.LRA_HEADER, lra)
-                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
-                .get();
+        lraTestService.waitForRecovery(lra);
 
-        // invoke phase 2 inside the container (execute checks that verify that callbacks have been called)
-        Response response2 = deploymentTarget.path(RecoveryResource.RECOVERY_RESOURCE_PATH)
-            .path(RecoveryResource.PHASE_2)
-            .request()
-                .header(RecoveryResource.LRA_HEADER, lra)
-                .header(LRA_TCK_DEPLOYMENT_URL, deploymentURL.toExternalForm())
-                .get();
+        // execute checks that verify that callbacks have been called
+        lraTestService.waitForCallbacks(lra);
 
-        Assert.assertEquals(response2.readEntity(String.class), 200, response2.getStatus());
+        assertMetricCallbackCalled(LRAMetricType.Compensated, lra);
+        assertMetricCallbackCalled(LRAMetricType.Cancelled, lra);
+    }
 
-        deployer.undeploy(DEPLOYMENT_NAME);
+    private void assertMetricCallbackCalled(LRAMetricType metricType, URI lra) {
+        Response responseMetric = deploymentTarget
+                .path(LRAMetricRest.LRA_TCK_METRIC_RESOURCE_PATH)
+                .path(LRAMetricRest.METRIC_PATH)
+                .queryParam(LRAMetricRest.METRIC_TYPE_PARAM, metricType)
+                .queryParam(LRAMetricRest.LRA_ID_PARAM, lra)
+                .queryParam(LRAMetricRest.PARTICIPANT_NAME_PARAM, RecoveryResource.class.getName())
+                .request().get();
+        Assert.assertEquals("Expect the metric REST call to " + responseMetric.getLocation()
+                + " to succeed", 200, responseMetric.getStatus());
+        int metricNumber = responseMetric.readEntity(Integer.class);
+        Assert.assertTrue("Expecting the metric " + metricType + " callback was called",
+                metricNumber >= 1);
     }
 }

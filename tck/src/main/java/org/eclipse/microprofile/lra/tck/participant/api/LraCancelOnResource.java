@@ -143,6 +143,7 @@ public class LraCancelOnResource {
      * will be called only once for the test invocation.
      * </p>
      * @param lraId The LRA id generated for this action
+     * @param uriInfo as context provided by JAX-RS to find base service URI
      * @return JAX-RS response
      */
     @GET

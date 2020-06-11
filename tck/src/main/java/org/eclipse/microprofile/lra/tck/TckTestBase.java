@@ -42,6 +42,10 @@ import java.util.logging.Logger;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * Base testsuite class for in-container tests.
+ * It provides {@link Before} and @{@link After} junit hooks to clean the environment.
+ */
 public class TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckTestBase.class.getName());
 
@@ -73,20 +77,20 @@ public class TckTestBase {
                 LRARecoveryService.class.getPackage())
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
-    
-    @After
-    public void after() {
-        lraTestService.stop();
-    }
 
     @Before
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
-        
+
         lraTestService.start(deploymentURL);
         lraMetricService.clear();
         this.lraClient = lraTestService.getLRAClient();
         this.tckSuiteTarget = lraTestService.getTCKSuiteTarget();
+    }
+
+    @After
+    public void after() {
+        lraTestService.stop();
     }
 
     void checkStatusAndCloseResponse(Response.Status expectedStatus, Response response, WebTarget resourcePath) {

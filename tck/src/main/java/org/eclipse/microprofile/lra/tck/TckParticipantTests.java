@@ -126,6 +126,8 @@ public class TckParticipantTests extends TckTestBase {
     /**
      * Test verifies {@link java.util.concurrent.CompletionStage} parametrized with 
      * {@link Void} as valid non-JAX-RS participant method return type
+     *
+     * @throws InterruptedException when waiting for the finishing the completion is interrupted
      */
     @Test
     public void testNonJaxRsCompletionStageVoid() throws InterruptedException {

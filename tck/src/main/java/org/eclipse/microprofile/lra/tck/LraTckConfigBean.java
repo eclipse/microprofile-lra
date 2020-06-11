@@ -35,6 +35,18 @@ public class LraTckConfigBean {
     private static final Long LRA_TIMEOUT_MILLIS = 50000L;
 
     /**
+     * Name of the config property that is used as factor adjusting timeout values
+     * used in the testsuite.
+     */
+    public static final String LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME = "lra.tck.timeout.factor";
+
+    /**
+     * Name of the config property which is used to configure the TCK base url.
+     * See {@link LraTckConfigBean#tckSuiteBaseUrl}.
+     */
+    public static final String LRA_TCK_BASE_URL_PROPERTY_NAME = "lra.tck.base.url";
+
+    /**
      * <p>
      * Timeout factor which adjusts waiting time and timeouts for the TCK suite.
      * <p>
@@ -45,7 +57,7 @@ public class LraTckConfigBean {
      * If you wish the test waits shorter time than designed
      * or the timeout is elapsed faster then set the value less than <code>1.0</code>
      */
-    @Inject @ConfigProperty(name = "lra.tck.timeout.factor", defaultValue = "1.0")
+    @Inject @ConfigProperty(name = LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, defaultValue = "1.0")
     private double timeoutFactor;
 
     /**
@@ -54,12 +66,12 @@ public class LraTckConfigBean {
      * <p>
      * The default base URL where TCK suite is expected to be started is <code>http://localhost:8180/</code>.
      */
-    @Inject @ConfigProperty(name = "lra.tck.base.url", defaultValue = "http://localhost:8180/")
+    @Inject @ConfigProperty(name = LRA_TCK_BASE_URL_PROPERTY_NAME, defaultValue = "http://localhost:8180/")
     private String tckSuiteBaseUrl;
 
     /**
      * Adjusting the default timeout by the specified timeout factor which can be defined by user
-     * when property <code>lra.tck.timeout.factor</code> is defined.
+     * when property {@code #LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME} is defined.
      *
      * @return default timeout adjusted with timeout factor
      */
@@ -70,10 +82,19 @@ public class LraTckConfigBean {
     /**
      * Adjusting the provided value by timeout factor defined for the TCK suite.
      *
-     * @param timeout timeout value to be adjusted by 'lra.tck.timeout.factor'
+     * @param timeout timeout value to be adjusted by {@code #LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME}
      * @return value of adjusted timeout
      */
     public long adjustTimeout(long timeout) {
+        return adjustTimeout(timeout, timeoutFactor);
+    }
+
+    private long adjustTimeout(long timeout, double timeoutFactor) {
+        if (timeout < 0 || timeoutFactor < 0)  {
+            throw new IllegalArgumentException(String.format(
+                    "Provided arguments (timeout=%d, timeoutFactor=%.2f) have to be positive", timeout, timeoutFactor));
+        }
         return (long) Math.ceil(timeout * timeoutFactor);
     }
+
 }

@@ -186,7 +186,7 @@ public class TckRecoveryTests {
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
         try {
-            Thread.sleep(RecoveryResource.LRA_TIMEOUT);
+            Thread.sleep(adjustTimeoutByDefaultFactor(RecoveryResource.LRA_TIMEOUT));
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "Sleep LRA timeout interrupted", e);
             Assert.fail("Sleeping LRA timeout " + RecoveryResource.LRA_TIMEOUT + " was interrupted: " + e.getMessage());
@@ -220,5 +220,14 @@ public class TckRecoveryTests {
         int metricNumber = responseMetric.readEntity(Integer.class);
         Assert.assertTrue("Expecting the metric " + metricType + " callback was called",
                 metricNumber >= 1);
+    }
+
+    /**
+     * A helper method which is capable to adjust timeout value
+     * by factor obtained from system property {@code LraTckConfigBean#LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME}.
+     */
+    private long adjustTimeoutByDefaultFactor(long timeout) {
+        String timeoutFactor = System.getProperty(LraTckConfigBean.LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, "1.0");
+        return (long) Math.ceil(timeout * Double.parseDouble(timeoutFactor));
     }
 }

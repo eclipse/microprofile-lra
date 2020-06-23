@@ -419,7 +419,7 @@ public class LraResource {
     @GET
     @Path(TIME_LIMIT)
     @Produces(MediaType.APPLICATION_JSON)
-    @LRA(value = LRA.Type.REQUIRED, timeLimit = 100, timeUnit = ChronoUnit.MILLIS)
+    @LRA(value = LRA.Type.REQUIRED, timeLimit = 500, timeUnit = ChronoUnit.MILLIS)
     public Response timeLimit(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
 
@@ -427,7 +427,7 @@ public class LraResource {
 
         try {
             // sleep longer time than specified in the attribute 'timeLimit'
-            Thread.sleep(configBean.adjustTimeout(300));
+            Thread.sleep(configBean.adjustTimeout(1000));
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE, "Interrupted because time limit elapsed", e);
         }
@@ -447,7 +447,7 @@ public class LraResource {
         activityStore.add(new Activity(lraId));
 
         try {
-            Thread.sleep(1000); // sleep for longer than specified in the timeLimit annotation attribute
+            Thread.sleep(configBean.adjustTimeout(1000)); // sleep for longer than specified in the timeLimit annotation attribute
             // force the implementation to notice that the LRA should have timed out
             lraTestService.waitForCallbacks(lraId);
             // the next request should fail with a 412 code since the LRA should no longer be active

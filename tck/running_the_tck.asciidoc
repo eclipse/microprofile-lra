@@ -37,6 +37,7 @@ The LRA TCK suite can be parametrized by following properties, handled in the su
   When set-up lower then the timeouts will be shorter.
   Thus on slower machines it's expected longer timeouts will be needed. For example if test expects
   some waiting time to be 10 seconds and this factor is set to `1.5` then the result waiting time is 15 seconds.
+  The timeout factor must be configured as system property because of the test limitations.
 `lra.http.recovery.host`, `lra.http.recovery.port`, `lra.http.recovery.path`::
   Hostname, port and path for the recovery endpoint that will be contacted in tests checking recovery capabilities.
 

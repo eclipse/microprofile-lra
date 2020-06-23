@@ -318,8 +318,7 @@ public class TckTests extends TckTestBase {
                 .request()
                 .get();
 
-        URI lraId = URI.create(response.readEntity(String.class));
-        response.close();
+        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
         // Note that the timeout firing will cause the implementation to compensate
         // the LRA so it may no longer exist

@@ -65,8 +65,8 @@ import java.lang.annotation.Target;
  * <code>
  *   &#64;PUT
  *   &#64;AfterLRA
- *   public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
- *                            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLraId,
+ *   public Response afterEnd(&#64;HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+ *                            &#64;HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLraId,
  *                            Status status)
  * </code>
  * </pre>

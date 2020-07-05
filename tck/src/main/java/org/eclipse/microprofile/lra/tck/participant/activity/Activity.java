@@ -36,7 +36,6 @@ public class Activity implements Serializable {
     private URI recoveryUri;
     private String statusUrl;
     private ParticipantStatus status;
-    private String userData;
     private String endData;
 
     private final AtomicInteger acceptedCount = new AtomicInteger(0);
@@ -88,22 +87,12 @@ public class Activity implements Serializable {
                 ", recoveryUri='" + getRecoveryUri() + '\'' +
                 ", statusUrl='" + getStatusUrl() + '\'' +
                 ", status=" + getStatus() +
-                ", userData='" + getUserData() + '\'' +
                 ", endData='" + getEndData() + '\'' +
                 '}';
     }
 
     public int getAndDecrementAcceptCount() {
         return getAcceptedCount().getAndDecrement();
-    }
-
-    public String getUserData() {
-        return userData;
-    }
-
-    public Activity setUserData(String userData) {
-        this.userData = userData;
-        return this;
     }
 
     public String getEndData() {

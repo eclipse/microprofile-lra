@@ -58,7 +58,7 @@ public class AfterLRAParticipant {
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, AfterLRAParticipant.class.getName());
         return Response.ok().build();
     }
@@ -66,7 +66,7 @@ public class AfterLRAParticipant {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, AfterLRAParticipant.class.getName());
 
         return Response.ok().build();

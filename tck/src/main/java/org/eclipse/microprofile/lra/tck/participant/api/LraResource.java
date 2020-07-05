@@ -151,16 +151,13 @@ public class LraResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                 String userData) {
+                                 @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class.getName());
 
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Complete methods
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Complete methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
-
-        activity.setEndData(userData);
 
         if (activity.getAndDecrementAcceptCount() > 0) {
             activity.setStatus(ParticipantStatus.Completing);
@@ -182,8 +179,7 @@ public class LraResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                   @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                   String userData) {
+                                   @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
 
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Compensate methods
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Compensate methods
@@ -191,8 +187,6 @@ public class LraResource {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class.getName());
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
-
-        activity.setEndData(userData);
 
         if (activity.getAndDecrementAcceptCount() > 0) {
             activity.setStatus(ParticipantStatus.Compensating);

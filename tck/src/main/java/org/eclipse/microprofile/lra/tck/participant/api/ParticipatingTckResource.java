@@ -62,7 +62,7 @@ public class ParticipatingTckResource {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }
@@ -75,7 +75,7 @@ public class ParticipatingTckResource {
     @PUT
     @Path("/complete")
     @Complete
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         if(lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }

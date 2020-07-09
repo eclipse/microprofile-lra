@@ -139,7 +139,7 @@ public class LraCancelOnResource {
      * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)} invoked by the test.
      * Because the specification mandates that the same participant can be enlisted
      * only once per LRA instance then
-     * the {@link Compensate} method {@link #compensateWork(URI, String)}
+     * the {@link Compensate} method {@link #compensateWork(URI)}
      * will be called only once for the test invocation.
      * </p>
      * @param lraId The LRA id generated for this action
@@ -183,7 +183,7 @@ public class LraCancelOnResource {
     @PUT
     @Path("/compensate")
     @Compensate
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId, String userData) {
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         if (lraId == null) {
             throw new NullPointerException("lraId can't be null as it should be invoked with the context");
         }

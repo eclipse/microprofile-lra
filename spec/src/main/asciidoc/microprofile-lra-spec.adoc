@@ -499,8 +499,7 @@ public class SimpleLRAParticipant
     @Complete
     @Path("/complete")
     @PUT
-    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 String userData)
+    public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
     {
         /*
          * Free up resources allocated in the context of the LRA identified by the
@@ -515,8 +514,7 @@ public class SimpleLRAParticipant
     @Compensate
     @Path("/compensate")
     @PUT
-    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                   String userData)
+    public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
     {
         /*
          * The LRA identified by the value in the injected JAX-RS header was

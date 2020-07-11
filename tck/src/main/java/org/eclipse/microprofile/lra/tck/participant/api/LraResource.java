@@ -62,6 +62,7 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 @ApplicationScoped
@@ -347,13 +348,17 @@ public class LraResource {
     @Path("/nestedActivity")
     @LRA(value = LRA.Type.NESTED, end = true)
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId) {
+                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId,
+                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRAId) {
         assertHeaderPresent(nestedLRAId, LRA_HTTP_CONTEXT_HEADER);
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
+        assertHeaderPresent(parentLRAId, LRA_HTTP_PARENT_CONTEXT_HEADER);
 
         storeActivity(nestedLRAId, recoveryId);
 
-        return Response.ok(nestedLRAId).build();
+        return Response.ok(nestedLRAId)
+            .header(LRA_HTTP_PARENT_CONTEXT_HEADER, parentLRAId)
+            .build();
     }
 
     /**

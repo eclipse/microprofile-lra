@@ -20,6 +20,7 @@
 package org.eclipse.microprofile.lra.tck;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
@@ -138,7 +139,7 @@ public class TckTests extends TckTestBase {
             assertEquals("Response status to ' " + resourcePath.getUri() + "' does not match.",
                     Response.Status.OK.getStatusCode(), response.getStatus());
     
-            Object parentId = response.getHeaders().getFirst(LRA_HTTP_CONTEXT_HEADER);
+            Object parentId = response.getHeaders().getFirst(LRA_HTTP_PARENT_CONTEXT_HEADER);
     
             assertNotNull("Expecting to get parent LRA id as response from " + resourcePath.getUri(), parentId);
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),

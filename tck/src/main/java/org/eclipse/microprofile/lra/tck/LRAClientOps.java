@@ -19,11 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -46,9 +43,6 @@ import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingT
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.START_BUT_DONT_END_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.STATUS_CODE_QUERY_NAME;
 import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.LEAVE_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.TCK_PARTICIPANT_RESOURCE_PATH;
 
 public class LRAClientOps {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
@@ -61,64 +55,6 @@ public class LRAClientOps {
         this.target = target;
         this.executor = Executors.newSingleThreadScheduledExecutor();
         this.lraTasks = new HashMap<>();
-    }
-
-    // see if it is possible to join with an LRA - if it is possible to do that then the LRA is still active
-    private int tryToEnlistWithAnLRA(URI lra) {
-        // call a JAX-RS endpoint that should result in the enlistment of a resource into the LRA
-        int status = invokeRestEndpointAndReturnStatus(lra, TCK_PARTICIPANT_RESOURCE_PATH, JOIN_WITH_EXISTING_LRA_PATH, 200);
-
-        if (status == 200) {
-            // leave the LRA otherwise any tests checking completion/compensation counts would fail
-
-            leaveLRA(lra, TCK_PARTICIPANT_RESOURCE_PATH, LEAVE_PATH);
-
-        }
-
-        return status;
-    }
-
-    boolean isLRAFinished(URI lra) {
-        // if the LRA has finished/finishing or does not exist 412 or 410 MUST be be reported
-        int status = tryToEnlistWithAnLRA(lra);
-
-        return status == Response.Status.GONE.getStatusCode() || status == Response.Status.PRECONDITION_FAILED.getStatusCode();
-    }
-
-    /**
-     * TODO if the current PR is acceptable then delete the old isLRAFinished method
-     * (which tests whether an LRA is active by making an attempt to enlist with it
-     * which some spec implementations report as a stack trace WARNING if the LRA is
-     * no longer active).
-     *
-     * @param lra the LRA to test
-     * @param lraMetricService metrics
-     * @param resourceName name of the resource that the metrics parameter applies to
-     * @return whether or not an LRA has finished
-     */
-    boolean isLRAFinished(URI lra, LRAMetricService lraMetricService, String resourceName) {
-        return getLRAEndStatus(lra, lraMetricService, resourceName) != null;
-    }
-
-    /**
-     *
-     * @param lra the LRA whose end status is being queried
-     * @param lraMetricService the metrics service
-     * @param resourceName the name of the resource whose metrics hold the end state of the LRA
-     * @return the end status of the LRA (or null if the LRA has not yet finished)
-     */
-    private LRAStatus getLRAEndStatus(URI lra, LRAMetricService lraMetricService, String resourceName) {
-        if (lraMetricService.getMetric(LRAMetricType.Closed, lra, resourceName) >= 1) {
-            return LRAStatus.Closed;
-        } else if (lraMetricService.getMetric(LRAMetricType.FailedToClose, lra, resourceName) >= 1) {
-            return LRAStatus.FailedToClose;
-        } else if (lraMetricService.getMetric(LRAMetricType.Cancelled, lra, resourceName) >= 1) {
-            return LRAStatus.Cancelled;
-        } else if (lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra, resourceName) >= 1) {
-            return LRAStatus.FailedToCancel;
-        }
-
-        return null;
     }
 
     // synchronize access to the connection since it is shared with the LRA background cancellation code

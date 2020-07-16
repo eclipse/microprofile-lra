@@ -24,6 +24,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
+import org.eclipse.microprofile.lra.tck.service.spi.LRAManagementService;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
@@ -64,6 +65,8 @@ public class TckTestBase {
     private URL deploymentURL;
 
     LRAClientOps lraClient;
+    
+    LRAManagementService lraManagementService;
 
     WebTarget tckSuiteTarget;
 
@@ -86,6 +89,7 @@ public class TckTestBase {
         lraMetricService.clear();
         this.lraClient = lraTestService.getLRAClient();
         this.tckSuiteTarget = lraTestService.getTCKSuiteTarget();
+        this.lraManagementService = LRATestService.loadService(LRAManagementService.class);
     }
 
     @After

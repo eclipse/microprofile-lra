@@ -616,11 +616,11 @@ public class TckLRATypeTests extends TckTestBase {
                 // validate that the method ran with an LRA and that it is still active
                 assertNotEquals(testName.getMethodName() + ": Resource method should not have run with an LRA: " + methodLraId,
                         0, methodLraId.length());
-                assertFalse(lraClient.isLRAFinished(URI.create(methodLraId)));
+                assertFalse(lraManagementService.isLRAFinished(URI.create(methodLraId)));
                 lraClient.closeLRA(methodLraId);
             } else if (methodLraId.length() != 0) {
                 // otherwise it should be finished
-                assertTrue(lraClient.isLRAFinished(URI.create(methodLraId)));
+                assertTrue(lraManagementService.isLRAFinished(URI.create(methodLraId)));
             }
 
             if (lra != null) {

@@ -122,12 +122,7 @@ import java.lang.annotation.Target;
  *   <td scope="row">The resource is still attempting compensation</td>
  * </tr>
  * <tr>
- *   <td scope="row">410</td>
- *   <td scope="row">Empty</td>
- *   <td scope="row">The resource does not know about the LRA</td>
- * </tr>
- * <tr>
- *   <td scope="row">500</td>
+ *   <td scope="row">409</td>
  *   <td scope="row">{@link ParticipantStatus} enum value</td>
  *   <td scope="row"><p>The resource has failed to compensate.
  *   The payload contains the reason for the failure.
@@ -146,6 +141,11 @@ import java.lang.annotation.Target;
  *   actual state as reported by the {@link Status} method MUST
  *   be {@link ParticipantStatus#FailedToCompensate}</p></td>
  * </tr>
+ * <tr>
+ *   <td scope="row">410</td>
+ *   <td scope="row">Empty</td>
+ *   <td scope="row">The resource does not know about the LRA</td>
+ * </tr>
  * </table>
  *
  * <p>
@@ -158,7 +158,7 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * If any other code is returned (or, in the 500 case, the body does not
+ * If any other code is returned (or, in the 409 case, the body does not
  * correspond to a valid state) then the implementation SHOULD either keep
  * retrying or attempt to discover the status by calling the
  * {@link Status} method if present or a combination of both.

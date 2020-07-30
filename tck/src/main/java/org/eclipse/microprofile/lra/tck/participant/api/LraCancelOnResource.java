@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.Response.Status.Family;
 import javax.ws.rs.core.UriInfo;
 
+import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
@@ -177,7 +178,7 @@ public class LraCancelOnResource {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraCancelOnResource.class);
 
         LOGGER.info(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
-        return Response.ok().build();
+        return LRAResponse.completed();
     }
 
     @PUT
@@ -191,6 +192,6 @@ public class LraCancelOnResource {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraCancelOnResource.class);
 
         LOGGER.info(String.format("LRA id '%s' was compensated", lraId.toASCIIString()));
-        return Response.ok().build();
+        return LRAResponse.compensated();
     }
 }

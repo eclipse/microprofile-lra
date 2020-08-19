@@ -628,9 +628,6 @@ public class TckLRATypeTests extends TckTestBase {
             }
 
             return methodLraId;
-        } catch (Throwable e) {
-            LOGGER.warning(e.getMessage());
-            return null;
         } finally {
             response.close();
         }

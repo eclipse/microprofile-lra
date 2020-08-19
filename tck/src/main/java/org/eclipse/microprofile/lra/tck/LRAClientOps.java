@@ -33,9 +33,9 @@ import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -60,7 +60,7 @@ public class LRAClientOps {
     public LRAClientOps(WebTarget target) {
         this.target = target;
         this.executor = Executors.newSingleThreadScheduledExecutor();
-        this.lraTasks = new HashMap<>();
+        this.lraTasks = new ConcurrentHashMap<>();
     }
 
     // see if it is possible to join with an LRA - if it is possible to do that then the LRA is still active

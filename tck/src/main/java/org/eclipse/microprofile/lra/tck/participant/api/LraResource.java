@@ -68,7 +68,7 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVER
 @ApplicationScoped
 @Path(LraResource.LRA_RESOURCE_PATH)
 @LRA(value = LRA.Type.SUPPORTS, end = false)
-public class LraResource {
+public class LraResource extends ResourceParent {
     public static final String LRA_RESOURCE_PATH = "lraresource";
     public static final String TRANSACTIONAL_WORK_PATH = "work";
     public static final String ACCEPT_WORK = "acceptWork";

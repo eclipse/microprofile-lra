@@ -38,6 +38,9 @@ public final class LRAMetricAssertions {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    private LRATestService lraTestService;
+
     // ----------------------------- COMPENSATED -----------------------------------
     /**
      * Asserts that <b>compensated</b> was called for given LRA and participant class translated to fully qualified classname as String,
@@ -326,7 +329,7 @@ public final class LRAMetricAssertions {
      * @param participantClazz  the participant class used as resource name in the map
      */
     public void assertFinished(String message, URI lraId, Class<?> participantClazz) {
-        assertTrue(message, lraMetricService.isLRAFinished(lraId, participantClazz));
+        assertTrue(message, lraTestService.isLRAFinished(lraId, participantClazz.getName()));
     }
 
     private void assertYes(String message, LRAMetricType metricType, URI lraId, Class<?> participantClazz) {

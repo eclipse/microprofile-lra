@@ -27,6 +27,7 @@ import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -56,6 +57,9 @@ public class AfterLRAParticipant {
     @Inject
     private LRAMetricService lraMetricService;
 
+    @Inject
+    private LRATestService lraTestService;
+
     @PUT
     @Path("/complete")
     @Complete
@@ -84,34 +88,8 @@ public class AfterLRAParticipant {
     @PUT
     @Path(AFTER_LRA)
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
-    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
-                             @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoverId,
-                             LRAStatus status) {
-
-        assertHeaderPresent(recoverId, LRA_HTTP_RECOVERY_HEADER);
-
-        switch (status) {
-            case Closed:
-                // FALLTHRU
-            case Cancelled:
-                // FALLTHRU
-            case FailedToCancel:
-                // FALLTHRU
-            case FailedToClose:
-                lraMetricService.incrementMetric(
-                        LRAMetricType.valueOf(status.name()),
-                        lraId,
-                        AfterLRAParticipant.class);
-                return Response.ok().build();
-            default:
-                return Response.status(Response.Status.BAD_REQUEST).build();
-        }
+    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
+        return lraTestService.processAfterLRAInfo(lraId, status, AfterLRAParticipant.class,
+            AFTER_LRA_PARTICIPANT_PATH + AFTER_LRA);
     }
-
-    private void assertHeaderPresent(URI lraId, String headerName) {
-        if (lraId == null) {
-            throw new WrongHeaderException(String.format("%s: missing '%s' header", AFTER_LRA_PARTICIPANT_PATH + AFTER_LRA, headerName));
-        }
-    }
-
 }

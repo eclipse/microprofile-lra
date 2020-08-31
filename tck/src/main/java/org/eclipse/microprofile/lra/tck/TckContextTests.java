@@ -343,10 +343,12 @@ public class TckContextTests extends TckTestBase {
                 .header(LRA_TCK_FAULT_CODE_HEADER, finishStatus);
         Response response;
 
-        if (where.startsWith(METRIC_PATH) || (where.startsWith(CLEAR_STATUS_PATH))) {
-            builder.header(LRA_TCK_HTTP_CONTEXT_HEADER, lraContext);
-        } else {
-            builder.header(LRA_HTTP_CONTEXT_HEADER, lraContext);
+        if (lraContext != null) {
+            if (where.startsWith(METRIC_PATH) || (where.startsWith(CLEAR_STATUS_PATH))) {
+                builder.header(LRA_TCK_HTTP_CONTEXT_HEADER, lraContext);
+            } else {
+                builder.header(LRA_HTTP_CONTEXT_HEADER, lraContext);
+            }
         }
 
         switch (method) {

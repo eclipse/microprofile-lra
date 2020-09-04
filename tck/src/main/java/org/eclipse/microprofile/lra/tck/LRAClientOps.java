@@ -246,7 +246,10 @@ public class LRAClientOps {
     }
 
     void cleanUp(Logger logger, String testName) {
-        lraTasks.forEach((lra, future) -> {
+        // cancelCancelation removes items from the lraTasks map, so a copy is
+        // needed to prevent a ConcurrentModificationException
+        Map<LRATask, ScheduledFuture<?>> taskCopy = new HashMap<>(lraTasks);
+        taskCopy.forEach((lra, future) -> {
             logger.warning("Test: " + testName + " didn't finish LRA " + lra.lra + " with clientId " + lra.clientId);
             cancelLRA(lra.lra);
         });

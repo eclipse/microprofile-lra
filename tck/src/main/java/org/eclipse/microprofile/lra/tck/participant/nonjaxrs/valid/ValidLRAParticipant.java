@@ -19,13 +19,13 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid;
 
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
@@ -83,7 +83,7 @@ public class ValidLRAParticipant {
     public void onLRAEnd(URI lraId, LRAStatus status) {
         verifyLRAId(lraId);
 
-        lraMetricService.incrementMetric(LRAMetricType.AfterLRA, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.AfterLRA, lraId, ValidLRAParticipant.class);
 
         LOGGER.fine(String.format("LRA id '%s' was finished with status %s",
                 lraId.toASCIIString(), status.name()));
@@ -93,7 +93,7 @@ public class ValidLRAParticipant {
     public void completeWithException(URI lraId, URI parentId) {
         verifyLRAId(lraId);
 
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ValidLRAParticipant.class);
 
         LOGGER.fine(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
         throw new WebApplicationException(Response.ok().build());
@@ -103,7 +103,7 @@ public class ValidLRAParticipant {
     public ParticipantStatus compensate(URI lraId) {
         verifyLRAId(lraId);
 
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ValidLRAParticipant.class);
 
         LOGGER.fine(String.format("LRA id '%s' was compensated", lraId.toASCIIString()));
         return ParticipantStatus.Compensating;
@@ -113,7 +113,7 @@ public class ValidLRAParticipant {
     public Response status(URI lraId) {
         verifyLRAId(lraId);
 
-        lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ValidLRAParticipant.class);
 
         LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called", lraId.toASCIIString()));
         return Response.ok(ParticipantStatus.FailedToCompensate).build();
@@ -123,7 +123,7 @@ public class ValidLRAParticipant {
     public void forget(URI lraId) {
         verifyLRAId(lraId);
 
-        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, ValidLRAParticipant.class);
 
         LOGGER.fine(String.format("LRA id '%s' forget called", lraId.toASCIIString()));
     }

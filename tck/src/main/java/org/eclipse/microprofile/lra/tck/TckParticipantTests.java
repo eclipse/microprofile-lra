@@ -19,9 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.net.URI;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ExecutionException;
@@ -40,8 +37,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.LongBusinessMethodParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRACSParticipant;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid.ValidLRAParticipant;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -60,7 +56,7 @@ public class TckParticipantTests extends TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckParticipantTests.class.getName());
 
     @Inject
-    private LRAMetricService lraMetricService;
+    private LRAMetricAssertions lraMetric;
 
     @Inject
     private LRATestService lraTestService;
@@ -85,18 +81,17 @@ public class TckParticipantTests extends TckTestBase {
         Response response = resourcePath.request().get();
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
-        assertEquals("Non JAX-RS @Complete method throwing WebApplicationException shoud have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
-        assertEquals("@Compensate method should not have been called as LRA completed succesfully",
-            0, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        lraMetric.assertCompletedEquals("Non JAX-RS @Complete method throwing WebApplicationException shoud have been called",
+            1, lraId, ValidLRAParticipant.class);
+        lraMetric.assertNotCompensated("@Compensate method should not have been called as LRA completed succesfully",
+            lraId, ValidLRAParticipant.class);
 
         /*
          * Validate that a resource can receive notifications of the final outcome of an LRA using
          * the {@link org.eclipse.microprofile.lra.annotation.AfterLRA} annotation on
          * a non JAX-RS method
          */
-        assertTrue("@AfterLRA method should have been called",
-                lraMetricService.getMetric(LRAMetricType.AfterLRA, lraId) >= 1);
+        lraMetric.assertAfterLRA("@AfterLRA method should have been called", lraId, ValidLRAParticipant.class);
     }
 
     /**
@@ -119,19 +114,16 @@ public class TckParticipantTests extends TckTestBase {
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
-
-        assertEquals("Non JAX-RS @Compensate method should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
-        assertEquals("@Complete method should not have been called as LRA compensated",
-            0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
+        
+        lraMetric.assertCompensatedEquals("Non JAX-RS @Compensate method should have been called",
+            1, lraId, ValidLRAParticipant.class);
+        lraMetric.assertNotCompleted("@Complete method should not have been called as LRA compensated",
+            lraId, ValidLRAParticipant.class);
 
         lraTestService.waitForRecovery(lraId);
 
-        assertTrue("Non JAX-RS @Status method should have been called",
-            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
-        assertTrue("Non JAX-RS @Forget method should have been called",
-            lraMetricService.getMetric(LRAMetricType.Forget, lraId) >= 1);
-
+        lraMetric.assertStatus("Non JAX-RS @Status method should have been called", lraId, ValidLRAParticipant.class);
+        lraMetric.assertForget("Non JAX-RS @Forget method should have been called", lraId, ValidLRAParticipant.class);
     }
 
     /**
@@ -149,10 +141,10 @@ public class TckParticipantTests extends TckTestBase {
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
 
-        assertEquals("Non JAX-RS @Compensate method with CompletionStage<Void> should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
-        assertEquals("Non JAX-RS @Complete method should have not been called",
-            0, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
+        lraMetric.assertCompensatedEquals("Non JAX-RS @Compensate method with CompletionStage<Void> should have been called",
+            1, lraId, ValidLRACSParticipant.class);
+        lraMetric.assertNotCompleted("Non JAX-RS @Complete method should have not been called",
+                lraId, ValidLRACSParticipant.class);
 
         lraTestService.waitForRecovery(lraId);
     }
@@ -173,16 +165,16 @@ public class TckParticipantTests extends TckTestBase {
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
-        assertEquals("Non JAX-RS @Complete method with CompletionStage<Response> should have been called",
-            1, lraMetricService.getMetric(LRAMetricType.Completed, lraId));
-        assertEquals("Non JAX-RS @Compensate method should have not been called",
-            0, lraMetricService.getMetric(LRAMetricType.Compensated, lraId));
+        lraMetric.assertCompletedEquals("Non JAX-RS @Complete method with CompletionStage<Response> should have been called",
+            1, lraId, ValidLRACSParticipant.class);
+        lraMetric.assertNotCompensated("Non JAX-RS @Compensate method should have not been called",
+            lraId, ValidLRACSParticipant.class);
 
         lraTestService.waitForRecovery(lraId);
 
-        assertTrue("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
-            lraMetricService.getMetric(LRAMetricType.Status, lraId) >= 1);
-
+        lraMetric.assertStatus("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
+            lraId, ValidLRACSParticipant.class);
+        
         lraTestService.waitForRecovery(lraId);
     }
 
@@ -204,18 +196,21 @@ public class TckParticipantTests extends TckTestBase {
                       .path(LongBusinessMethodParticipant.SYNC_METHOD)
                       .request()
                       .put(Entity.text(""));
-        Assert.assertEquals(200, syncMethodResponse.getStatus());
+        Assert.assertEquals("Endpoint " + LongBusinessMethodParticipant.SYNC_METHOD + " failed execution",
+                200, syncMethodResponse.getStatus());
         // -1 indicates that the LRAMetricType.Compensated key is not yet present in the metrics Map.
         // This in turn means that @Compensate could not have been called yet.
-        Assert.assertEquals(-1, lraMetricService.getMetric(
-                LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()));
+        lraMetric.assertNotCompleted("Business method is in progress and @Complete has not been expected",
+                lraId, LongBusinessMethodParticipant.class);
+        lraMetric.assertNotCompensated("Business method is in progress and @Compensate can't be called " +
+                        "as cancelation has not been invoked yet", lraId, LongBusinessMethodParticipant.class);
         LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
         lraOps.cancelLRA(lraId);
         // waiting for the LRA to be finished
         lraTestService.waitForRecovery(lraId);
         // participant has to be compensated
-        Assert.assertTrue("@Compensate method should have been called at least once.",
-                lraMetricService.getMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName()) >= 1);
+        lraMetric.assertCompensated("@Compensate method should have been called at least once " +
+                        "as cancel was invoked", lraId, LongBusinessMethodParticipant.class);
 
         Response response = lraFuture.get(lraTimeout(), TimeUnit.MILLISECONDS);
         Assert.assertEquals(LongBusinessMethodParticipant.class.getSimpleName() + "'s business method is expected " +

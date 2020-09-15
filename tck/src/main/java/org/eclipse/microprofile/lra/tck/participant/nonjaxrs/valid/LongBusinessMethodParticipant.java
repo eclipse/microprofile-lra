@@ -57,7 +57,7 @@ public class LongBusinessMethodParticipant {
         if(businessLatch.getCount() > 0) {
             businessLatch.countDown();
         }
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class);
     }
 
     @PUT

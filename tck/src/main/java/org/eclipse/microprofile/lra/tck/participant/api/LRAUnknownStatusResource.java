@@ -81,7 +81,7 @@ public class LRAUnknownStatusResource {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
             throws NotFoundException {
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LRAUnknownStatusResource.class);
 
         // flow for the following cases
         // Scenario.COMPLETE_RETRY
@@ -109,7 +109,7 @@ public class LRAUnknownStatusResource {
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId)
             throws NotFoundException {
 
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LRAUnknownStatusResource.class);
 
         // flow for the following cases
         // Scenario.COMPENSATE_RETRY
@@ -134,7 +134,7 @@ public class LRAUnknownStatusResource {
     @Path("/status")
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Status, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.Status, lraId, LRAUnknownStatusResource.class);
 
         return Response.status(410).build();
     }
@@ -143,7 +143,7 @@ public class LRAUnknownStatusResource {
     @Path(AFTER_LRA)
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
     public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
-        lraMetricService.incrementMetric(LRAMetricType.AfterLRA, lraId);
+        lraMetricService.incrementMetric(LRAMetricType.AfterLRA, lraId, LRAUnknownStatusResource.class);
         switch (status) {
             case Closed:
                 // FALLTHRU
@@ -154,7 +154,8 @@ public class LRAUnknownStatusResource {
             case FailedToClose:
                 lraMetricService.incrementMetric(
                         LRAMetricType.valueOf(status.name()),
-                        lraId);
+                        lraId,
+                        LRAUnknownStatusResource.class);
                 return Response.ok().build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).build();

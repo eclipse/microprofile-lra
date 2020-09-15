@@ -59,7 +59,7 @@ public class AfterLRAParticipant {
     @Path("/complete")
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, AfterLRAParticipant.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, AfterLRAParticipant.class);
         return Response.ok().build();
     }
 
@@ -67,7 +67,7 @@ public class AfterLRAParticipant {
     @Path("/compensate")
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, AfterLRAParticipant.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, AfterLRAParticipant.class);
 
         return Response.ok().build();
     }
@@ -100,7 +100,7 @@ public class AfterLRAParticipant {
                 lraMetricService.incrementMetric(
                         LRAMetricType.valueOf(status.name()),
                         lraId,
-                        AfterLRAParticipant.class.getName());
+                        AfterLRAParticipant.class);
                 return Response.ok().build();
             default:
                 return Response.status(Response.Status.BAD_REQUEST).build();

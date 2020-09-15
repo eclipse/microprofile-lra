@@ -23,6 +23,7 @@ import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricRest;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
+import org.hamcrest.Matchers;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -47,6 +48,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.junit.Assert.assertThat;
 
 /**
  * <p>
@@ -218,8 +221,8 @@ public class TckRecoveryTests {
         Assert.assertEquals("Expect the metric REST call to " + responseMetric.getLocation()
                 + " to succeed", 200, responseMetric.getStatus());
         int metricNumber = responseMetric.readEntity(Integer.class);
-        Assert.assertTrue("Expecting the metric " + metricType + " callback was called",
-                metricNumber >= 1);
+        assertThat("Expecting the metric " + metricType + " callback was called",
+                metricNumber, Matchers.greaterThanOrEqualTo(1));
     }
 
     /**

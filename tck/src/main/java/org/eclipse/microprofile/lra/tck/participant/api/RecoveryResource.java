@@ -67,7 +67,7 @@ public class RecoveryResource {
     @Path("/compensate")
     @Compensate
     public Response compensate(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, RecoveryResource.class);
 
         return Response.ok().build();
     }
@@ -76,8 +76,7 @@ public class RecoveryResource {
     @Path("/after")
     @AfterLRA
     public Response afterLRA(@HeaderParam(LRA.LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus lraStatus) {
-        lraMetricService.incrementMetric(LRAMetricType.valueOf(lraStatus.name()), lraId,
-            RecoveryResource.class.getName());
+        lraMetricService.incrementMetric(LRAMetricType.valueOf(lraStatus.name()), lraId, RecoveryResource.class);
 
         return Response.ok().build();
     }

@@ -279,6 +279,8 @@ package:
   | Indicates that this class is no longer interested in this LRA.
 | https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/Status.java#L30[@Status]
   | When the annotated method is invoked it should report the status.
+| https://github.com/eclipse/microprofile-lra/tree/master/api/src/main/java/org/eclipse/microprofile/lra/annotation/AfterLRA.java#L30[@AfterLRA]
+  | When an LRA has reached a final state the annotated method is invoked.
 |===
 
 Briefly, these annotations are used as follows:
@@ -335,14 +337,14 @@ security is specifically not defined in the specification and it is up to implem
 [[lra-context]]
 ==== The LRA Context
 
-When a method is invoked in the context of an LRA its identifier (of type java.net.URI) MUST be made
+When a method (that is annotated with any of the annotations defined in this specification)
+is invoked in the context of an LRA its identifier (of type java.net.URI) MUST be made
 available to the business logic. This LRA is referred to as the `active context`.
 
-For JAX-RS resource methods, the identifier is made available via request and
-response headers which the business method can obtain using standard JAX-RS mechanisms,
-i.e. `@Context` or by injecting a JAX-RS header param with the name specified by
-the Java constant `LRA_HTTP_CONTEXT_HEADER` as defined <<source-LRA, in the LRA annotation class>>.
-This header is referred to as the `context header`.
+For JAX-RS resource methods the LRA identifier is made available to the business method
+(via standard JAX-RS mechanisms, i.e. a JAX-RS `@Context` annotation or by injecting a JAX-RS
+header param with the name specified by the Java constant `LRA_HTTP_CONTEXT_HEADER` as defined
+<<source-LRA, in the LRA annotation class>>. This header is referred to as the `context header`.
 
 When using non-JAX-RS based 'complete' and 'compensate' methods (see <<non-jaxrs-participant-methods>>)
 this identifier is passed as a method parameter.
@@ -532,11 +534,17 @@ public class SimpleLRAParticipant
 The example also shows that when an LRA is present its identifier can be obtained
 by reading the request headers.
 
-The next example demonstrates how to start an LRA in one method and close
-it in a different method using the `LRA#end` element.
-It also shows how to configure the LRA to be automatically cancelled if the business method
-returns the particular HTTP status codes identified in the `cancelOn` and
-`cancelOnFamily` elements:
+The next example demonstrates how to execute business logic in the context of a
+new or existing LRA (the `bookTrip` method) and to close it in a different method
+(the `confirmTrip` method) using the LRA `end` element. [Note that this specification
+supports nested contexts so if there was already a context present on method entry
+it is possible that <<nesting-lras,it is nested>> - if the business logic needs to
+do any special actions for nested contexts it should inject the
+`LRA_HTTP_PARENT_CONTEXT_HEADER` header and check whether the value is null].
+
+The example also shows how to configure the LRA to be automatically cancelled
+if the business method returns the particular HTTP status codes identified in
+the `cancelOn` and `cancelOnFamily` elements:
 
 [source,java]
 ----
@@ -550,13 +558,25 @@ returns the particular HTTP status codes identified in the `cancelOn` and
        end = false) // the LRA will continue to run when the method finishes
   @Path("/book")
   @POST
-  public Response bookTrip(...) { ... }
+  public Response bookTrip(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+      if (parentLRA != null) { // is the context nested
+          // code which is sensitive to executing with a nested context goes here
+      }
+      ...
+  }
 
   @LRA(LRA.Type.MANDATORY, // requires an active context before method can be executed
        end = true) // end the LRA started by the bookTrip method
   @Path("/confirm")
   @PUT
-  public Booking confirmTrip(Booking booking) throws BookingException { ... }
+  public Booking confirmTrip(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA,
+                           Booking booking) throws BookingException {
+      if (parentLRA != null) { // is the context nested
+          // code which is sensitive to executing with a nested context goes here
+      }
+  }
 ----
 
 The `end = false` element on the bookTrip method forces the LRA to continue running when
@@ -598,7 +618,12 @@ public class BusinessResource {
     @Path("/after")
     @AfterLRA // method is called when the LRA associated with the method activityWithLRA finishes
     public Response notifyLRAFinished(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+                                      @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA,
                                       LRAStatus status) {
+
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
 
         switch (status) {
             case Closed:
@@ -635,19 +660,107 @@ meaning of the term `eventual consistency` as used in this specification).
 Under failure conditions the system will keep retrying until it is certain that the
 participant has been successfully notified.
 
-The LRA model is quite flexible in how business methods perform compensations.
-If a compensating activity is brief then the synchronous model may be appropriate:
+The LRA model supports both synchronous and asynchronous programming models.
+For example, if a compensating activity is brief then the synchronous model may
+be appropriate as the following code snippet shows. The snippet also shows how
+the compensating code can check for a <<nesting-lras,nested context>> (by reading
+the injected LRA_HTTP_PARENT_CONTEXT_HEADER header):
 
 [source,java]
 ----
-    @Compensate
+    @Compensate // marks this method as the callback to use if the LRA cancels
     @Path("/compensate")
-    @PUT
-    public Response compensatePreviousAction(
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        getActivity(lraId).setCompensated();  // business logic for handling the LRA, not provided by spec or implementation.
+    @PUT // the implementation will only invoke the callback using HTTP PUT
+    public Response compensateForAPreviousAction(
+               @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+               @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
 
-        return Response.ok();
+        if (parentLRA != null) 
+            // A nested context is being cancelled.
+            //
+            // Code which is sensitive to executing with a nested context goes here.
+            // Nested contexts are explained in detail in a later section.
+            //
+            // Generally only the @Complete handler will be sensitive to executing
+            // with a nested context (because Compensated is a final state in the
+            // LRA participant model whereas the Completed state is contingent upon
+            // the parent completing).
+        }
+
+        // perform business logic which compensates for any previous work performed
+        // in the context of the LRA
+        getActivity(lraId).setCompensated();
+
+        // If the compensation was successful then the participant can safely clean
+        // up. But if the participant failed to compensate is must remember that it
+        // failed until explicitly told it may forget about the LRA (via the forget
+        // method below).
+        if (compensationWasSuccessful) {
+            return Response.ok().build();
+        } else {
+            // return one of the other status codes
+            ...
+        }
+    }
+
+    @Complete // marks this method as the callback to use if the LRA closes
+    @Path("/complete")
+    @PUT
+    public Response cleanupAfterAPreviousAction(
+               @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+               @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+
+        // business logic for handling the closing LRA (provided by the business developer)
+        if (parentLRA != null) 
+            // A nested context is being closed.
+            //
+            // Code which is sensitive to executing with a nested context goes here.
+            //
+            // Note that if a nested context is closed but the parent context is later
+            // cancelled then any work performed when the nested context was active
+            // must still be capable of being compensated for. Therefore,
+            // even though no more work will be executed with the nested context, the
+            // business logic must remember how to compensate for any work it did do
+            // (until it is explicitly told to forget about the nested context via the
+            // forget method below).
+            getActivity(lraId).setProvisionallyCompleted();
+        } else {
+            getActivity(lraId).setFullyCompleted();
+        }
+
+        if (completionWasSuccessful) {
+            return Response.ok().build();
+        } else {
+            // return one of the other status codes
+            ...
+        }
+    }
+
+    @Forget
+    @Path("/forget")
+    @DELETE
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,) {
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+
+        if (parentLRA != null) {
+            // Code which is sensitive to executing with a nested context goes here.
+            //
+            // As mentioned in the comment in the @Complete method (cleanupAfterAPreviousAction)
+            // the participant may have saved some information about this LRA and this
+            // forget callback is the opportunity for the participant to finally clean up.
+            // Note that if instead the participant had compensated (in the method
+            // compensateForAPreviousAction) then it should already have cleaned up after it
+            // successfully compensated (for the actions it performed in the context of the LRA).
+
+            // mark the activity as fully complete (note that if the participant compensated
+            // then this forget method would not be invoked).
+            if (provisionallyComplete) {
+                getActivity(lraId).setFullyCompleted();
+                ...
+            }
+            ...
+        }
+        ...
     }
 ----
 
@@ -662,9 +775,14 @@ shows how a compensating activity can be started in the background:
     @Path("/compensate")
     @PUT
     public Response compensatePreviousAction(
-            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
 
-        // business logic for handling the LRA, not provided by spec or implementation.
+        // business logic for handling the LRA (provided by the business developer)
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
+
         ActivityClient client = getActivity(lraId).getResourceForCompensation();
         String backgroundActivity = client.compensate(lraId);
         ...
@@ -686,8 +804,13 @@ reporting its` progress using the `@Status` annotation:
     @Status
     @Path("/status")
     @GET
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFinished(lraId))  // Business logic, not provided by spec or Implementation
+    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
+
+        if (isFinished(lraId))  // Business logic (provided by the business developer)
             return Response.ok().entity(ParticipantStatus.Compensated).build();
         else
             return Response.ok().entity(ParticipantStatus.Compensating).build();
@@ -707,8 +830,14 @@ by reporting `FailedToCompensate` either via the compensate method, for example
     @Compensate
     @Path("/compensate")
     @PUT
-    public Response compensatePreviousAction(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
+    public Response compensatePreviousAction(
+                        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                        @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
+
+        if (isFailed(lraId)) // Business logic (provided by the business developer)
               return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
@@ -721,15 +850,23 @@ or it can report the failure via the `@Status` method:
     @Status
     @Path("/status")
     @GET
-    public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        if (isFailed(lraId)) // Business logic, not provided by spec or Implementation
+    public Response status(
+                        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                        @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
+        if (isFailed(lraId)) // Business logic (provided by the business developer)
             return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
         ...
     }
 ----
 
 In the successful case the participant SHOULD clean up any resources it allocated in the
-context of the LRA. Any requests (including the current one) made in the context of the
+context of the LRA (but note that if the LRA is nested the participant may need to delay
+fully cleaning up until it knows what the parent decided - please refer to the section
+<<nesting-lras,which describes nested contexts>> for more detail).
+Any requests (including the current one) made in the context of the
 same LRA MAY return a `410 Gone` status code.
 
 In the failure case the participant is responsible for remembering that it failed until
@@ -740,8 +877,12 @@ it is explicitly told that it can clean up via the `@Forget` method:
     @Forget
     @Path("/forget")
     @DELETE
-    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
-        // Business logic, not provided by spec or Implementation
+    public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+        if (parentLRA != null) { // is the context nested
+            // code which is sensitive to executing with a nested context goes here
+        }
+        // Business logic (provided by the business developer)
         if (isFailed(lraId)) {
             cleanupResources(lraId);
         }
@@ -752,7 +893,10 @@ it is explicitly told that it can clean up via the `@Forget` method:
 
 The resource class MAY also contain a method marked with the `@Complete` annotation.
 If such a method is present then the method MUST be invoked when the associated LRA
-is closed. Again, the specification does not MANDATE when the method is called,
+is closed (the participant can determine whether or not the closing context is nested
+by injecting the `LRA_HTTP_PARENT_CONTEXT_HEADER` header as described in the section
+about <<nesting-lras,nested contexts>>).
+Again, the specification does not MANDATE when the method is called,
 just that it will eventually be invoked. Typically the resource would use this call
 to perform any clean up actions. The method is optional since such clean up actions
 may not be necessary, for example consider a system that just tracks hotel reservations
@@ -762,14 +906,19 @@ if the LRA is completed or not: the room will be unavailable for others. If it r
 a call to `@Compensate` then it will free the room. But it won't do anything on
 `@Complete`.
 
-If the participant successfully compensates or completes then it may forget about
-the LRA. Otherwise it should remember that it is still associated with the LRA and
-it MUST report the status of the association using the
-<<jaxrs-response-table,appropriate JAX-RS response code>> if it uses JAX-RS for
-participant notifications. If it does not use JAX-RS for participant notifications
-then it MUST report the status of the association using one of the values in the
+In the case of a top level LRA, if the participant successfully compensates or
+completes then it may forget about the LRA. In the case of a nested LRA, the
+participant may or may not need to wait (depending upon the needs of the business
+logic) to see what the outcome of the top level LRA is. If the participant cannot
+compensate it should remember that it is still associated with the LRA in which
+case, if it is a JAX-RS method, it MUST report the status of the association using
+the <<jaxrs-response-table,appropriate JAX-RS response code>> and if it is a non
+JAX-RS based participant then it MUST report the status of the association using
+one of the values in the
 `ParticipantStatus` enum according to the <<participant-state-model,the
-participant state model>>. If the compensation and completion methods are not
+participant state model>>.
+
+If the compensation and completion methods are not
 idempotent then there MUST be a method annotated with `@Status` which reports the
 status. Otherwise the compensation and completion methods should return the status.
 If the participant is no longer associated with the LRA (because it has successfully
@@ -1023,23 +1172,47 @@ The javadoc for the <<source-LRA,LRA annotation>> discusses this element
 in much more detail (look for the javadoc for the `NESTED` enum value
 of the LRA.Type element).
 
+The concept of nested transaction contexts is not new and is present in a
+number of industry standards and research initiatives. Some notable
+examples include OASIS Web Services
+footnote:[OASIS LRA: https://www.oasis-open.org/committees/document.php?document_id=12794],
+extensions to the concept of Sagas
+footnote:[Hector Garcia-Molina, Modeling long-running activities as nested sagas
+https://dl.acm.org/doi/10.5555/108798.108801] and the OMG's Additional Structuring Mechanisms
+footnote:[Additional Structuring Mechanisms for the OTS Specification, September 2000,
+https://www.omg.org/spec/OTS/About-OTS/
+
 In the following example the bookFlight method supports the presence of
-an LRA context and if there is one present then it books a flight inside a
-nested LRA which means that it can be cancelled independently of the parent
-LRA. But if there is no LRA present then a new top level LRA is started
-for the duration of the bookFlight method.
+an incoming LRA context and if there is one present then (because of the
+NESTED annotation element) it books a flight in a new LRA nested inside
+the incoming context. Since the context is nested it can be cancelled
+independently of the parent LRA but can only be provisionally closed
+(contingent upon the parent closing).
+
+On the other hand, if there is no incoming context present then (because
+of the NESTED annotation element) a new top level LRA is started.
+
+In either case a new LRA is started which will be terminated when
+the bookFlight method returns.
 
 [source,java]
 ----
     @Inject
     private FlightService service;
 
-    @LRA(LRA.Type.NESTED)
+    @LRA(LRA.Type.NESTED, end = true)
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public Booking bookFlight(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA,
                               @QueryParam("flightNumber") String flightNumber) {
-        // business logic for handling the LRA, not provided by spec or implementation.
+        if (parentLRA == null) {
+            // code that should execute in the context of a top level LRA
+        } else {
+            // code which should execute in the context of a nested LRA
+        }
+
+        // business logic for handling the LRA (provided by the business developer)
         return service.book(lraId, flightNumber);
     }
 ----
@@ -1088,7 +1261,7 @@ time standard to which all timezones can be canonically converted. This will pro
 degree of alignment between clocks (where alignment means that clocks are only
 approximately globally synchronised).
 
-Potential reasons for requiring absolute time values, as opposed to durations, include:
+Potential reasons for requiring absolute time values, as opposed to a duration, include:
 
 1. When a failed server is restarted the implementation [of this specification] needs to
    calculate how long is left for timed LRAs to become eligible for cancellation based on
@@ -1131,8 +1304,10 @@ it will be removed from the LRA just before the bean method is entered
 subsequently ended). Even though the method runs without an LRA context
 the implementation MUST still make the context available via a JAX-RS header.
 
-The javadoc for the <<source-Leave,Leave annotation>> provides greater detail
-about this annotation.
+Please refer to the javadoc for the <<source-Leave,Leave annotation>> for
+greater detail. Notice that only the `LRA_HTTP_CONTEXT_HEADER` is
+required to be present when the resource method is invoked, i.e. there is no
+requirement for the `LRA_HTTP_PARENT_CONTEXT_HEADER` to be injected.
 
 An example of this annotation is shown next:
 
@@ -1211,7 +1386,8 @@ Only when the implementation is certain that participant has finished
 will it tell it that it is okay to release any resources it associated
 with the LRA.
 
-If a participant is enlisted in a nested LRA then it can ask to be notified
+Additionally, if a participant is enlisted in a nested LRA, then it can
+ask to be notified
 when the parent LRA closes using this `@Forget` annotation. This feature is
 useful since a nested LRA can be closed independently from its parent but
 it must retain the ability to compensate until the parent has finished.
@@ -1251,11 +1427,16 @@ an asynchronous response:
             cancelOn = NOT_FOUND) // cancel LRA on 404
     @Path("async-path")
     @POST
-    public CompletionStage<Response> asyncInvocationWithLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+    public CompletionStage<Response> asyncInvocationWithLRA(
+               @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+               @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
         return CompletableFuture.supplyAsync(
                 () -> {
                     try {
                         // a long running operation with lraId
+                        if (parentLRA != null) { // is the context nested
+                            // code which is sensitive to executing with a nested context goes here
+                        }
                         ...
                         return Response.ok().entity(lraId).build();
                     } catch (BusinessException ex) {
@@ -1280,11 +1461,15 @@ participant compensation handlers to run:
     @Path("completion-stage-exceptionally-lra")
     @POST
     public CompletionStage<Response> asyncInvocationWithException(
-        @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+               @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
+               @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
 
         final CompletableFuture<Response> response = new CompletableFuture<>();
 
         executorService.submit(() -> {
+            if (parentLRA != null) { // is the context nested
+                // code which is sensitive to executing with a nested context goes here
+            }
             // execute long running business activity finishing with a NOT_FOUND error
             // which causes the LRA to cancel
             response.completeExceptionally(
@@ -1302,13 +1487,18 @@ the JAX-RS `@Suspended` annotation:
 
 [source,java]
 ----
-    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
+    @LRA(value = LRA.Type.REQUIRES_NEW, // the method must run with an LRA
          end = true) // the LRA must end when the method completes
     @Path("asyncresponse-lra")
     @POST
     public void asyncResponseLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                          final @Suspended AsyncResponse ar) {
         executorService.submit(() -> {
+            // Notice that since a new LRA was created for running this
+            // method (`LRA.Type.REQUIRES_NEW`) the context cannot be
+            // nested (in contrast to the previous example which did have
+            // a nested context).
+            //
             // execute long running business activity and resume when done
             ar.resume(Response.ok().entity(lraId).build());
         });
@@ -1332,7 +1522,7 @@ an LRA consuming an async API using an AWS S3 client:
 ----
     S3AsyncClient client = S3AsyncClient.create();
 
-    @LRA(value = LRA.Type.REQUIRED, end = true)
+    @LRA(value = LRA.Type.REQUIRES_NEW, end = true)
     @Path("completion-stage-lra")
     @POST
     public CompletionStage<PutObjectResponse> asyncInvocationWithLRA(
@@ -1360,7 +1550,7 @@ And finally, here is an example of how to run a non JAX-RS compensation asynchro
 [source,java]
 ----
     @Compensate
-    public CompletionStage<ParticipantStatus> compensate(final URI lraId) {
+    public CompletionStage<ParticipantStatus> compensate(URI lraId, URI parentId) {
         // the compensation includes two long running operations:
         CompletableFuture<Void> memUpdate = CompletableFuture.runAsync((() -> {/* ... */}));
         CompletableFuture<Void> dbUpdate = CompletableFuture.runAsync((() -> {/* ... */}));

@@ -56,15 +56,18 @@ import java.lang.annotation.Target;
  * {@link LRA#LRA_HTTP_ENDED_CONTEXT_HEADER} and the
  * final status is passed to the method as plain text
  * corresponding to one of the {@link LRAStatus} enum values.
- * For example:
+ * If this LRA was nested then the parent LRA MUST be present in the header
+ * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+ * and value is of type {@link java.net.URI}. For example:
  * </p>
  *
  * <pre>
  * <code>
  *   &#64;PUT
  *   &#64;AfterLRA
- *   public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
- *                          LRAStatus status)
+ *   public Response afterEnd(&#64;HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId,
+ *                            &#64;HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLraId,
+ *                            Status status)
  * </code>
  * </pre>
  *

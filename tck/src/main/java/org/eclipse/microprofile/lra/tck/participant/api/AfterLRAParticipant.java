@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
@@ -60,7 +61,7 @@ public class AfterLRAParticipant {
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, AfterLRAParticipant.class);
-        return Response.ok().build();
+        return LRAResponse.completed();
     }
 
     @PUT
@@ -69,7 +70,7 @@ public class AfterLRAParticipant {
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, AfterLRAParticipant.class);
 
-        return Response.ok().build();
+        return LRAResponse.compensated();
     }
 
     @PUT

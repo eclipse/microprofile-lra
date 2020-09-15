@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
 import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
@@ -164,14 +165,14 @@ public class LraResource {
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
                     LRA_RESOURCE_PATH, lraId));
 
-            return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
+            return LRAResponse.Builder.completing().location(URI.create(activity.getStatusUrl())).build();
         }
 
         activity.setStatus(ParticipantStatus.Completed);
         activity.setStatusUrl(String.format("%s/%s/activity/completed", context.getBaseUri(), lraId.toASCIIString()));
 
         LOGGER.info(String.format("LRA id '%s' was completed", lraId.toASCIIString()));
-        return Response.ok(activity.getStatusUrl()).build();
+        return LRAResponse.completed(activity.getStatusUrl());
     }
 
     @PUT
@@ -193,14 +194,14 @@ public class LraResource {
             activity.setStatusUrl(String.format("%s/%s/%s/status", context.getBaseUri(),
                     LRA_RESOURCE_PATH, lraId));
 
-            return Response.accepted().location(URI.create(activity.getStatusUrl())).build();
+            return LRAResponse.Builder.compensating().location(URI.create(activity.getStatusUrl())).build();
         }
 
         activity.setStatus(ParticipantStatus.Compensated);
         activity.setStatusUrl(String.format("%s/%s/activity/compensated", context.getBaseUri(), lraId));
 
         LOGGER.info(String.format("LRA id '%s' was compensated", lraId));
-        return Response.ok(activity.getStatusUrl()).build();
+        return LRAResponse.compensated(activity.getStatusUrl());
     }
 
     @DELETE

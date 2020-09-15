@@ -23,6 +23,7 @@ package org.eclipse.microprofile.lra.annotation.ws.rs;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
@@ -312,7 +313,7 @@ public @interface LRA {
          *     then the {@link Complete} annotated method, if present,
          *     <i>is not</i> called again. If the LRA method causes the LRA
          *     to cancel then the nested LRA is moved to the
-         *     {@link org.eclipse.microprofile.lra.annotation.LRAStatus#Cancelling}
+         *     {@link LRAStatus#Cancelling}
          *     state and the {@link Compensate} callback will be invoked.
          * </p>
          * <p>

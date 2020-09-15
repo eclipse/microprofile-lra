@@ -823,7 +823,8 @@ participant state model>>.
 
 But what if the business logic is unable to compensate for a previous action?
 In this case the participant must remember that it was unable to compensate
-by reporting `FailedToCompensate` either via the compensate method, for example
+by reporting `FailedToCompensate` either via the compensate method using 
+the `409 Conflict` status code, for example:
 
 [source,java]
 ----
@@ -838,7 +839,7 @@ by reporting `FailedToCompensate` either via the compensate method, for example
         }
 
         if (isFailed(lraId)) // Business logic (provided by the business developer)
-              return Response.ok().entity(ParticipantStatus.FailedToCompensate).build();
+              return Response.status(Response.Status.CONFLICT).build();
         ...
     }
 ----
@@ -974,12 +975,12 @@ annotations when associated with JAX-RS resource methods:
 
 | `@Compensate`
 | PUT
-| 200, 202, 410, 500
+| 200, 202, 409, 410
 | <<source-Compensate,see javadoc>>
 
 | `@Complete`
 | PUT
-| 200, 202, 410, 500
+| 200, 202, 409, 410
 | <<source-Complete,see javadoc>>
 
 | `@Status`

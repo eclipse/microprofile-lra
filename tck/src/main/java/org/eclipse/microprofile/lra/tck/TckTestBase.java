@@ -19,6 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
@@ -71,6 +72,7 @@ public class TckTestBase {
         return ShrinkWrap
             .create(WebArchive.class, archiveName + ".war")
             .addPackages(false, TckTestBase.class.getPackage(),
+                LRAResponse.class.getPackage(),
                 Activity.class.getPackage(),
                 LraResource.class.getPackage(),
                 LRAMetricService.class.getPackage(),

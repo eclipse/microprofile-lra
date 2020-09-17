@@ -62,7 +62,7 @@ public class LongBusinessMethodParticipant {
 
     @PUT
     @Path(BUSINESS_METHOD)
-    @LRA(value = LRA.Type.MANDATORY)
+    @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response enlistWithLongLatency(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         LOGGER.info("call of enlistWithLongLatency");
         try {

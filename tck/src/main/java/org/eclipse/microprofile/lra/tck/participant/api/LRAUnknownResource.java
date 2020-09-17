@@ -19,10 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
@@ -43,14 +41,13 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
 
 /**
  * TCK Tests related to the 410 status code handling. Version without a Status method.
  */
 @ApplicationScoped
 @Path(LRAUnknownResource.LRA_CONTROLLER_PATH)
-public class LRAUnknownResource {
+public class LRAUnknownResource extends ResourceParent {
     public static final String LRA_CONTROLLER_PATH = "lraUnknownController";
     public static final String TRANSACTIONAL_WORK_PATH = "work";
 
@@ -127,28 +124,4 @@ public class LRAUnknownResource {
         LOGGER.info(String.format("LRA id '%s' was compensated", lraId));
         return Response.status(responseCode).build();
     }
-
-    @PUT
-    @Path(AFTER_LRA)
-    @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
-    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
-        lraMetricService.incrementMetric(LRAMetricType.AfterLRA, lraId, LRAUnknownResource.class);
-        switch (status) {
-            case Closed:
-                // FALLTHRU
-            case Cancelled:
-                // FALLTHRU
-            case FailedToCancel:
-                // FALLTHRU
-            case FailedToClose:
-                lraMetricService.incrementMetric(
-                        LRAMetricType.valueOf(status.name()),
-                        lraId,
-                        LRAUnknownResource.class);
-                return Response.ok().build();
-            default:
-                return Response.status(Response.Status.BAD_REQUEST).build();
-        }
-    }
-
 }

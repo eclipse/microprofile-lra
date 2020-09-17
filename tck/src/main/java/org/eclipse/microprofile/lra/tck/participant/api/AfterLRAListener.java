@@ -22,8 +22,7 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -44,14 +43,14 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVER
  */
 @ApplicationScoped
 @Path(AfterLRAListener.AFTER_LRA_LISTENER_PATH)
-public class AfterLRAListener {
+public class AfterLRAListener extends ResourceParent {
     public static final String AFTER_LRA_LISTENER_PATH = "after-lra-listener";
     public static final String AFTER_LRA_LISTENER_WORK = "work";
 
     private static final String AFTER_LRA = "/after";
 
     @Inject
-    private LRAMetricService lraMetricService;
+    private LRATestService lraTestService;
 
     @PUT
     @Path(AFTER_LRA_LISTENER_WORK)
@@ -65,21 +64,7 @@ public class AfterLRAListener {
     @Path(AFTER_LRA)
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
     public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
-        switch (status) {
-            case Closed:
-                // FALLTHRU
-            case Cancelled:
-                // FALLTHRU
-            case FailedToCancel:
-                // FALLTHRU
-            case FailedToClose:
-                lraMetricService.incrementMetric(
-                        LRAMetricType.valueOf(status.name()),
-                        lraId,
-                        AfterLRAListener.class);
-                return Response.ok().build();
-            default:
-                return Response.status(Response.Status.BAD_REQUEST).build();
-        }
+        return lraTestService.processAfterLRAInfo(lraId, status, AfterLRAListener.class,
+            AFTER_LRA_LISTENER_PATH + AFTER_LRA);
     }
 }

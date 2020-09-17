@@ -19,8 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 
 import javax.ws.rs.GET;
@@ -106,7 +104,4 @@ public interface LRATypeTckInterface {
     @Path(NEVER_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NEVER, end = false)
     Response neverEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId);
-
-    @AfterLRA
-    void afterLRA(URI lraId, LRAStatus status);
 }

@@ -56,7 +56,7 @@ public class TckTestBase {
     private LraTckConfigBean config;
     
     @Inject
-    private LRATestService lraTestService;
+    LRATestService lraTestService;
 
     @Inject
     private LRAMetricService lraMetricService;

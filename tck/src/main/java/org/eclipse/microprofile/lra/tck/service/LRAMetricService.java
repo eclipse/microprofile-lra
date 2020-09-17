@@ -19,8 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-
 import javax.enterprise.context.ApplicationScoped;
 import java.net.URI;
 import java.util.Arrays;
@@ -71,17 +69,35 @@ public class LRAMetricService {
     }
 
     /**
+     * Returns count number for particular metric type.
+     *
+     * @param metricType counter for which the metric type will be returned
+     * @param lraId counter for which lra id will be returned
+     * @return metric counter defined based on the method parameters
+     */
+    public int getMetric(LRAMetricType metricType, URI lraId) {
+        if (metricsPerLra.containsKey(lraId)) {
+            return metricsPerLra.get(lraId).values().stream()
+                .mapToInt(lraMetric -> lraMetric.get(metricType))
+                .sum();
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * Returns count number for particular metric type filtered by LRA id and the participant class
      * which defines the participant name (the fully qualified class name is used for it).
      *
-     * @param metricType  counter for which the metric type will be returned
-     * @param lraId  counter for which lra id will be returned
-     * @param participantClazz  counter for which the participant will be returned
+     * @param metricType counter for which the metric type will be returned
+     * @param lraId counter for which lra id will be returned
+     * @param participantClazz counter for which the participant will be returned
      * @return metric counter defined based on the method parameters
      */
     public int getMetric(LRAMetricType metricType, URI lraId, Class<?> participantClazz) {
         return getMetric(metricType, lraId, participantClazz.getName());
     }
+
 
     /**
      * Returns count number for particular metric type filtered by LRA id and the participant's name.
@@ -106,31 +122,7 @@ public class LRAMetricService {
     public void clear() {
         metricsPerLra.clear();
     }
-
-    /**
-     * TODO if the current PR is acceptable then delete the old isLRAFinished method
-     * (which tests whether an LRA is active by making an attempt to enlist with it
-     * which some spec implementations report as a stack trace WARNING if the LRA is
-     * no longer active).
-     *
-     * @param lraId the LRA id to test
-     * @param participantClazz class of the participant that the metrics parameter applies to
-     * @return whether or not an LRA has finished
-     */
-    boolean isLRAFinished(URI lraId, Class<?> participantClazz) {
-        LRAStatus metricStatus = null;
-        if (getMetric(LRAMetricType.Closed, lraId, participantClazz) >= 1) {
-            metricStatus = LRAStatus.Closed;
-        } else if (getMetric(LRAMetricType.FailedToClose, lraId, participantClazz) >= 1) {
-            metricStatus = LRAStatus.FailedToClose;
-        } else if (getMetric(LRAMetricType.Cancelled, lraId, participantClazz) >= 1) {
-            metricStatus = LRAStatus.Cancelled;
-        } else if (getMetric(LRAMetricType.FailedToCancel, lraId, participantClazz) >= 1) {
-            metricStatus = LRAStatus.FailedToCancel;
-        }
-        return metricStatus != null;
-    }
-
+    
     /**
      * A class to hold all of the metrics gathered in the context of a single LRA.
      * We need stats per LRA since a misbehaving test may leave an LRA in need of

@@ -19,8 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.LRAClientOps;
 
@@ -43,7 +41,7 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT
 @ApplicationScoped
 @Path(NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH)
 @LRA(value = LRA.Type.SUPPORTS, end = false)
-public class NonParticipatingTckResource {
+public class NonParticipatingTckResource extends ResourceParent {
     public static final String TCK_NON_PARTICIPANT_RESOURCE_PATH = "non-participating-tck-resource";
 
     public static final String START_AND_END_PATH = "/start-and-end";
@@ -126,11 +124,6 @@ public class NonParticipatingTckResource {
     public Response notSupportedButCallServiceWhichStartsButDoesntEndAnLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(invokeRestEndpoint(lraId, TCK_NON_PARTICIPANT_RESOURCE_PATH, START_BUT_DONT_END_PATH,
                 200)).build();
-    }
-
-    @AfterLRA
-    public void afterLRA(URI lraId, LRAStatus status) {
-        // no-op, required by the specification (see https://github.com/eclipse/microprofile-lra/pull/265)
     }
 
     private String invokeRestEndpoint(URI lra, String basePath, String path, int coerceResponse) {

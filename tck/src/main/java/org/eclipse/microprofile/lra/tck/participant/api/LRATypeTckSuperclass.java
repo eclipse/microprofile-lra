@@ -19,8 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 
 import javax.ws.rs.GET;
@@ -31,7 +29,7 @@ import java.net.URI;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
-public abstract class LRATypeTckSuperclass {
+public abstract class LRATypeTckSuperclass extends ResourceParent {
 
     public static final String REQUIRED_PATH = "/required";
     public static final String REQUIRES_NEW_PATH = "/requires-new";
@@ -106,9 +104,4 @@ public abstract class LRATypeTckSuperclass {
     @Path(NEVER_WITH_END_FALSE_PATH)
     @LRA(value = LRA.Type.NEVER, end = false)
     public abstract Response neverEndLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId);
-
-    @AfterLRA
-    public void afterLRA(URI lraId, LRAStatus status) {
-        // no-op, required by the specification (see https://github.com/eclipse/microprofile-lra/pull/265)
-    }
 }

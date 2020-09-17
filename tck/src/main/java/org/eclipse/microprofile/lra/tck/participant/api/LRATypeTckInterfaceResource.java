@@ -19,14 +19,12 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
 @Path(LRATypeTckInterfaceResource.TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH)
-public class LRATypeTckInterfaceResource implements LRATypeTckInterface {
+public class LRATypeTckInterfaceResource extends ResourceParent implements LRATypeTckInterface {
 
     public static final String TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH = "lra-type-tck-interface-resource";
 
@@ -76,10 +74,6 @@ public class LRATypeTckInterfaceResource implements LRATypeTckInterface {
 
     public Response neverEndLRA(URI lraId) {
         return Response.ok(lraId).build();
-    }
-
-    public void afterLRA(URI lraId, LRAStatus status) {
-        // no-op, required by the specification (see https://github.com/eclipse/microprofile-lra/pull/265)
     }
 
 }

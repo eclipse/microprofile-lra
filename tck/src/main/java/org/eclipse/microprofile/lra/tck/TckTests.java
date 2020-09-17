@@ -100,7 +100,7 @@ public class TckTests extends TckTestBase {
             lraClient.cancelLRA(lra);
 
             assertTrue("LRA '" + lra + "' should not be active but is not marked as finished",
-                    lraClient.isLRAFinished(lra));
+                    lraTestService.isLRAFinished(lra));
         } catch (GenericLRAException e) {
             e.printStackTrace();
             throw e;
@@ -120,7 +120,7 @@ public class TckTests extends TckTestBase {
         lraClient.closeLRA(lra);
 
         assertTrue("LRA '" + lra + "' should not be active anymore but is not marked as finished",
-                lraClient.isLRAFinished(lra));
+                lraTestService.isLRAFinished(lra));
     }
 
     @Test
@@ -154,7 +154,7 @@ public class TckTests extends TckTestBase {
 
             // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
             assertTrue("Nested LRA id '" + lra + "' should be listed in the list of the active LRAs (from call to "
-                    + resourcePath.getUri() + ")", lraClient.isLRAFinished(nestedLraId));
+                    + resourcePath.getUri() + ")", lraTestService.isLRAFinished(nestedLraId));
         } finally {
             if(response != null) {
                 response.close();
@@ -189,7 +189,7 @@ public class TckTests extends TckTestBase {
 
         // validate that the implementation still knows about lraId
         assertFalse("LRA '" + lra + "' should be active as it is not closed yet but it is marked as finished",
-                lraClient.isLRAFinished(lra));
+                lraTestService.isLRAFinished(lra));
 
         // close the LRA
         lraClient.closeLRA(lra);
@@ -202,7 +202,7 @@ public class TckTests extends TckTestBase {
 
         // check that implementation no longer knows about lraId
         assertTrue("LRA '" + lra + "' should not be active anymore as it was closed yet but is not marked as finished",
-            lraClient.isLRAFinished(lra));
+            lraTestService.isLRAFinished(lra));
     }
 
     @Test
@@ -214,7 +214,7 @@ public class TckTests extends TckTestBase {
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
         lraClient.closeLRA(lra);
         assertTrue("LRA '" + lra + "' should be active as it is not closed yet but it is marked as finished",
-                lraClient.isLRAFinished(lra));
+                lraTestService.isLRAFinished(lra));
     }
 
     /**
@@ -404,7 +404,7 @@ public class TckTests extends TckTestBase {
             lraMetric.assertNotCompleted(String.format("acceptTest with cancel: participant (%s) was asked to complete",
                     resourcePath.getUri()), lra, LraResource.class);
         }
-        assertTrue("acceptTest: LRA " + lra + " did not finish", lraClient.isLRAFinished(lra));
+        assertTrue("acceptTest: LRA " + lra + " did not finish", lraTestService.isLRAFinished(lra));
     }
 
     @Test
@@ -602,7 +602,7 @@ public class TckTests extends TckTestBase {
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
-                lraClient.isLRAFinished(URI.create( lraArray[0])));
+                lraTestService.isLRAFinished(URI.create(lraArray[0])));
 
         lraTestService.waitForCallbacks(lra);
 
@@ -647,7 +647,7 @@ public class TckTests extends TckTestBase {
         IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertTrue(
                 String.format("multiLevelNestedActivity: %s LRA still active (resource path was %s)",
                         (i == 0 ? "top level" : "nested"), resourcePath.getUri()),
-                lraClient.isLRAFinished(URI.create(lraArray[i]))));
+                lraTestService.isLRAFinished(URI.create(lraArray[i]))));
 
         lraTestService.waitForCallbacks(lra);
 

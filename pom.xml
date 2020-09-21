@@ -20,7 +20,7 @@
     <groupId>org.eclipse.microprofile.lra</groupId>
     <artifactId>microprofile-lra-parent</artifactId>
     <name>MicroProfile Long Running Actions</name>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-M2</version>
     <description>Eclipse MicroProfile LRA Feature - Parent POM</description>
     <packaging>pom</packaging>
 
@@ -68,7 +68,7 @@
         <connection>scm:git:https://github.com/eclipse/microprofile-lra.git</connection>
         <developerConnection>scm:git:git@github.com:eclipse/microprofile-lra.git</developerConnection>
         <url>https://github.com/eclipse/microprofile-lra</url>
-        <tag>HEAD</tag>
+        <tag>1.0-M2</tag>
     </scm>
 
     <distributionManagement>
@@ -245,7 +245,7 @@
                                     <property name="option" value="text" />
                                 </module>
                                 <module name="WhitespaceAround">
-                                  <property name="tokens" value="LITERAL_ELSE"/>
+                                  <property name="tokens" value="LITERAL_ELSE" />
                                 </module>
                                 <module name="NeedBraces" />
                                 <module name="EmptyStatement" />

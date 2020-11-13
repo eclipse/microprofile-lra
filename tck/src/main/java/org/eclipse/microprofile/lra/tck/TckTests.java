@@ -604,7 +604,10 @@ public class TckTests extends TckTestBase {
         assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
                 lraTestService.isLRAFinished(URI.create(lraArray[0])));
 
-        lraTestService.waitForCallbacks(lra);
+        // starting at index 1 as LRAResource#multiLevelNestedActivity returns the top-level LRA as the first argument which was not finished yet
+        IntStream.range(1, uris.length).parallel().forEach(i -> {
+            lraTestService.waitForCallbacks(uris[i]);
+        });
 
         // check that all nested activities were told to complete
         lraMetric.assertCompletedAllEquals("multiLevelNestedActivity: step 3 (called test path " +

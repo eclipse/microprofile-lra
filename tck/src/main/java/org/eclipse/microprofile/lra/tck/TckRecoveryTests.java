@@ -67,17 +67,12 @@ import static org.junit.Assert.assertThat;
 public class TckRecoveryTests {
     private static final Logger LOG = Logger.getLogger(TckRecoveryTests.class.getName());
     
-    public static final String LRA_TCK_DEPLOYMENT_URL = "LRA-TCK-Deployment-URL";
-
     private static final String DEPLOYMENT_NAME = "tck-recovery";
     private static final Logger LOGGER = Logger.getLogger(TckRecoveryTests.class.getName());
 
     @ArquillianResource
     private Deployer deployer;
     
-    @ArquillianResource
-    private URL deploymentURL;
-
     private LRATestService lraTestService;
     private Client deploymentClient;
     private WebTarget deploymentTarget;
@@ -86,13 +81,10 @@ public class TckRecoveryTests {
     public TestName testName = new TestName();
         
     @Before
-    public void before() throws URISyntaxException {
+    public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
-        
-        deploymentClient = ClientBuilder.newClient();
-        deploymentTarget = deploymentClient.target(deploymentURL.toURI());
-        lraTestService = new LRATestService();
-        lraTestService.start(deploymentURL);
+        // deploy the test service
+        deployer.deploy(DEPLOYMENT_NAME);
     }
     
     @After
@@ -125,9 +117,8 @@ public class TckRecoveryTests {
      * = cancel the LRA and verify that the callbacks have been sent
      */
     @Test
-    public void testCancelWhenParticipantIsRestarted() {
-        // deploy the test service
-        deployer.deploy(DEPLOYMENT_NAME);
+    public void testCancelWhenParticipantIsRestarted(@ArquillianResource URL deploymentURL) {
+        clientServiceSetup(deploymentURL);
 
         // starting and enlisting to LRA
         Response response = deploymentTarget
@@ -169,9 +160,8 @@ public class TckRecoveryTests {
      * - verify that the Compensate callbacks have been received
      */
     @Test
-    public void testCancelWhenParticipantIsUnavailable() {
-        // deploy the test service
-        deployer.deploy(DEPLOYMENT_NAME);
+    public void testCancelWhenParticipantIsUnavailable(@ArquillianResource URL deploymentURL) {
+        clientServiceSetup(deploymentURL);
 
         // starting and enlisting to LRA
         Response response = deploymentTarget
@@ -232,5 +222,16 @@ public class TckRecoveryTests {
     private long adjustTimeoutByDefaultFactor(long timeout) {
         String timeoutFactor = System.getProperty(LraTckConfigBean.LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, "1.0");
         return (long) Math.ceil(timeout * Double.parseDouble(timeoutFactor));
+    }
+
+    private void clientServiceSetup(URL deploymentURL) {
+        try {
+            deploymentClient = ClientBuilder.newClient();
+            deploymentTarget = deploymentClient.target(deploymentURL.toURI());
+            lraTestService = new LRATestService();
+            lraTestService.start(deploymentURL);
+        } catch (URISyntaxException use) {
+            throw new IllegalStateException("Cannot create URI from deployment URL " + deploymentURL, use);
+        }
     }
 }

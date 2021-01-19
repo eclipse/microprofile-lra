@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -26,23 +26,23 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
  * A representation of the status of a participant according to a
  * participant state model:
  *
- * The initial state Active is entered when a participant is first
+ * The initial state {@link #Active} is entered when a participant is first
  * associated with a Long Running Action.
  *
- * The state Compensating is entered when a compensate
+ * The state {@link #Compensating} is entered when a compensate
  * notification is received (which indicates that the associated
- * LRA was cancelled). The transition to end state Compensated
+ * LRA was cancelled). The transition to end state {@link #Compensated}
  * should occur when the participant has compensated for any actions
  * it performed when the LRA was executing. If compensation is not,
- * and will never be, possible then the final state of FailedToCompensate
+ * and will never be, possible then the final state of {@link #FailedToCompensate}
  * is entered and the participant cannot leave this state until it receives
- * a forget notification {@link Forget}.
+ * a {@link Forget} notification.
  *
- * The state Completing is entered when a complete
+ * The state {@link #Completing} is entered when a complete
  * notification is received (which indicates that the associated
- * LRA was closed). This state is followed by Completed
- * or FailedToComplete depending upon whether the participant was or
- * was not able to tidy up.
+ * LRA was closed). This state is followed by the {@link #Completed}
+ * or {@link #FailedToComplete} state depending upon whether the participant
+ * was or was not able to tidy up.
  *
  * Note that a particant can leave this state model via the {@link Leave}
  * annotation provided that the associated LRA is in the state
@@ -57,7 +57,7 @@ public enum ParticipantStatus {
      */
     Active,
     /**
-     * The participant is currently compensating any work it performed
+     * The participant is currently compensating for any work it performed
      */
     Compensating,
     /**
@@ -65,7 +65,7 @@ public enum ParticipantStatus {
      */
     Compensated,
     /**
-     * The participant was not able to compensate the work it performed (and must
+     * The participant was not able to compensate for the work it performed (and it must
      * remember it could not compensate until such time that it receives a forget
      * message ({@link Forget})
      */

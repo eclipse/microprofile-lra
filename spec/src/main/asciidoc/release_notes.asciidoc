@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019 Contributors to the Eclipse Foundation
+// Copyright (c) 2019-2021 Contributors to the Eclipse Foundation
 //
 // See the NOTICE file(s) distributed with this work for additional
 // information regarding copyright ownership.
@@ -66,12 +66,15 @@ Provides CDI annotations:
 |@Complete
 |Indicates that the method should be invoked if the LRA is closed.
 |Optional
+
 |@Leave
 |Indicates that this class is no longer interested in this LRA.
 |Yes
+
 |@Status
 |When the annotated method is invoked it should report the status.
 |Optional
+
 |@Forget
 |The method may release any resources associated with the LRA
 |Optional

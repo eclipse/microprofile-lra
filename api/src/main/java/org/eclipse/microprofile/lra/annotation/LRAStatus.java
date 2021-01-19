@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -24,21 +24,21 @@ package org.eclipse.microprofile.lra.annotation;
  * A representation of the status of a Long Running Action according to a
  * LRA state model:
  *
- * The initial state Active is entered when an LRA is created.
+ * The initial state {@link #Active} is entered when an LRA is created.
  *
- * The state Cancelling is entered when a request to cancel
- * an LRA is received. The transition to end state Cancelled
+ * The state {@link #Cancelling} is entered when a request to cancel
+ * an LRA is received. The transition to end state {@link #Cancelled}
  * should occur when all the enlisted participants have indicated that
  * they successfully compensated for any actions they performed when the
  * LRA was executing. If any participant could not, and will never be able
- * to, compensate then the final state of FailedToCancel is entered.
+ * to, compensate then the final state of {@link #FailedToCancel} is entered.
  *
- * The state Closing is entered when a request to close
- * an LRA is received. The transition to end state Closed
+ * The state {@link #Closing} is entered when a request to close
+ * an LRA is received. The transition to end state {@link #Closed}
  * should occur when all the enlisted participants have indicated that
  * they successfully completed any actions they performed when the
  * LRA was executing. If any participant could not, and will never be able
- * to, complete then the final state of FailedToComplete is entered
+ * to, complete then the final state of {@link #FailedToClose} is entered.
  */
 public enum LRAStatus {
     /**

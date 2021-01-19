@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -28,6 +28,7 @@ import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.Status;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -43,7 +44,8 @@ import java.time.temporal.ChronoUnit;
  *
  * <p>
  * This annotation MUST be combined with either the {@link Compensate} or the
- * {@link AfterLRA} annotation otherwise the deployment will be rejected.
+ * {@link AfterLRA} annotated methods in the same bean class otherwise
+ * the deployment will be rejected.
  * </p>
  *
  * <p>
@@ -53,12 +55,11 @@ import java.time.temporal.ChronoUnit;
  * </p>
  *
  * <ul>
- *   <li>any incoming context should be suspended and if so if a new one should be
- *       started</li>
+ *   <li>any incoming context should be suspended and if so if a new one should be started</li>
  *   <li>to start a new LRA</li>
  *   <li>to end any LRA context when the method ends</li>
- *   <li>to return a error status code without running the annotated method if
- *       there should have been an LRA context present on method entry</li>
+ *   <li>to return an error status code without running the annotated method if
+ *       there should have been an LRA context present on the method entry</li>
  *   <li>to cancel the LRA context when the method returns particular HTTP
  *       status codes</li>
  * </ul>
@@ -85,15 +86,14 @@ import java.time.temporal.ChronoUnit;
  *
  * <p>
  * If an LRA is propagated to a resource that is not annotated with any
- * particular LRA behavior, then the value of the <code>mp.lra.propagation.active</code> configuration parameter
+ * particular LRA behavior, then the MicroProfile Config value <code>mp.lra.propagation.active</code>
  * determines how the LRA is propagated. The default of this parameter is <code>true</code> which
- * means that the LRA must be propagated to outgoing requests.
- * For example, suppose resource <code>A</code>
- * starts an LRA and then performs a JAX-RS request to resource <code>B</code> which
- * does not contain any LRA annotations. If resource <code>B</code> then performs a
- * JAX-RS request to a third service, <code>C</code> say, which does contain LRA
- * annotations then the LRA context started at <code>A</code> must be propagated
- * to <code>C</code> (for example if <code>C</code> uses an annotation to join the LRA,
+ * means that the LRA will be propagated to outgoing requests.
+ * For example, suppose resource <code>A</code> starts an LRA and then performs a JAX-RS request
+ * to resource <code>B</code> which does not contain any LRA annotations. If resource
+ * <code>B</code> then performs a JAX-RS request to a third service, <code>C</code> say,
+ * which does contain LRA annotations then the LRA context started at <code>A</code> must be
+ * propagated to <code>C</code> (for example, if <code>C</code> uses an annotation to join the LRA,
  * then <code>C</code> must be enlisted in the LRA that was started at <code>A</code>).
  * </p>
  *
@@ -109,14 +109,14 @@ import java.time.temporal.ChronoUnit;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface LRA {
     /**
-     * When a JAX-RS invocation is made with an active LRA it is made available
+     * When a JAX-RS invocation is made with an active LRA, it is made available
      * via an HTTP header field with the following name. The value contains
-     * the LRA id associated with the HTTP request/response and is of type {@link java.net.URI}.
+     * the LRA id associated with the HTTP request/response and it is of type {@link java.net.URI}.
      */
     String LRA_HTTP_CONTEXT_HEADER = "Long-Running-Action";
 
     /**
-     * Header name holding the LRA context of an LRA that has finished - to be
+     * The header name holding the LRA context of an LRA that has finished - to be
      * used in conjunction with the {@link AfterLRA} annotation.
      */
     String LRA_HTTP_ENDED_CONTEXT_HEADER = "Long-Running-Action-Ended";
@@ -124,11 +124,11 @@ public @interface LRA {
     /**
      * When an implementation of the LRA specification invokes any of the
      * participant callbacks (namely {@link Compensate}, {@link Complete},
-     * {@link org.eclipse.microprofile.lra.annotation.Status}, {@link Forget}
-     * and {@link AfterLRA}) in the context of a nested LRA it must ensure that
-     * the parent LRA is made available via an HTTP header field with the
-     * following name. The value contains the parent LRA id associated with
-     * the HTTP request/response and is of type {@link java.net.URI}.
+     * {@link Status}, {@link Forget}, and {@link AfterLRA}) in the context
+     * of a nested LRA it must ensure that the parent LRA is made available
+     * via an HTTP header field with the following name. The value contains
+     * the parent LRA context associated with the HTTP request/response and
+     * it is of type {@link java.net.URI}.
      */
     String LRA_HTTP_PARENT_CONTEXT_HEADER = "Long-Running-Action-Parent";
 
@@ -140,7 +140,7 @@ public @interface LRA {
 
     /**
      * <p>
-     *     The Type element of the LRA annotation indicates whether a resource method
+     *     The {@link Type} element of the LRA annotation indicates whether a resource method
      *     is to be executed within the context of an LRA.
      * </p>
      *
@@ -160,7 +160,7 @@ public @interface LRA {
      * <p>
      *     If the method is to run in the context of an LRA and the annotated class
      *     also contains a method annotated with {@link AfterLRA}
-     *     then the resource will be notified of the final state of the LRA.
+     *     then the resource will also be notified of the final state of the LRA.
      * </p>
      *
      * <p>
@@ -169,13 +169,13 @@ public @interface LRA {
      * </p>
      *
      * <p>
-     *     If the method does run in the context of an LRA then the application
-     *     can control whether or not it is closed when the method returns using
+     *     If the method runs in the context of an LRA then the application
+     *     can control whether or not it is closed when the method finishes using
      *     the {@link LRA#end()} element.
      * </p>
      *
      * <p>
-     *     When an LRA is present its identifier is made available to
+     *     When an LRA is present, its identifier is made available to
      *     the business logic in the JAX-RS request and response headers with the
      *     name {@value #LRA_HTTP_CONTEXT_HEADER} of type {@link java.net.URI}.
      * </p>
@@ -247,12 +247,12 @@ public @interface LRA {
 
         /**
          * <p>
-         *     If called outside an LRA context, i.e. {@link #LRA_HTTP_CONTEXT_HEADER} is not present,
+         *     If called outside an LRA context, i.e., {@link #LRA_HTTP_CONTEXT_HEADER} is not present,
          *     the resource method execution must then continue outside an LRA context.
          * </p>
          *
          * <p>
-         *     If called inside an LRA context, i.e. {@link #LRA_HTTP_CONTEXT_HEADER} is present referring
+         *     If called inside an LRA context, i.e., {@link #LRA_HTTP_CONTEXT_HEADER} is present referring
          *     to an active, inactive or non-existent LRA, the method is not executed and a
          *     <code>412 Precondition Failed</code> HTTP status code is returned
          *     to the caller.
@@ -265,13 +265,13 @@ public @interface LRA {
          *     An LRA (called the child) can be scoped within an existing LRA
          *     (called the parent) using the NESTED element value. A new LRA will be
          *     created even if there is already one present when the method is invoked,
-         *     i.e. these LRAs will then either be top-level or nested automatically
+         *     i.e., these LRAs will then either be top-level or nested automatically
          *     depending upon the context within which they are created. If invoked
-         *     without a context the new LRA will be top level. If invoked with an
-         *     LRA present a new nested LRA is started whose outcome depends upon
+         *     without a context, the new LRA will be top level. If invoked with an
+         *     LRA present, a new nested LRA is started whose outcome depends upon
          *     whether or not the enclosing LRA is closed or cancelled.
          *     The id of the parent LRA MUST be present in the header with the name
-         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER} and value is of type {@link java.net.URI}.
+         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER} and the value is of type {@link java.net.URI}.
          * </p>
          *
          * <p>
@@ -384,7 +384,7 @@ public @interface LRA {
      * If the annotated method runs with an LRA context then this element determines
      * whether or not it is closed when the method returns. If the element has the
      * value {@literal true} then the LRA will be ended and all participants that
-     * have the @Complete annotation MUST eventually be asked to complete.
+     * have the {@link Complete} annotation MUST eventually be asked to complete.
      * If the element has the value {@literal false} then the LRA will not be ended
      * when the method finishes.
      * </p>
@@ -393,7 +393,7 @@ public @interface LRA {
      * If the <code>end</code> value is set to {@literal false} but the annotated
      * method finishes with a status code that matches any of the values specified
      * in the {@link #cancelOn()} or {@link #cancelOnFamily()} elements
-     * then the  LRA will be cancelled. In other words the
+     * then the  LRA will be cancelled. In other words, the
      * {@link #cancelOn()} and {@link #cancelOnFamily()} elements take precedence
      * over the <code>end</code> element.
      * </p>
@@ -410,7 +410,7 @@ public @interface LRA {
      * has already been closed when the annotated method returns then this
      * element is silently ignored, Cancelling an LRA means that all
      * participants will eventually be asked to compensate (by having
-     * their @Compensate annotated method invoked).
+     * their {@link Compensate} annotated method invoked).
      * </p>
      *
      * <p>
@@ -434,14 +434,14 @@ public @interface LRA {
      * has already been closed when the annotated method returns then this
      * element is silently ignored, Cancelling an LRA means that all
      * participants will eventually be asked to compensate (by having
-     * their @Compensate annotated method invoked).
+     * their {@link Compensate} annotated method invoked).
      * </p>
      *
      * <p>
      * If a JAX-RS method is annotated with this element and the method
      * returns a response code which matches any of the specified status
      * codes then the LRA will be cancelled. The method can return status
-     * codes in a {@link Response} or via an exception mappper.
+     * codes in a {@link Response} or via a JAX-RS exception mappper.
      * </p>
      *
      * @return the {@link Response.Status} HTTP status codes that will cause

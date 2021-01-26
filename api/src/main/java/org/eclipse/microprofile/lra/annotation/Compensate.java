@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -46,15 +46,15 @@ import java.lang.annotation.Target;
  *
  * <p>
  * If the annotation is applied to a JAX-RS resource method then the request
- * method MUST be {@link javax.ws.rs.PUT}. The id of the currently
+ * method MUST be {@link javax.ws.rs.PUT}. The LRA context of the currently
  * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
  * this LRA is nested then the parent LRA MUST be present in the header with the name
- * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+ * {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
  * and the header value will be of type {@link java.net.URI}.
  * </p>
  *
  * <p>
- * If the annotated method is not a JAX-RS resource method then the id of the currently
+ * If the annotated method is not a JAX-RS resource method then the LRA context of the currently
  * running LRA and its parent LRA (if it is nested) can be obtained by adhering to
  * predefined method signatures as defined in the LRA specification document.
  * For example,
@@ -68,14 +68,15 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * would be a valid compensation method declaration. If an invalid signature is detected 
+ * would be a valid compensation method declaration. If an invalid signature is detected,
  * the implementation of this specification MUST prohibit successful startup of the application
  * (e.g. with a runtime exception).
  * </p>
  *
  * <p>
  * If the participant cannot compensate immediately then it must report that the
- * compensation is in progress by either returning a future (such as
+ * compensation request was received and that the compensation is in progress by
+ * either returning a future (such as
  * {@link java.util.concurrent.CompletionStage}) which will eventually report
  * one of the final states, or a <code>202 Accepted</code> JAX-RS response code or,
  * in the case of non JAX-RS resource methods, by returning
@@ -84,12 +85,12 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * Note that, according to the state model defined by {@link LRAStatus}, it is not possible
+ * Note that according to the state model defined by {@link LRAStatus}, it is not possible
  * to receive compensation notifications after an LRA has been asked to cancel.
  * Therefore combining this annotation with an <code>&#64;LRA</code> annotation that does not
  * start a new LRA will result in a <code>412 PreCondition Failed</code> JAX-RS response
  * code. On the other hand, combining it with an <code>&#64;LRA</code> annotation that
- * begins a new LRA can in certain uses case make sense, but in this case the LRA
+ * begins a new LRA can in certain use cases make sense, but in this case, the LRA
  * that this method is being asked to compensate for will be unavailable.
  * </p>
  *
@@ -151,8 +152,8 @@ import java.lang.annotation.Target;
  * <p>
  * The implementation will handle the return code 410 in the same way
  * as the return code 200. Specifically, when the implementation calls the Compensate method
- * as a result of the LRA being cancelled, and the participant returns the code
- * 410, the implementation assumes that the action is compensated and participant returns
+ * as a result of the LRA being cancelled and the participant returns the code
+ * 410, the implementation assumes that the action is compensated and the participant returned
  * a 410 since participant is allowed to forget about an action which is completely
  * handled by the participant.
  * </p>
@@ -169,7 +170,7 @@ import java.lang.annotation.Target;
  *
  * <ol>
  * <li>The implementation invokes the compensate method via JAX-RS.</li>
- * <li>The JAX-RS server returns a 500 code (ie the notification does not reach the participant).</li>
+ * <li>The JAX-RS server returns a 500 code (i.e., the notification does not reach the participant).</li>
  * <li>If there is a status method then the implementation uses that to get the current
  * state of the participant. If the status is Active then the implementation may
  * infer that the original request never reached the participant so it is safe to

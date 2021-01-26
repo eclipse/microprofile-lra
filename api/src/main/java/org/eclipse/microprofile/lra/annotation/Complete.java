@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -41,9 +41,10 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * In the case where the ability to complete the Long Running Action is time bounded, you can limit the lifespan
- * of the Long Running action by providing values for the {@link LRA#timeLimit()} and {@link LRA#timeUnit()} timeUnit} attributes.
- * When the time limit is reached the LRA becomes eligible for automatic cancellation.
+ * In the case where the ability to complete the Long Running Action is time bounded,
+ * you can limit the lifespan of the Long Running action by providing values for the
+ * {@link LRA#timeLimit()} and {@link LRA#timeUnit()} timeUnit} attributes. When the
+ * time limit is reached the LRA becomes eligible for automatic cancellation.
  * </p>
  *
  * <p>
@@ -51,8 +52,8 @@ import java.lang.annotation.Target;
  * method MUST be {@link javax.ws.rs.PUT}. The id of the currently
  * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
  * this LRA is nested then the parent LRA MUST be present in the header with the name
- * {@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
- * and the header value will be of type {@link java.net.URI}.
+ * {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER} and the header value will be of type
+ * {@link java.net.URI}.
  * </p>
  *
  * <p>
@@ -78,7 +79,7 @@ import java.lang.annotation.Target;
  * <p>
  * If the participant cannot complete immediately then it must report that
  * completion is in progress by either returning a future (such as
- *  * {@link java.util.concurrent.CompletionStage}) which will eventually report
+ * {@link java.util.concurrent.CompletionStage}) which will eventually report
  * one of the final states, or a <code>202 Accepted</code> JAX-RS response code or,
  * in the case of non JAX-RS resource methods, by returning
  * {@link ParticipantStatus#Completing} (see the specification
@@ -86,7 +87,7 @@ import java.lang.annotation.Target;
  * </p>
  *
  * <p>
- * Note that, according to the state model defined by {@link LRAStatus}, it is not possible
+ * Note that according to the state model defined by {@link LRAStatus}, it is not possible
  * to receive completion notifications after an LRA has been asked to close.
  * Therefore combining this annotation with an <code>&#64;LRA</code> annotation that does not
  * start a new LRA will result in a <code>412 PreCondition Failed</code> JAX-RS response
@@ -139,8 +140,7 @@ import java.lang.annotation.Target;
  *   status using the {@link Status} annotation if present.
  *   </p>
  *   <p>
- *   Note that the
- *   actual state as reported by the {@link Status} method MUST
+ *   Note that the actual state as reported by the {@link Status} method MUST
  *   be {@link ParticipantStatus#FailedToComplete}</p></td>
  * </tr>
  * <tr>
@@ -153,7 +153,7 @@ import java.lang.annotation.Target;
  * <p>
  * The implementation will handle the return code 410 in the same way
  * as the return code 200. Specifically, when the implementation calls the Complete method
- * as a result of the LRA being closed, and the participant returns the code
+ * as a result of the LRA being closed and the participant returns the code
  * 410, the implementation assumes that the action is completed and participant returns
  * a 410 since participant is allowed to forget about an action which is completely
  * handled by the participant.
@@ -171,7 +171,7 @@ import java.lang.annotation.Target;
  *
  * <ol>
  * <li>The implementation invokes the complete method via JAX-RS.</li>
- * <li>The JAX-RS server returns a 500 code (ie the notification does not reach the participant).</li>
+ * <li>The JAX-RS server returns a 500 code (i.e., the notification does not reach the participant).</li>
  * <li>If there is a status method then the implementation uses that to get the current
  * state of the participant. If the status is Active then the implementation may
  * infer that the original request never reached the participant so it is safe to

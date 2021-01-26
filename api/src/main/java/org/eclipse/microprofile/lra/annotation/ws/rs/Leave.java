@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2018-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -48,18 +48,17 @@ import java.lang.annotation.Target;
  * from the incoming context and will be enlisted with the new context (and the method
  * will execute with this new context). Note that in this case the context exposed in
  * the <code>&#64;LRA_HTTP_CONTEXT_HEADER</code> JAX-RS header will be set to the new LRA (and
- * not the original
- * one), ie the original context will not be available to the business logic.
+ * not the original one), i.e., the original context will not be available to the business logic.
  * </p>
  *
  * <p>
  * Also note that it is not possible to join or leave an LRA that has already
- * been asked to cancel or close (since that would conflict with the
- * the participant state model as defined in the LRA specification).
+ * been asked to cancel or close since that would conflict with the
+ * the participant state model as defined in the LRA specification.
  * </p>
  *
  * <p>
- * Leaving a particular LRA has no effect on any other LRA - ie the same
+ * Leaving a particular LRA has no effect on any other LRA - i.e., the same
  * resource can be enlisted with many different LRAs and leaving one
  * particular LRA will not affect its participation in any of the other
  * LRAs it has joined.

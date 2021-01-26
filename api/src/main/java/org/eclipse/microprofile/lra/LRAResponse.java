@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (c) 2020 Contributors to the Eclipse Foundation
+ * Copyright (c) 2020-2021 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -23,7 +23,7 @@ package org.eclipse.microprofile.lra;
 import javax.ws.rs.core.Response;
 
 /**
- * Utility class that will create the correct {@link Response} or {@link Response.ResponseBuilder}
+ * The utility class that will create the correct {@link Response} or {@link Response.ResponseBuilder}
  * for the response that should be returned from the LRA JAX-RS methods.
  */
 public final class LRAResponse {

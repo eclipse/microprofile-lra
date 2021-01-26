@@ -12,9 +12,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-:revnumber: 0.1
-:revdate: 2018-03-27
-:revremark: Specification
+:author: The MicroProfile community and its contributors
 :version-label!:
 :sectanchors:
 :doctype: book
@@ -22,7 +20,6 @@
 :source-highlighter: coderay
 :toc: left
 :toclevels: 4
-:sectnums:
 ifdef::backend-pdf[]
 :pagenums:
 endif::[]
@@ -32,9 +29,11 @@ endif::[]
 
 
 [[long-running-actions]]
-= Eclipse MicroProfile LRA
+= MicroProfile LRA
 
-include::license-alv2.asciidoc[]
+// == License
+:sectnums!:
+include::license-efsl.adoc[]
 
 [[introduction]]
 == Introduction

@@ -35,23 +35,24 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+
+import static org.junit.Assert.assertThrows;
 
 /**
  * <p>
  * TCK that verifies that invalid non-JAX-RS participant method signatures are reported during deployment
  * </p>
- * 
+ *
  * <p>
- * Each test deploys an archive containing single invalid participant containing an error in its participant 
+ * Each test deploys an archive containing single invalid participant containing an error in its participant
  * method signature and expects that such deployment is aborted according to the specification.
  * </p>
  */
 @RunWith(Arquillian.class)
 public class TckInvalidSignaturesTests {
-    
+
     private static final String INVALID_RETURN_TYPE_DEPLOYMENT = "nonjaxrs-return-type-deploy";
     private static final String TOO_MANY_ARGS_DEPLOYMENT = "too-many-args-deploy";
     private static final String INVALID_ARGUMENT_TYPE_DEPLOYMENT = "nonjaxrs-argument-type-deploy";
@@ -59,14 +60,11 @@ public class TckInvalidSignaturesTests {
     private static final String INVALID_LRA_RESOURCE_DEPLOYMENT = "invalid-lra-resource-deploy";
 
     @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    @Rule
     public DeploymentNameRule deploymentNameRule = new DeploymentNameRule();
 
     @ArquillianResource
     private Deployer deployer;
-    
+
     @Deployment(name = INVALID_RETURN_TYPE_DEPLOYMENT, managed = false)
     public static WebArchive deployInvalidReturnTypeParticipant() {
         return createArchive(InvalidReturnTypeParticipant.class);
@@ -81,7 +79,7 @@ public class TckInvalidSignaturesTests {
     public static WebArchive deployInvalidArgumentTypeParticipant() {
         return createArchive(InvalidArgumentTypesParticipant.class);
     }
-    
+
     @Deployment(name = INVALID_AFTER_LRA_SIGNATURE_DEPLOYMENT, managed = false)
     public static WebArchive deployInvalidAfterLRASignatureResource() {
         return createArchive(InvalidAfterLRASignatureListener.class);
@@ -99,7 +97,7 @@ public class TckInvalidSignaturesTests {
             .addClasses(resourceClass, JaxRsActivator.class)
             .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
-    
+
     @After
     public void after() {
         deployer.undeploy(deploymentNameRule.deploymentName);
@@ -147,13 +145,11 @@ public class TckInvalidSignaturesTests {
 
     private void testInvalidDeployment(String deploymentName) {
         deploymentNameRule.deploymentName = deploymentName;
-        expectedException.expect(DeploymentException.class);
-
-        deployer.deploy(deploymentName);
+        assertThrows(DeploymentException.class, () -> deployer.deploy(deploymentName));
     }
 
     private static final class DeploymentNameRule extends TestName {
-        
+
         String deploymentName;
     }
 }

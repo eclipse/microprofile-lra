@@ -360,6 +360,8 @@ public class LraResource extends ResourceParent {
     /**
      * Used to close nested LRA in which this resource is enlisted
      *
+     * @param lraId the id of the LRA
+     * @return the JAX-RS response indicating that LRA should be cancelled
      * @see org.eclipse.microprofile.lra.tck.TckTests#mixedMultiLevelNestedActivity
      */
     @PUT
@@ -430,6 +432,11 @@ public class LraResource extends ResourceParent {
     }
 
     /**
+     * Starts an LRA with the time limit and verifies that after the timelimit is passed the
+     * LRA is finished by the invocation to a mandatory LRA endpoint (which should fail with 412)
+     *
+     * @param lraId the id of the LRA
+     * @return the JAX-RS response 200 if successful or the received HTTP status call otherwise
      * @see org.eclipse.microprofile.lra.tck.TckTests#timeLimitWithPreConditionFailed
      */
     @GET

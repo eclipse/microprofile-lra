@@ -49,7 +49,7 @@ import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * <p>
@@ -66,27 +66,27 @@ import static org.junit.Assert.assertThat;
 @RunAsClient
 public class TckRecoveryTests {
     private static final Logger LOG = Logger.getLogger(TckRecoveryTests.class.getName());
-    
+
     private static final String DEPLOYMENT_NAME = "tck-recovery";
     private static final Logger LOGGER = Logger.getLogger(TckRecoveryTests.class.getName());
 
     @ArquillianResource
     private Deployer deployer;
-    
+
     private LRATestService lraTestService;
     private Client deploymentClient;
     private WebTarget deploymentTarget;
 
     @Rule
     public TestName testName = new TestName();
-        
+
     @Before
     public void before() {
         LOGGER.info("Running test: " + testName.getMethodName());
         // deploy the test service
         deployer.deploy(DEPLOYMENT_NAME);
     }
-    
+
     @After
     public void after() {
         try {
@@ -108,13 +108,15 @@ public class TckRecoveryTests {
      * This test verifies that if the microservice application fails after
      * it enlists with a LRA and then it is restarted again the Compensate
      * callbacks are still received correctly.
-     * 
+     *
      * Scenario:
      * - start a new container with a single LRA resource
      * - start a new LRA and enlist LRA resource
      * - kill the container/application
      * - start the container/application
      * = cancel the LRA and verify that the callbacks have been sent
+     *
+     * @param deploymentURL the URL of the arquillian deployment
      */
     @Test
     public void testCancelWhenParticipantIsRestarted(@ArquillianResource URL deploymentURL) {
@@ -149,7 +151,7 @@ public class TckRecoveryTests {
      * enlisted with the LRA fails and the LRA is ended during the time
      * the service is still down, the Compensate callbacks are received
      * when the microservice application is started again.
-     * 
+     *
      * Scenario:
      * - start a new container with a single LRA resource
      * - start a new LRA and enlist the LRA resource with it
@@ -158,6 +160,8 @@ public class TckRecoveryTests {
      * - start the container again
      * - replay the end phase to get Compensate calls redelivered
      * - verify that the Compensate callbacks have been received
+     *
+     * @param deploymentURL the URL of the arquillian deployment
      */
     @Test
     public void testCancelWhenParticipantIsUnavailable(@ArquillianResource URL deploymentURL) {
@@ -174,7 +178,7 @@ public class TckRecoveryTests {
 
         // kill the test service while LRA is still active
         deployer.undeploy(DEPLOYMENT_NAME);
-        
+
         // Wait for the timeout cancellation of the LRA. This will put the LRA into cancel only state.
         // Then wait for the short delay to actually perform the cancellation while the service is still down.
         // Compensate should be attempted to be called while the participant service is down
@@ -189,7 +193,7 @@ public class TckRecoveryTests {
 
         // start the test service again
         deployer.deploy(DEPLOYMENT_NAME);
-        
+
         // trigger recovery causing the Compensate call to be replayed
         lraTestService.waitForRecovery(lra);
 

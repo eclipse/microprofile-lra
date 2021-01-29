@@ -39,8 +39,8 @@ import java.lang.annotation.Target;
  *
  * <p>
  * Similar remarks apply if the participant was enlisted in a
- * nested LRA ({@link LRA.Type#NESTED}). Actions performed in the context
- * of a nested LRA must remain compensatable until the participant
+ * nested LRA ({@link org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type#NESTED}).
+ * Actions performed in the context of a nested LRA must remain compensatable until the participant
  * is explicitly told it can clean up using this <code>&#64;Forget</code>
  * annotation.
  * </p>
@@ -70,7 +70,7 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * would be a valid forget method declaration. If an invalid signature is detected 
+ * would be a valid forget method declaration. If an invalid signature is detected
  * the implementation of this specification MUST prohibit successful startup of the application
  * (e.g. with a runtime exception).
  * </p>

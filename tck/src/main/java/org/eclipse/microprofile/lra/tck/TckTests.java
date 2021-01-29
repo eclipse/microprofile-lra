@@ -29,7 +29,6 @@ import org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 import org.hamcrest.Matchers;
-import org.hamcrest.core.IsEqual;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -60,11 +59,11 @@ import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.TRANS
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.JOIN_WITH_EXISTING_LRA_PATH2;
 import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.TCK_PARTICIPANT_RESOURCE_PATH;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -76,7 +75,7 @@ public class TckTests extends TckTestBase {
 
     @Inject
     private LRATestService lraTestService;
-    
+
     private enum CompletionType {
         complete, compensate, mixed
     }
@@ -135,21 +134,21 @@ public class TckTests extends TckTestBase {
                     .request()
                     .header(LRA_HTTP_CONTEXT_HEADER, lra)
                     .put(Entity.text(""));
-    
+
             assertEquals("Response status to ' " + resourcePath.getUri() + "' does not match.",
                     Response.Status.OK.getStatusCode(), response.getStatus());
-    
+
             Object parentId = response.getHeaders().getFirst(LRA_HTTP_CONTEXT_HEADER);
-    
+
             assertNotNull("Expecting to get parent LRA id as response from " + resourcePath.getUri(), parentId);
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
                     parentId, lra.toString());
-    
+
             URI nestedLraId = URI.create(response.readEntity(String.class)); // We can keep String.class here as it is in TCK
-    
+
             // close the LRA
             lraClient.closeLRA(lra);
-    
+
             // validate that the nested LRA was closed
 
             // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
@@ -159,7 +158,7 @@ public class TckTests extends TckTestBase {
             if(response != null) {
                 response.close();
             }
-        } 
+        }
     }
 
     @Test
@@ -194,7 +193,7 @@ public class TckTests extends TckTestBase {
         // close the LRA
         lraClient.closeLRA(lra);
         lraTestService.waitForCallbacks(lra);
-        
+
         // check that participant was told to complete
         lraMetric.assertCompletedEquals("Wrong completion count for call " + resourcePath.getUri() +
                 ". Expecting the method LRA was completed after joining the existing LRA " + lra,
@@ -325,7 +324,7 @@ public class TckTests extends TckTestBase {
 
         // check that participant was invoked
         lraTestService.waitForCallbacks(lraId);
-        
+
         /*
          * The call to activities/timeLimit should have started an LRA which should have timed out
          * (because the invoked resource method sleeps for longer than the timeLimit annotation
@@ -337,7 +336,7 @@ public class TckTests extends TckTestBase {
                 lraId, LraResource.class);
         lraMetric.assertCompensatedEquals("The LRA should have timed out and compensate should be called. "
                 + "Expecting the number of compensate call before test is one less lower than the ones after LRA timed out. "
-                + "The test call went to " + resourcePath.getUri(), 
+                + "The test call went to " + resourcePath.getUri(),
                 1, lraId, LraResource.class);
     }
 
@@ -359,8 +358,8 @@ public class TckTests extends TckTestBase {
                 .get();
 
         assertThat("Expected 412 or 410 response", response.getStatus(),
-                Matchers.anyOf(new IsEqual(Response.Status.PRECONDITION_FAILED.getStatusCode()),
-                               new IsEqual(Response.Status.GONE.getStatusCode())));
+                Matchers.anyOf(Matchers.is(Response.Status.PRECONDITION_FAILED.getStatusCode()),
+                               Matchers.is(Response.Status.GONE.getStatusCode())));
 
         response.close();
     }

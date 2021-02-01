@@ -23,13 +23,13 @@ package org.eclipse.microprofile.lra;
 import javax.ws.rs.core.Response;
 
 /**
- * The utility class that will create the correct {@link Response} or {@link Response.ResponseBuilder}
+ * The utility class that will create the correct {@link Response} or {@link javax.ws.rs.core.Response.ResponseBuilder}
  * for the response that should be returned from the LRA JAX-RS methods.
  */
 public final class LRAResponse {
-    
+
     private LRAResponse() {}
-    
+
     public static Response compensated() {
         return Builder.compensated().build();
     }
@@ -37,7 +37,7 @@ public final class LRAResponse {
     public static Response compensated(Object entity) {
         return Builder.compensated(entity).build();
     }
-    
+
     public static Response compensating() {
         return Builder.compensating().build();
     }
@@ -45,7 +45,7 @@ public final class LRAResponse {
     public static Response compensating(Object entity) {
         return Builder.compensating(entity).build();
     }
-    
+
     public static Response failedToCompensate() {
         return Builder.failedToCompensate().build();
     }
@@ -53,7 +53,7 @@ public final class LRAResponse {
     public static Response failedToCompensate(Object entity) {
         return Builder.failedToCompensate(entity).build();
     }
-    
+
     public static Response completed() {
         return Builder.completed().build();
     }
@@ -61,7 +61,7 @@ public final class LRAResponse {
     public static Response completed(Object entity) {
         return Builder.completed(entity).build();
     }
-    
+
     public static Response completing() {
         return Builder.completing().build();
     }
@@ -69,7 +69,7 @@ public final class LRAResponse {
     public static Response completing(Object entity) {
         return Builder.completing(entity).build();
     }
-    
+
     public static Response failedToComplete() {
         return Builder.failedToComplete().build();
     }
@@ -77,7 +77,7 @@ public final class LRAResponse {
     public static Response failedToComplete(Object entity) {
         return Builder.failedToComplete(entity).build();
     }
-    
+
     public static final class Builder {
         public static Response.ResponseBuilder compensated() {
             return Response.ok();

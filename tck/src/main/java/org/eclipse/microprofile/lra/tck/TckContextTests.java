@@ -61,8 +61,8 @@ import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResourc
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.RESET_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.STATUS_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource.TCK_CONTEXT_RESOURCE_PATH;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 /**
  * test that Compensate, Complete, Status, Forget and Leave annotations work without an LRA annotation

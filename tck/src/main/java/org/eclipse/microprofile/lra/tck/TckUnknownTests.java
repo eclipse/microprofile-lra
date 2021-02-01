@@ -40,7 +40,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * TCK Tests related to the 410 status code handling. Version without a Status method.
@@ -83,7 +83,7 @@ public class TckUnknownTests extends TckTestBase {
     public void compensate_retry() throws WebApplicationException {
         String lraIdString = invoke(Scenario.COMPENSATE_RETRY);
         URI lraId = URI.create(lraIdString);
-        
+
         lraTestService.waitForRecovery(lraId);
 
         int compensatedCalled = lraMetricService.getMetric(LRAMetricType.Compensated,

@@ -44,7 +44,7 @@
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <eclipse-jarsigner-plugin.version>1.1.4</eclipse-jarsigner-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.1.0</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
         <apache-rat-plugin.version>0.13</apache-rat-plugin.version>

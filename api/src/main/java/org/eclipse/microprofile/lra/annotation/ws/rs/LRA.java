@@ -63,7 +63,7 @@ import java.time.temporal.ChronoUnit;
  *   <li>to cancel the LRA context when the method returns particular HTTP
  *       status codes</li>
  * </ul>
- * 
+ *
  * Some of the above defined LRA operations are performed before the execution
  * proceeds to the LRA annotated business method. If any of these LRA operations
  * cannot complete the implementation MUST return one of the defined HTTP status
@@ -271,7 +271,8 @@ public @interface LRA {
          *     LRA present, a new nested LRA is started whose outcome depends upon
          *     whether or not the enclosing LRA is closed or cancelled.
          *     The id of the parent LRA MUST be present in the header with the name
-         *     {@value LRA_HTTP_PARENT_CONTEXT_HEADER} and the value is of type {@link java.net.URI}.
+         *     {@value org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+         *     and the value is of type {@link java.net.URI}.
          * </p>
          *
          * <p>
@@ -324,8 +325,8 @@ public @interface LRA {
          *     the top level parent LRA is then told to cancel the nested participants
          *     will be told to compensate. This implies that the nested participants
          *     must be aware that they are nested and the JAX-RS header with the
-         *     name {@value #LRA_HTTP_PARENT_CONTEXT_HEADER} is guaranteed to hold
-         *     the parent context whenever a nested LRA is being propagated.
+         *     name {@value org.eclipse.microprofile.lra.annotation.ws.rs.LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+         *     is guaranteed to hold the parent context whenever a nested LRA is being propagated.
          * </p>
          *
          * <p>
@@ -420,7 +421,7 @@ public @interface LRA {
      * in a {@link Response} or via a JAX-RS exception mappper.
      * </p>
      *
-     * @return the {@link Response.Status.Family} status families that will cause
+     * @return the {@link javax.ws.rs.core.Response.Status.Family} status families that will cause
      * cancellation of the LRA
      */
     Response.Status.Family[] cancelOnFamily() default {
@@ -444,7 +445,7 @@ public @interface LRA {
      * codes in a {@link Response} or via a JAX-RS exception mappper.
      * </p>
      *
-     * @return the {@link Response.Status} HTTP status codes that will cause
+     * @return the {@link javax.ws.rs.core.Response.Status} HTTP status codes that will cause
      * cancellation of the LRA
      */
     Response.Status[] cancelOn() default {};

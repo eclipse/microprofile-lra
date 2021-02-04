@@ -20,10 +20,6 @@ image:https://badges.gitter.im/eclipse/microprofile-lra.svg[link="https://gitter
 
 # Long Running Actions for MicroProfile
 
-## Status
-
-MicroProfile LRA proposal in progress
-
 == Introduction
 
 The specification introduces APIs for services to coordinate activities.

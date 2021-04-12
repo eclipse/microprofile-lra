@@ -63,7 +63,7 @@ public class AfterLRAListener extends ResourceParent {
     @PUT
     @Path(AFTER_LRA)
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
-    public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
+    public Response afterLRA(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
         return lraTestService.processAfterLRAInfo(lraId, status, AfterLRAListener.class,
             AFTER_LRA_LISTENER_PATH + AFTER_LRA);
     }

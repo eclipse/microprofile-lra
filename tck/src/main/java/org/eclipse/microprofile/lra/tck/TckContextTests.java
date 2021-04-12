@@ -297,7 +297,7 @@ public class TckContextTests extends TckTestBase {
             .path(AfterLRAListener.AFTER_LRA_LISTENER_WORK)
             .request()
             .header(LRA_HTTP_CONTEXT_HEADER, lra)
-            .put(null);
+            .put(Entity.text(""));
 
         assertEquals("AfterLRA listener hasn't been enlisted for the notification",
             200, enlistResponse.getStatus());

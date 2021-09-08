@@ -39,6 +39,12 @@ package org.eclipse.microprofile.lra.annotation;
  * they successfully completed any actions they performed when the
  * LRA was executing. If any participant could not, and will never be able
  * to, complete then the final state of {@link #FailedToClose} is entered.
+ *
+ * This specification expects that this enum is consumable in JAX-RS implementations
+ * passed as an entity parameter. This means that if the JAX-RS implementation does
+ * not support enum types as entity parameters then the implementation of this
+ * specification should provide a custom message body reader that will handle this
+ * parsing.
  */
 public enum LRAStatus {
     /**

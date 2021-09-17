@@ -92,7 +92,6 @@ To get started, add this dependency to your project:
 <dependency>
     <groupId>org.eclipse.microprofile.lra</groupId>
     <artifactId>microprofile-lra-api</artifactId>
-    <version>${version.microprofile.lra}</version>
     <version>1.0</version>
     <scope>provided</scope>
 </dependency>

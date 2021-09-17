@@ -26,7 +26,8 @@ public class WrongHeaderException extends WebApplicationException {
     /**
      * Wrong header exception.
      *
-     * @param message error message of this exception
+     * @param message
+     *            error message of this exception
      */
     public WrongHeaderException(String message) {
         super(message);

@@ -19,18 +19,17 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
+
 /**
- * TCK invalid LRA resource containing invalid signature for <code>&#64;AfterLRA</code> method. It's
- * used for verification of deployment time invalid signature detection and error report in 
- * {@link TckInvalidSignaturesTests}.
+ * TCK invalid LRA resource containing invalid signature for <code>&#64;AfterLRA</code> method. It's used for
+ * verification of deployment time invalid signature detection and error report in {@link TckInvalidSignaturesTests}.
  */
 @Path(InvalidAfterLRASignatureListener.RESOURCE_PATH)
 public class InvalidAfterLRASignatureListener {

@@ -19,6 +19,11 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
+
+import java.net.URI;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
@@ -30,11 +35,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
-import java.net.URI;
-
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
 
 @ApplicationScoped
 @Path(NoLRAResource.NO_LRA_RESOURCE_PATH)
@@ -62,7 +62,8 @@ public class NoLRAResource {
         String id = checkStatusAndClose(response, Response.Status.OK.getStatusCode(), true, resourcePath);
 
         if (id == null) {
-            return Response.status(Response.Status.PRECONDITION_FAILED).entity("LRA context was not propagated").build();
+            return Response.status(Response.Status.PRECONDITION_FAILED).entity("LRA context was not propagated")
+                    .build();
         }
 
         return Response.ok(id).build();
@@ -74,7 +75,8 @@ public class NoLRAResource {
                 if (webTarget != null) {
                     throw new WebApplicationException(
                             String.format("%s: expected status %d got %d",
-                                    webTarget.getUri().toString(), expected, response.getStatus()), response);
+                                    webTarget.getUri().toString(), expected, response.getStatus()),
+                            response);
                 }
 
                 throw new WebApplicationException(response);

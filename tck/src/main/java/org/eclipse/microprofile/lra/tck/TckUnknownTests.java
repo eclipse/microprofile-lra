@@ -19,6 +19,16 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.URI;
+
+import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
@@ -32,15 +42,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-
-import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * TCK Tests related to the 410 status code handling. Version without a Status method.
@@ -120,10 +121,12 @@ public class TckUnknownTests extends TckTestBase {
     }
 
     private String invoke(Scenario scenario) {
-        WebTarget resourcePath = tckSuiteTarget.path(LRAUnknownResource.LRA_CONTROLLER_PATH).path(LRAUnknownResource.TRANSACTIONAL_WORK_PATH)
+        WebTarget resourcePath = tckSuiteTarget.path(LRAUnknownResource.LRA_CONTROLLER_PATH)
+                .path(LRAUnknownResource.TRANSACTIONAL_WORK_PATH)
                 .queryParam("scenario", scenario.name());
         Response response = resourcePath.request().put(Entity.text(""));
 
-        return checkStatusReadAndCloseResponse(Response.Status.fromStatusCode(scenario.getPathResponseCode()), response, resourcePath);
+        return checkStatusReadAndCloseResponse(Response.Status.fromStatusCode(scenario.getPathResponseCode()), response,
+                resourcePath);
     }
 }

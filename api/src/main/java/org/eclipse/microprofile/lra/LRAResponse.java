@@ -28,7 +28,8 @@ import javax.ws.rs.core.Response;
  */
 public final class LRAResponse {
 
-    private LRAResponse() {}
+    private LRAResponse() {
+    }
 
     public static Response compensated() {
         return Builder.compensated().build();

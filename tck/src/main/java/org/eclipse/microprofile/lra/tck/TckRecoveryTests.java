@@ -19,6 +19,20 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.tck.participant.api.RecoveryResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricRest;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
@@ -38,28 +52,14 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-
 /**
  * <p>
  * Tests for the recovery of failed LRA services. Test that LRA functions properly even in case of service failures.
  * </p>
  * <p>
- * This test is meant to be run in "run as client mode controlling the behaviour not via CDI injection but via HTTP calls.
- * The @{@link Deployment} is defined as <code>managed = false</code>
- * which means that Arquillian does not automatically deploy the deployment at the start of the test
- * and the test control this step on its own.
+ * This test is meant to be run in "run as client mode controlling the behaviour not via CDI injection but via HTTP
+ * calls. The @{@link Deployment} is defined as <code>managed = false</code> which means that Arquillian does not
+ * automatically deploy the deployment at the start of the test and the test control this step on its own.
  * </p>
  */
 @RunWith(Arquillian.class)
@@ -105,18 +105,15 @@ public class TckRecoveryTests {
     }
 
     /**
-     * This test verifies that if the microservice application fails after
-     * it enlists with a LRA and then it is restarted again the Compensate
-     * callbacks are still received correctly.
+     * This test verifies that if the microservice application fails after it enlists with a LRA and then it is
+     * restarted again the Compensate callbacks are still received correctly.
      *
-     * Scenario:
-     * - start a new container with a single LRA resource
-     * - start a new LRA and enlist LRA resource
-     * - kill the container/application
-     * - start the container/application
-     * = cancel the LRA and verify that the callbacks have been sent
+     * Scenario: - start a new container with a single LRA resource - start a new LRA and enlist LRA resource - kill the
+     * container/application - start the container/application = cancel the LRA and verify that the callbacks have been
+     * sent
      *
-     * @param deploymentURL the URL of the arquillian deployment
+     * @param deploymentURL
+     *            the URL of the arquillian deployment
      */
     @Test
     public void testCancelWhenParticipantIsRestarted(@ArquillianResource URL deploymentURL) {
@@ -147,21 +144,16 @@ public class TckRecoveryTests {
     }
 
     /**
-     * This test verifies that if the microservice application which
-     * enlisted with the LRA fails and the LRA is ended during the time
-     * the service is still down, the Compensate callbacks are received
-     * when the microservice application is started again.
+     * This test verifies that if the microservice application which enlisted with the LRA fails and the LRA is ended
+     * during the time the service is still down, the Compensate callbacks are received when the microservice
+     * application is started again.
      *
-     * Scenario:
-     * - start a new container with a single LRA resource
-     * - start a new LRA and enlist the LRA resource with it
-     * - kill the container
-     * - cancel the LRA while the container is still down
-     * - start the container again
-     * - replay the end phase to get Compensate calls redelivered
-     * - verify that the Compensate callbacks have been received
+     * Scenario: - start a new container with a single LRA resource - start a new LRA and enlist the LRA resource with
+     * it - kill the container - cancel the LRA while the container is still down - start the container again - replay
+     * the end phase to get Compensate calls redelivered - verify that the Compensate callbacks have been received
      *
-     * @param deploymentURL the URL of the arquillian deployment
+     * @param deploymentURL
+     *            the URL of the arquillian deployment
      */
     @Test
     public void testCancelWhenParticipantIsUnavailable(@ArquillianResource URL deploymentURL) {
@@ -220,8 +212,8 @@ public class TckRecoveryTests {
     }
 
     /**
-     * A helper method which is capable to adjust timeout value
-     * by factor obtained from system property {@code LraTckConfigBean#LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME}.
+     * A helper method which is capable to adjust timeout value by factor obtained from system property
+     * {@code LraTckConfigBean#LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME}.
      */
     private long adjustTimeoutByDefaultFactor(long timeout) {
         String timeoutFactor = System.getProperty(LraTckConfigBean.LRA_TCK_TIMEOUT_FACTOR_PROPETY_NAME, "1.0");

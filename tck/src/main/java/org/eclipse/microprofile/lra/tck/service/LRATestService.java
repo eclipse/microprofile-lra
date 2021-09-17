@@ -19,19 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.tck.LRAClientOps;
-import org.eclipse.microprofile.lra.tck.participant.api.WrongHeaderException;
-import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
-import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
-import org.junit.Assert;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
@@ -39,7 +28,19 @@ import java.util.ServiceLoader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+import org.eclipse.microprofile.lra.tck.LRAClientOps;
+import org.eclipse.microprofile.lra.tck.participant.api.WrongHeaderException;
+import org.eclipse.microprofile.lra.tck.service.spi.LRACallbackException;
+import org.eclipse.microprofile.lra.tck.service.spi.LRARecoveryService;
+import org.junit.Assert;
 
 @ApplicationScoped
 public class LRATestService {
@@ -63,7 +64,7 @@ public class LRATestService {
     }
 
     public void stop() {
-        if(tckSuiteClient != null) {
+        if (tckSuiteClient != null) {
             tckSuiteClient.close();
         }
     }
@@ -109,7 +110,7 @@ public class LRATestService {
 
         if (!iterator.hasNext()) {
             throw new IllegalStateException(String.format("No implementation of %s which is required for the " +
-                "TCK run was found with the service loader", type.getName()));
+                    "TCK run was found with the service loader", type.getName()));
         }
 
         return iterator.next();
@@ -125,19 +126,19 @@ public class LRATestService {
         assertHeaderPresent(endedLRAId, path, LRA_HTTP_ENDED_CONTEXT_HEADER);
 
         switch (status) {
-            case Closed:
+            case Closed :
                 // FALLTHRU
-            case Cancelled:
+            case Cancelled :
                 // FALLTHRU
-            case FailedToCancel:
+            case FailedToCancel :
                 // FALLTHRU
-            case FailedToClose:
+            case FailedToClose :
                 lraMetricService.incrementMetric(
-                    LRAMetricType.valueOf(status.name()),
-                    endedLRAId,
-                    resourceClass);
+                        LRAMetricType.valueOf(status.name()),
+                        endedLRAId,
+                        resourceClass);
                 return Response.ok().build();
-            default:
+            default :
                 return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
@@ -146,27 +147,30 @@ public class LRATestService {
     /**
      * Returns whether the passed LRA and resource are in finished state.
      *
-     * @param lra the LRA to test
-     * @param resourceName name of the resource that the metrics parameter applies to
+     * @param lra
+     *            the LRA to test
+     * @param resourceName
+     *            name of the resource that the metrics parameter applies to
      * @return whether or not an LRA has finished
      */
     public boolean isLRAFinished(URI lra, String resourceName) {
         return lraMetricService.getMetric(LRAMetricType.Closed, lra, resourceName) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.FailedToClose, lra, resourceName) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.Cancelled, lra, resourceName) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra, resourceName) > 0;
+                lraMetricService.getMetric(LRAMetricType.FailedToClose, lra, resourceName) > 0 ||
+                lraMetricService.getMetric(LRAMetricType.Cancelled, lra, resourceName) > 0 ||
+                lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra, resourceName) > 0;
     }
 
     /**
      * Returns whether the passed LRA is in finished state.
      *
-     * @param lra the LRA to test
+     * @param lra
+     *            the LRA to test
      * @return whether or not an LRA has finished
      */
     public boolean isLRAFinished(URI lra) {
         return lraMetricService.getMetric(LRAMetricType.Closed, lra) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.FailedToClose, lra) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.Cancelled, lra) > 0 ||
-            lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra) > 0;
+                lraMetricService.getMetric(LRAMetricType.FailedToClose, lra) > 0 ||
+                lraMetricService.getMetric(LRAMetricType.Cancelled, lra) > 0 ||
+                lraMetricService.getMetric(LRAMetricType.FailedToCancel, lra) > 0;
     }
 }

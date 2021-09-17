@@ -19,15 +19,16 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.activity;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 /**
  * Storing activities processed by resources during TCK suite run.
@@ -37,10 +38,10 @@ public class ActivityStorage {
     private Map<URI, Activity> activities = new HashMap<>();
 
     public Activity getActivityAndAssertExistence(URI lraId, UriInfo jaxrsContext) {
-        if(!activities.containsKey(lraId)) {
-           String errorMessage = String.format("Activity store does not contain LRA id '%s', "
-                   + "invoked from endpoint '%s'", lraId, jaxrsContext.getPath());
-           throw new WebApplicationException(Response.status(410).entity(errorMessage).build());
+        if (!activities.containsKey(lraId)) {
+            String errorMessage = String.format("Activity store does not contain LRA id '%s', "
+                    + "invoked from endpoint '%s'", lraId, jaxrsContext.getPath());
+            throw new WebApplicationException(Response.status(410).entity(errorMessage).build());
         }
 
         return activities.get(lraId);

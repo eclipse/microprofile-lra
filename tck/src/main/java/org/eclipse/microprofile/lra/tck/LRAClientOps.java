@@ -19,13 +19,11 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.START_BUT_DONT_END_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.STATUS_CODE_QUERY_NAME;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.temporal.ChronoUnit;
@@ -38,10 +36,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.END_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.START_BUT_DONT_END_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.STATUS_CODE_QUERY_NAME;
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
 
 public class LRAClientOps {
     private static final Logger LOGGER = Logger.getLogger(TckLRATypeTests.class.getName());
@@ -100,7 +101,7 @@ public class LRAClientOps {
             throws GenericLRAException {
         String lra = invokeRestEndpoint(parentLRA,
                 TCK_NON_PARTICIPANT_RESOURCE_PATH, START_BUT_DONT_END_PATH, 200)
-                .readEntity(String.class);
+                        .readEntity(String.class);
 
         if (timeout > 0L) {
             scheduleCancelation(clientID, toURI(lra), timeout, unit);
@@ -141,21 +142,21 @@ public class LRAClientOps {
 
     private static TimeUnit timeUnit(ChronoUnit unit) {
         switch (unit) {
-            case NANOS:
+            case NANOS :
                 return TimeUnit.NANOSECONDS;
-            case MICROS:
+            case MICROS :
                 return TimeUnit.MICROSECONDS;
-            case MILLIS:
+            case MILLIS :
                 return TimeUnit.MILLISECONDS;
-            case SECONDS:
+            case SECONDS :
                 return TimeUnit.SECONDS;
-            case MINUTES:
+            case MINUTES :
                 return TimeUnit.MINUTES;
-            case HOURS:
+            case HOURS :
                 return TimeUnit.HOURS;
-            case DAYS:
+            case DAYS :
                 return TimeUnit.DAYS;
-            default:
+            default :
                 throw new IllegalArgumentException("ChronoUnit cannot be converted to TimeUnit: " + unit);
         }
     }
@@ -163,13 +164,18 @@ public class LRAClientOps {
     /**
      * arrange for an LRA to be automatically cancelled after a specified timeout
      *
-     * @param clientId client assigned arbitrary identifier for the LRA
-     * @param lra the LRA that should be cancelled when the time limit is reached
-     * @param timeout the time to wait before attempting cancellation of the LRA
-     * @param unit the time unit
+     * @param clientId
+     *            client assigned arbitrary identifier for the LRA
+     * @param lra
+     *            the LRA that should be cancelled when the time limit is reached
+     * @param timeout
+     *            the time to wait before attempting cancellation of the LRA
+     * @param unit
+     *            the time unit
      */
     private void scheduleCancelation(String clientId, URI lra, long timeout, ChronoUnit unit) {
-        lraTasks.put(new LRATask(clientId, lra), executor.schedule(() -> cancelLRA(clientId, lra), timeout, timeUnit(unit)));
+        lraTasks.put(new LRATask(clientId, lra),
+                executor.schedule(() -> cancelLRA(clientId, lra), timeout, timeUnit(unit)));
     }
 
     private void cancelCancelation(URI lraId) {

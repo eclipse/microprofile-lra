@@ -20,8 +20,7 @@
 package org.eclipse.microprofile.lra.tck.service.spi;
 
 /**
- * Generic exception for any failures that occures during the invocations of methods in
- * {@link LRARecoveryService}.
+ * Generic exception for any failures that occures during the invocations of methods in {@link LRARecoveryService}.
  */
 public class LRACallbackException extends Exception {
 

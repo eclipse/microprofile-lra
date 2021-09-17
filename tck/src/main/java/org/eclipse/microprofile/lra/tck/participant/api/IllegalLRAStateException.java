@@ -19,8 +19,9 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import javax.ws.rs.WebApplicationException;
 import java.net.URI;
+
+import javax.ws.rs.WebApplicationException;
 
 public class IllegalLRAStateException extends WebApplicationException {
     private final URI lraId;
@@ -28,8 +29,10 @@ public class IllegalLRAStateException extends WebApplicationException {
     /**
      * Creation of LRA state exception.
      *
-     * @param lraId  LRA id that is behind this exception
-     * @param message  error message of this exception
+     * @param lraId
+     *            LRA id that is behind this exception
+     * @param message
+     *            error message of this exception
      */
     public IllegalLRAStateException(URI lraId, String message) {
         super(String.format("%s, lra id: %s", message, lraId.toASCIIString()));

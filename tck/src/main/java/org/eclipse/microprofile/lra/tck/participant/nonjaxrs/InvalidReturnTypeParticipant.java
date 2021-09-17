@@ -19,18 +19,17 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs;
 
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
+
 /**
- * TCK invalid LRA participant containing invalid return type in the participant method signature
- * used for verification of deployment time invalid signature detection and error report in  
- * {@link TckInvalidSignaturesTests}.
+ * TCK invalid LRA participant containing invalid return type in the participant method signature used for verification
+ * of deployment time invalid signature detection and error report in {@link TckInvalidSignaturesTests}.
  */
 @Path("nonjaxrs-return-type")
 public class InvalidReturnTypeParticipant {
@@ -41,7 +40,7 @@ public class InvalidReturnTypeParticipant {
     public Response doInLRA() {
         return Response.ok().build();
     }
-    
+
     @Compensate
     public String compensate() {
         return "compensated";

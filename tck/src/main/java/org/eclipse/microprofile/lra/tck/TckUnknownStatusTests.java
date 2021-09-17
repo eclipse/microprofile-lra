@@ -19,6 +19,14 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import java.net.URI;
+
+import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownStatusResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
@@ -29,13 +37,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.net.URI;
 
 /**
  * TCK Tests related to the 410 status code handling. Version with a Status method.
@@ -93,6 +94,7 @@ public class TckUnknownStatusTests extends TckTestBase {
                 .queryParam("scenario", scenario.name());
         Response response = resourcePath.request().put(Entity.text(""));
 
-        return checkStatusReadAndCloseResponse(Response.Status.fromStatusCode(scenario.getPathResponseCode()), response, resourcePath);
+        return checkStatusReadAndCloseResponse(Response.Status.fromStatusCode(scenario.getPathResponseCode()), response,
+                resourcePath);
     }
 }

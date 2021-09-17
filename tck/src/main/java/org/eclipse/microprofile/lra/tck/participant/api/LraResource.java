@@ -19,21 +19,15 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.LRAResponse;
-import org.eclipse.microprofile.lra.annotation.Forget;
-import org.eclipse.microprofile.lra.tck.LRAClientOps;
-import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
-import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
-import org.eclipse.microprofile.lra.tck.participant.activity.ActivityStorage;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
-import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
-import org.eclipse.microprofile.lra.tck.service.LRATestService;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
+
+import java.net.URI;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.IntStream;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -55,15 +49,22 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.IntStream;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
+import org.eclipse.microprofile.lra.LRAResponse;
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
+import org.eclipse.microprofile.lra.tck.LRAClientOps;
+import org.eclipse.microprofile.lra.tck.LraTckConfigBean;
+import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
+import org.eclipse.microprofile.lra.tck.participant.activity.ActivityStorage;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
 @ApplicationScoped
 @Path(LraResource.LRA_RESOURCE_PATH)
@@ -96,11 +97,13 @@ public class LraResource extends ResourceParent {
     @Inject
     LRATestService lraTestService;
     /**
-     * Performing a GET on the participant URL will return the current status of the
-     * participant {@link ParticipantStatus}, or 410 if the participant does no longer know about this LRA.
+     * Performing a GET on the participant URL will return the current status of the participant
+     * {@link ParticipantStatus}, or 410 if the participant does no longer know about this LRA.
      *
-     * @param lraId the id of the LRA
-     * @param recoveryId the recovery id of this enlistment
+     * @param lraId
+     *            the id of the LRA
+     * @param recoveryId
+     *            the recovery id of this enlistment
      * @return the status of the LRA
      */
     @GET
@@ -108,10 +111,12 @@ public class LraResource extends ResourceParent {
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                           @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Status methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Status methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Status
+                                                             // methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke
+                                                                   // @Status methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -152,11 +157,13 @@ public class LraResource extends ResourceParent {
     @Produces(MediaType.APPLICATION_JSON)
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, LraResource.class);
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Complete methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Complete methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Complete
+                                                             // methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke
+                                                                   // @Complete methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
@@ -180,10 +187,12 @@ public class LraResource extends ResourceParent {
     @Produces(MediaType.APPLICATION_JSON)
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                   @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Compensate methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Compensate methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Compensate
+                                                             // methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke
+                                                                   // @Compensate methods
 
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LraResource.class);
 
@@ -209,17 +218,20 @@ public class LraResource extends ResourceParent {
     @Produces(MediaType.APPLICATION_JSON)
     @Forget
     public Response forgetWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                               @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
+            @HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId) {
         lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, LraResource.class);
 
-        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Forget methods
-        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke @Forget methods
+        assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER); // the TCK expects the implementation to invoke @Forget
+                                                             // methods
+        assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER); // the TCK expects the implementation to invoke
+                                                                   // @Forget methods
 
         Activity activity = activityStore.getActivityAndAssertExistence(lraId, context);
 
         if (activity == null) {
             throw new IllegalStateException(
-                String.format("Activity store does not contain LRA id '%s' while it was invoked forget method at ", context.getPath()));
+                    String.format("Activity store does not contain LRA id '%s' while it was invoked forget method at ",
+                            context.getPath()));
         }
 
         activityStore.remove(activity.getLraId());
@@ -268,7 +280,7 @@ public class LraResource extends ResourceParent {
         try {
             client = ClientBuilder.newClient();
             WebTarget target = client.target(context.getBaseUri());
-            URI lra = new LRAClientOps(target).startLRA(null,"subActivity", 0L, ChronoUnit.SECONDS);
+            URI lra = new LRAClientOps(target).startLRA(null, "subActivity", 0L, ChronoUnit.SECONDS);
 
             lraId = lra;
 
@@ -277,11 +289,12 @@ public class LraResource extends ResourceParent {
             // invoke a method that SUPPORTS LRAs. The filters should detect the LRA we just started
             // and add it as a header before calling the method at path /supports (ie supportsLRACall()).
             // The supportsLRACall method will return LRA id in the body if it is present.
-            String id = restPutInvocation(lra,"supports", "");
+            String id = restPutInvocation(lra, "supports", "");
 
             // check that the invoked method saw the LRA
             if (!lraId.toASCIIString().equals(id)) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids"))
+                        .build();
             }
 
             return Response.ok(id).build();
@@ -296,7 +309,7 @@ public class LraResource extends ResourceParent {
     @Path(TRANSACTIONAL_WORK_PATH)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         assertHeaderPresent(lraId, LRA_HTTP_CONTEXT_HEADER);
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
@@ -340,7 +353,7 @@ public class LraResource extends ResourceParent {
     @Produces(MediaType.TEXT_PLAIN)
     @LRA(value = LRA.Type.MANDATORY, end = false)
     public Response activityWithMandatoryLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                             @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return activityWithLRA(recoveryId, lraId);
     }
 
@@ -348,7 +361,7 @@ public class LraResource extends ResourceParent {
     @Path("/nestedActivity")
     @LRA(value = LRA.Type.NESTED, end = true)
     public Response nestedActivity(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                   @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRAId) {
         assertHeaderPresent(nestedLRAId, LRA_HTTP_CONTEXT_HEADER);
         assertHeaderPresent(recoveryId, LRA_HTTP_RECOVERY_HEADER);
 
@@ -360,14 +373,14 @@ public class LraResource extends ResourceParent {
     /**
      * Used to close nested LRA in which this resource is enlisted
      *
-     * @param lraId the id of the LRA
+     * @param lraId
+     *            the id of the LRA
      * @return the JAX-RS response indicating that LRA should be cancelled
      * @see org.eclipse.microprofile.lra.tck.TckTests#mixedMultiLevelNestedActivity
      */
     @PUT
     @Path(CANCEL_PATH)
-    @LRA(value = LRA.Type.MANDATORY,
-        cancelOnFamily = Response.Status.Family.SERVER_ERROR)
+    @LRA(value = LRA.Type.MANDATORY, cancelOnFamily = Response.Status.Family.SERVER_ERROR)
     public Response cancelLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(500).entity(lraId).build();
     }
@@ -387,19 +400,20 @@ public class LraResource extends ResourceParent {
         // invoke resources that enlist nested LRAs
         String[] lras = new String[nestedCnt + 1];
         lras[0] = nestedLRAId.toASCIIString();
-        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(nestedLRAId,"nestedActivity", ""));
+        IntStream.range(1, lras.length).forEach(i -> lras[i] = restPutInvocation(nestedLRAId, "nestedActivity", ""));
 
         return Response.ok(String.join(",", lras)).build();
     }
 
     private Activity storeActivity(URI lraId, URI recoveryId) {
         String lra = lraId != null ? lraId.toASCIIString() : null; // already asserted by the caller but check anyway
-        String rid = recoveryId != null ? recoveryId.toASCIIString() : null; // not asserted by the call so check for null
+        String rid = recoveryId != null ? recoveryId.toASCIIString() : null; // not asserted by the call so check for
+                                                                             // null
         LOGGER.fine(String.format("Storing information about LRA id '%s' and recoveryId '%s'", lra, rid));
 
         Activity activity = new Activity(lraId)
-            .setRecoveryUri(recoveryId)
-            .setStatus(null);
+                .setRecoveryUri(recoveryId)
+                .setStatus(null);
 
         return activityStore.add(activity);
     }
@@ -432,10 +446,11 @@ public class LraResource extends ResourceParent {
     }
 
     /**
-     * Starts an LRA with the time limit and verifies that after the timelimit is passed the
-     * LRA is finished by the invocation to a mandatory LRA endpoint (which should fail with 412)
+     * Starts an LRA with the time limit and verifies that after the timelimit is passed the LRA is finished by the
+     * invocation to a mandatory LRA endpoint (which should fail with 412)
      *
-     * @param lraId the id of the LRA
+     * @param lraId
+     *            the id of the LRA
      * @return the JAX-RS response 200 if successful or the received HTTP status call otherwise
      * @see org.eclipse.microprofile.lra.tck.TckTests#timeLimitWithPreConditionFailed
      */
@@ -449,7 +464,8 @@ public class LraResource extends ResourceParent {
         activityStore.add(new Activity(lraId));
 
         try {
-            Thread.sleep(configBean.adjustTimeout(1000)); // sleep for longer than specified in the timeLimit annotation attribute
+            Thread.sleep(configBean.adjustTimeout(1000)); // sleep for longer than specified in the timeLimit annotation
+                                                          // attribute
             // force the implementation to notice that the LRA should have timed out
             lraTestService.waitForCallbacks(lraId);
             // the next request should fail with a 412 code since the LRA should no longer be active
@@ -465,17 +481,16 @@ public class LraResource extends ResourceParent {
     }
 
     /**
-     * Performing a PUT on "participant URL"/compensate will cause the participant to compensate
-     * the work that was done within the scope of the transaction.
+     * Performing a PUT on "participant URL"/compensate will cause the participant to compensate the work that was done
+     * within the scope of the transaction.
      *
-     * The participant will either return a 200 OK code and a "status URL" which indicates
-     * the outcome and which can be probed (via GET) and will simply return the same
-     * (implicit) information:
+     * The participant will either return a 200 OK code and a "status URL" which indicates the outcome and which can be
+     * probed (via GET) and will simply return the same (implicit) information:
      *
-     * "URL"/cannot-compensate
-     * "URL"/cannot-complete
+     * "URL"/cannot-compensate "URL"/cannot-complete
      *
-     * @param lraId the id of the LRA
+     * @param lraId
+     *            the id of the LRA
      * @return the final status of the activity
      */
     @PUT
@@ -491,16 +506,15 @@ public class LraResource extends ResourceParent {
     }
 
     /**
-     * Performing a PUT on "participant URL"/complete will cause the participant to tidy up
-     * and it can forget this transaction.
+     * Performing a PUT on "participant URL"/complete will cause the participant to tidy up and it can forget this
+     * transaction.
      *
-     * The participant will either return a 200 OK code and a "status URL" which indicates
-     * the outcome and which can be probed (via GET)
-     * and will simply return the same (implicit) information:
-     * "URL"/cannot-compensate
+     * The participant will either return a 200 OK code and a "status URL" which indicates the outcome and which can be
+     * probed (via GET) and will simply return the same (implicit) information: "URL"/cannot-compensate
      * "URL"/cannot-complete
      *
-     * @param lraId the id of the LRA
+     * @param lraId
+     *            the id of the LRA
      * @return the final status of the activity
      */
     @PUT
@@ -545,7 +559,8 @@ public class LraResource extends ResourceParent {
 
     private void assertNotHeaderPresent(URI lraId) {
         if (lraId != null) {
-            throw new WrongHeaderException(String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
+            throw new WrongHeaderException(
+                    String.format("%s: unexpected '%s' header", context.getPath(), LRA_HTTP_CONTEXT_HEADER));
         }
     }
 }

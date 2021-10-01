@@ -23,33 +23,25 @@ package org.eclipse.microprofile.lra.annotation;
 import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
 
 /**
- * A representation of the status of a participant according to a
- * participant state model:
+ * A representation of the status of a participant according to a participant state model:
  *
- * The initial state {@link #Active} is entered when a participant is first
- * associated with a Long Running Action.
+ * The initial state {@link #Active} is entered when a participant is first associated with a Long Running Action.
  *
- * The state {@link #Compensating} is entered when a compensate
- * notification is received (which indicates that the associated
- * LRA was cancelled). The transition to end state {@link #Compensated}
- * should occur when the participant has compensated for any actions
- * it performed when the LRA was executing. If compensation is not,
- * and will never be, possible then the final state of {@link #FailedToCompensate}
- * is entered and the participant cannot leave this state until it receives
- * a {@link Forget} notification.
+ * The state {@link #Compensating} is entered when a compensate notification is received (which indicates that the
+ * associated LRA was cancelled). The transition to end state {@link #Compensated} should occur when the participant has
+ * compensated for any actions it performed when the LRA was executing. If compensation is not, and will never be,
+ * possible then the final state of {@link #FailedToCompensate} is entered and the participant cannot leave this state
+ * until it receives a {@link Forget} notification.
  *
- * The state {@link #Completing} is entered when a complete
- * notification is received (which indicates that the associated
- * LRA was closed). This state is followed by the {@link #Completed}
- * or {@link #FailedToComplete} state depending upon whether the participant
- * was or was not able to tidy up.
+ * The state {@link #Completing} is entered when a complete notification is received (which indicates that the
+ * associated LRA was closed). This state is followed by the {@link #Completed} or {@link #FailedToComplete} state
+ * depending upon whether the participant was or was not able to tidy up.
  *
- * Note that a particant can leave this state model via the {@link Leave}
- * annotation provided that the associated LRA is in the state
- * {@link LRAStatus#Active}.
+ * Note that a particant can leave this state model via the {@link Leave} annotation provided that the associated LRA is
+ * in the state {@link LRAStatus#Active}.
  *
- * The name value of the enum should be returned by participant methods marked
- * with the {@link Status}, {@link Compensate} and {@link Complete} annotations.
+ * The name value of the enum should be returned by participant methods marked with the {@link Status},
+ * {@link Compensate} and {@link Complete} annotations.
  */
 public enum ParticipantStatus {
     /**
@@ -65,9 +57,8 @@ public enum ParticipantStatus {
      */
     Compensated,
     /**
-     * The participant was not able to compensate for the work it performed (and it must
-     * remember it could not compensate until such time that it receives a forget
-     * message ({@link Forget})
+     * The participant was not able to compensate for the work it performed (and it must remember it could not
+     * compensate until such time that it receives a forget message ({@link Forget})
      */
     FailedToCompensate,
     /**

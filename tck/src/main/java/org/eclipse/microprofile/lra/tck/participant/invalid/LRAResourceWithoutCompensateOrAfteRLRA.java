@@ -19,8 +19,7 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.invalid;
 
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import java.net.URI;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -28,7 +27,9 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.net.URI;
+
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 
 @Path(LRAResourceWithoutCompensateOrAfteRLRA.INVALID_LRA_RESOURCE_PATH)
 public class LRAResourceWithoutCompensateOrAfteRLRA {

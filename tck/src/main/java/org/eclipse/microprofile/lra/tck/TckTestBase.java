@@ -19,6 +19,15 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.junit.Assert.assertEquals;
+
+import java.net.URL;
+import java.util.logging.Logger;
+
+import javax.inject.Inject;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
@@ -34,33 +43,25 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
-import java.net.URL;
-import java.util.logging.Logger;
-
-import static org.junit.Assert.assertEquals;
-
 /**
- * Base testsuite class for in-container tests.
- * It provides {@link Before} and @{@link After} junit hooks to clean the environment.
+ * Base testsuite class for in-container tests. It provides {@link Before} and @{@link After} junit hooks to clean the
+ * environment.
  */
 public class TckTestBase {
     private static final Logger LOGGER = Logger.getLogger(TckTestBase.class.getName());
 
-    @Rule public TestName testName = new TestName();
+    @Rule
+    public TestName testName = new TestName();
 
     @Inject
     private LraTckConfigBean config;
-    
+
     @Inject
     LRATestService lraTestService;
 
     @Inject
     private LRAMetricService lraMetricService;
-    
+
     @ArquillianResource
     private URL deploymentURL;
 
@@ -70,14 +71,14 @@ public class TckTestBase {
 
     static WebArchive deploy(String archiveName) {
         return ShrinkWrap
-            .create(WebArchive.class, archiveName + ".war")
-            .addPackages(false, TckTestBase.class.getPackage(),
-                LRAResponse.class.getPackage(),
-                Activity.class.getPackage(),
-                LraResource.class.getPackage(),
-                LRAMetricService.class.getPackage(),
-                LRARecoveryService.class.getPackage())
-            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+                .create(WebArchive.class, archiveName + ".war")
+                .addPackages(false, TckTestBase.class.getPackage(),
+                        LRAResponse.class.getPackage(),
+                        Activity.class.getPackage(),
+                        LraResource.class.getPackage(),
+                        LRAMetricService.class.getPackage(),
+                        LRARecoveryService.class.getPackage())
+                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
 
     @Before

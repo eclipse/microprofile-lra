@@ -19,15 +19,14 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.activity;
 
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-
 import java.io.Serializable;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+
 /**
- * A simple DTO that provides information about
- * the work processed in the TCK suite resources.
+ * A simple DTO that provides information about the work processed in the TCK suite resources.
  */
 public class Activity implements Serializable {
     private static final long serialVersionUID = 1L;

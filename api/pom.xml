@@ -26,144 +26,24 @@
 
     <artifactId>microprofile-lra-api</artifactId>
     <name>MicroProfile LRA API</name>
-    <description>Eclipse MicroProfile LRA Feature - API</description>
-
-    <properties>
-        <version.jaxrs-api>2.1</version.jaxrs-api>
-        <version.cdi-api>1.0-SP1</version.cdi-api>
-    </properties>
+    <description>Eclipse MicroProfile LRA - API</description>
 
     <dependencies>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bnd.annotation</artifactId>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.annotation.versioning</artifactId>
-            <version>1.0.0</version>
-            <scope>provided</scope>
+            <artifactId>org.osgi.service.cdi</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-            <artifactId>maven-resources-plugin</artifactId>
-            <executions>
-                <execution>
-                    <id>copy-resources</id>
-                    <phase>validate</phase>
-                    <goals>
-                        <goal>copy-resources</goal>
-                    </goals>
-                    <configuration>
-                        <outputDirectory>${basedir}/target/apidocs/doc-files/</outputDirectory>
-                        <overwrite>true</overwrite>
-                        <resources>
-                            <resource>
-                                <directory>src/main/javadoc/licenses/${revremark}/</directory>
-                                <filtering>true</filtering>
-                            </resource>
-                        </resources>
-                    </configuration>
-                </execution>
-            </executions>
-        </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <configuration>
-                    <failOnError>false</failOnError>
-                    <additionalparam>${javadoc.options}</additionalparam>
-                    <docfilessubdirs>true</docfilessubdirs>
-                    <attach>true</attach>
-                    <doclint>none</doclint>
-                    <doctitle>${project.name}</doctitle>
-                    <windowtitle>${project.name}</windowtitle>
-                    <header><![CDATA[<br>${project.name} v${project.version}]]></header>
-                    <bottom>
-                        <![CDATA[
-        Copyright &#169; ${inceptionYear} &#x2013; {currentYear} {organizationName}. All rights reserved.
-        <br>
-        Use is subject to <a href="{@docRoot}/doc-files/license.html" target="_top">license terms</a>.
-    ]]>
-                    </bottom>
-                    <tags>
-                        <tag>
-                            <name>implSpec</name>
-                            <placement>a</placement>
-                            <head>Implementation Specification:</head>
-                        </tag>
-                    </tags>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>biz.aQute.bnd</groupId>
-                <artifactId>bnd-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>bnd-process</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <Bundle-SymbolicName>org.eclipse.microprofile.lra</Bundle-SymbolicName>
-                    <Bundle-Name>MicroProfile LRA bundle</Bundle-Name>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                    </archive>
-                </configuration>
-            </plugin>
-<!--            Uncomment once the 1.0 is released-->
-<!--            <plugin>-->
-<!--                <groupId>biz.aQute.bnd</groupId>-->
-<!--                <artifactId>bnd-baseline-maven-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <base>-->
-<!--                        <version>1.0</version>-->
-<!--                    </base>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>baseline</id>-->
-<!--                        <goals>-->
-<!--                            <goal>baseline</goal>-->
-<!--                        </goals>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
-        </plugins>
-    </build>
 </project>

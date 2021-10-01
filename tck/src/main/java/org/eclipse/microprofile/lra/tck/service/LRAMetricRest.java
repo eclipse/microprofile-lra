@@ -19,13 +19,14 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.service;
 
+import java.net.URI;
+
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.net.URI;
 
 /**
  * JAX-RS endpoints for the {@link LRAMetricService}.
@@ -46,7 +47,7 @@ public class LRAMetricRest {
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     public int getMetric(@QueryParam(METRIC_TYPE_PARAM) LRAMetricType metricType, @QueryParam(LRA_ID_PARAM) URI lra,
-                         @QueryParam(PARTICIPANT_NAME_PARAM) String participantName) {
+            @QueryParam(PARTICIPANT_NAME_PARAM) String participantName) {
         if (metricType == null) {
             throw new NullPointerException("metricType");
         }

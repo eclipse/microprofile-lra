@@ -19,13 +19,12 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid;
 
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
+
+import java.net.URI;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -36,25 +35,26 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 /**
- * Valid participant resource containing async non-JAX-RS participant methods with 
- * {@link CompletionStage} return types
+ * Valid participant resource containing async non-JAX-RS participant methods with {@link CompletionStage} return types
  */
 @ApplicationScoped
 @Path(ValidLRACSParticipant.ROOT_PATH)
 public class ValidLRACSParticipant {
-    
+
     public static final String ROOT_PATH = "valid-cs-participant1";
     public static final String ENLIST_WITH_COMPLETE = "enlist-complete";
     public static final String ENLIST_WITH_COMPENSATE = "enlist-compensate";
-    
+
     private int recoveryPasses;
 
     @Inject
@@ -66,7 +66,7 @@ public class ValidLRACSParticipant {
     public Response enlistWithComplete(@HeaderParam(LRA.LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok(lraId).build();
     }
-    
+
     @GET
     @Path(ENLIST_WITH_COMPENSATE)
     @LRA(value = LRA.Type.REQUIRED, cancelOn = Response.Status.INTERNAL_SERVER_ERROR)
@@ -77,17 +77,18 @@ public class ValidLRACSParticipant {
     @Compensate
     public CompletionStage<Void> compensate(URI lraId) {
         assert lraId != null;
-        
-        return CompletableFuture.runAsync(() -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ValidLRACSParticipant.class));
+
+        return CompletableFuture.runAsync(
+                () -> lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ValidLRACSParticipant.class));
     }
 
     @Complete
     public CompletionStage<Response> complete(URI lraId) {
         assert lraId != null;
-        
+
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ValidLRACSParticipant.class);
-            
+
             return Response.accepted().build(); // Completing
         });
     }
@@ -95,14 +96,14 @@ public class ValidLRACSParticipant {
     @Status
     public CompletionStage<ParticipantStatus> status(URI lraId) {
         assert lraId != null;
-        
+
         return CompletableFuture.supplyAsync(() -> {
             lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ValidLRACSParticipant.class);
-            
+
             return ParticipantStatus.Completed;
         });
     }
-    
+
     @PUT
     @Path(ACCEPT_PATH)
     @LRA(value = LRA.Type.REQUIRES_NEW)

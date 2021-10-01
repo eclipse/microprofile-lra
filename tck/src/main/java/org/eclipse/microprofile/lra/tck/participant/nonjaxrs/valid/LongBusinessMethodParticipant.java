@@ -54,7 +54,7 @@ public class LongBusinessMethodParticipant {
     @Compensate
     public void compensate(URI lraId) {
         assert lraId != null;
-        if(businessLatch.getCount() > 0) {
+        if (businessLatch.getCount() > 0) {
             businessLatch.countDown();
         }
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, LongBusinessMethodParticipant.class);
@@ -82,7 +82,8 @@ public class LongBusinessMethodParticipant {
         try {
             syncLatch.await();
         } catch (Exception e) {
-            throw new IllegalStateException("Expecting the latch will be succesfully released on long latency LRA is in progress");
+            throw new IllegalStateException(
+                    "Expecting the latch will be succesfully released on long latency LRA is in progress");
         }
         return Response.ok().build();
     }

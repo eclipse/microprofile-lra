@@ -58,7 +58,9 @@ public class LraCancelOnResource {
     public static final String CANCEL_ON_FAMILY_DEFAULT_4XX = "cancelOnFamilyDefault4xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
-     * @param lraId The LRA id generated for this action
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
@@ -71,7 +73,9 @@ public class LraCancelOnResource {
     public static final String CANCEL_ON_FAMILY_DEFAULT_5XX = "cancelOnFamilyDefault5xx";
     /**
      * Default return status for cancelling LRA is <code>4xx</code> and <code>5xx</code>
-     * @param lraId The LRA id generated for this action
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
@@ -83,46 +87,46 @@ public class LraCancelOnResource {
 
     public static final String CANCEL_ON_FAMILY_3XX = "cancelOnFamily3xx";
     /**
-     * Cancel on family is set to <code>3xx</code>. The <code>3xx</code> return code
-     * has to cancel the LRA.
-     * @param lraId The LRA id generated for this action
+     * Cancel on family is set to <code>3xx</code>. The <code>3xx</code> return code has to cancel the LRA.
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_FAMILY_3XX)
-    @LRA(value = Type.REQUIRES_NEW,
-            cancelOnFamily = Family.REDIRECTION)
+    @LRA(value = Type.REQUIRES_NEW, cancelOnFamily = Family.REDIRECTION)
     public Response cancelOnFamily3xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.SEE_OTHER).entity(lraId).build();
     }
 
     public static final String CANCEL_ON_301 = "cancelOn301";
     /**
-     * Cancel on is set to <code>301</code>. The <code>301</code> return code
-     * has to cancel the LRA.
-     * @param lraId The LRA id generated for this action
+     * Cancel on is set to <code>301</code>. The <code>301</code> return code has to cancel the LRA.
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(CANCEL_ON_301)
-    @LRA(value = Type.REQUIRES_NEW,
-        cancelOn = {Status.MOVED_PERMANENTLY})
+    @LRA(value = Type.REQUIRES_NEW, cancelOn = {Status.MOVED_PERMANENTLY})
     public Response cancelOn301(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.MOVED_PERMANENTLY).entity(lraId).build();
     }
 
     public static final String NOT_CANCEL_ON_FAMILY_5XX = "notCancelOnFamily5xx";
     /**
-     * Cancel on family is set to <code>4xx</code>,
-     * the code from other families (e.g. for <code>5xx</code>
-     * should not cancel but should go with close the LRA.
-     * @param lraId The LRA id generated for this action
+     * Cancel on family is set to <code>4xx</code>, the code from other families (e.g. for <code>5xx</code> should not
+     * cancel but should go with close the LRA.
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
      * @return JAX-RS response
      */
     @GET
     @Path(NOT_CANCEL_ON_FAMILY_5XX)
-    @LRA(value = Type.REQUIRES_NEW,
-            cancelOnFamily = {Family.CLIENT_ERROR})
+    @LRA(value = Type.REQUIRES_NEW, cancelOnFamily = {Family.CLIENT_ERROR})
     public Response notCancelOnFamily5xx(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.status(Status.INTERNAL_SERVER_ERROR).entity(lraId).build();
     }
@@ -130,21 +134,21 @@ public class LraCancelOnResource {
     public static final String CANCEL_FROM_REMOTE_CALL = "cancelFromRemoteCall";
     /**
      * <p>
-     * Returning <code>200</code> thus the LRA should be closed but
-     * beforehand it makes a remote REST call which returns 5xx which is the
-     * default for the cancelling and so the whole LRA should be cancelled.
+     * Returning <code>200</code> thus the LRA should be closed but beforehand it makes a remote REST call which returns
+     * 5xx which is the default for the cancelling and so the whole LRA should be cancelled.
      * </p>
      * <p>
-     * The remote REST call invokes the same resource class {@link LraCancelOnResource}
-     * That assumes the call to the representative of the same LRA participant
-     * as it's already enlisted by the method {@link #cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)} invoked by the test.
-     * Because the specification mandates that the same participant can be enlisted
-     * only once per LRA instance then
-     * the {@link Compensate} method {@link #compensateWork(URI)}
-     * will be called only once for the test invocation.
+     * The remote REST call invokes the same resource class {@link LraCancelOnResource} That assumes the call to the
+     * representative of the same LRA participant as it's already enlisted by the method
+     * {@link #cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)} invoked by the test. Because the
+     * specification mandates that the same participant can be enlisted only once per LRA instance then the
+     * {@link Compensate} method {@link #compensateWork(URI)} will be called only once for the test invocation.
      * </p>
-     * @param lraId The LRA id generated for this action
-     * @param uriInfo as context provided by JAX-RS to find base service URI
+     * 
+     * @param lraId
+     *            The LRA id generated for this action
+     * @param uriInfo
+     *            as context provided by JAX-RS to find base service URI
      * @return JAX-RS response
      */
     @GET
@@ -165,7 +169,6 @@ public class LraCancelOnResource {
         }
         return Response.ok(lraId).build();
     }
-
 
     @PUT
     @Path("/complete")

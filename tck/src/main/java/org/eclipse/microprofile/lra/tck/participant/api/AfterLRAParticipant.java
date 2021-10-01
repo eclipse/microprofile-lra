@@ -19,6 +19,19 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
+
+import java.net.URI;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
@@ -29,22 +42,8 @@ import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
-
 /**
- * resource for testing that methods annotated with
- * {@link AfterLRA}
- * are notified correctly when an LRA terminates
+ * resource for testing that methods annotated with {@link AfterLRA} are notified correctly when an LRA terminates
  */
 @ApplicationScoped
 @Path(AfterLRAParticipant.AFTER_LRA_PARTICIPANT_PATH)
@@ -81,7 +80,7 @@ public class AfterLRAParticipant {
     @Path(AFTER_LRA_PARTICIPANT_WORK)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }
 
@@ -90,6 +89,6 @@ public class AfterLRAParticipant {
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
     public Response afterEnd(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
         return lraTestService.processAfterLRAInfo(lraId, status, AfterLRAParticipant.class,
-            AFTER_LRA_PARTICIPANT_PATH + AFTER_LRA);
+                AFTER_LRA_PARTICIPANT_PATH + AFTER_LRA);
     }
 }

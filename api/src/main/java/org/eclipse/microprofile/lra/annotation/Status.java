@@ -20,45 +20,37 @@
 
 package org.eclipse.microprofile.lra.annotation;
 
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-
-import javax.ws.rs.core.Response;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.ws.rs.core.Response;
+
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+
 /**
  * <p>
- * The LRA specification supports distributed communications amongst software
- * components and due to the unreliable nature of networks,
- * messages/requests can be lost, delayed, duplicated, etc., so the
- * implementation component responsible for invoking {@link Compensate}
- * and {@link Complete} annotated methods may lose track of the status of
- * a participant. In this case, ideally it would just resend the completion
- * or compensation notification but if the participant (the class that
- * contains the Compensate and Complete annotations) does not
- * support idempotency then it must be able to report its status by
- * by annotating one of the methods with this <code>&#64;Status</code> annotation.
- * The annotated method should report the status according to one of the
- * {@link ParticipantStatus} enum values.
+ * The LRA specification supports distributed communications amongst software components and due to the unreliable
+ * nature of networks, messages/requests can be lost, delayed, duplicated, etc., so the implementation component
+ * responsible for invoking {@link Compensate} and {@link Complete} annotated methods may lose track of the status of a
+ * participant. In this case, ideally it would just resend the completion or compensation notification but if the
+ * participant (the class that contains the Compensate and Complete annotations) does not support idempotency then it
+ * must be able to report its status by by annotating one of the methods with this <code>&#64;Status</code> annotation.
+ * The annotated method should report the status according to one of the {@link ParticipantStatus} enum values.
  * </p>
  *
  * <p>
- * If the annotation is applied to a JAX-RS resource method then the request
- * method MUST be {@link javax.ws.rs.GET}. The context of the currently
- * running LRA can be obtained by inspecting the incoming JAX-RS headers. If
- * this LRA is nested then the parent LRA MUST be present in the header with the name
- * {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
- * and value is of type {@link java.net.URI}.
+ * If the annotation is applied to a JAX-RS resource method then the request method MUST be {@link javax.ws.rs.GET}. The
+ * context of the currently running LRA can be obtained by inspecting the incoming JAX-RS headers. If this LRA is nested
+ * then the parent LRA MUST be present in the header with the name {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER} and value
+ * is of type {@link java.net.URI}.
  * </p>
  *
  * <p>
- * If the annotated method is not a JAX-RS resource method, the context of the currently
- * running LRA can be obtained by adhering to a predefined method signature as
- * defined in the LRA specification document. Similarly the method may determine
- * whether or not it runs with a nested LRA by providing a parameter to hold the parent context.
- * For example,
+ * If the annotated method is not a JAX-RS resource method, the context of the currently running LRA can be obtained by
+ * adhering to a predefined method signature as defined in the LRA specification document. Similarly the method may
+ * determine whether or not it runs with a nested LRA by providing a parameter to hold the parent context. For example,
  * </p>
  *
  * <pre>
@@ -69,64 +61,56 @@ import java.lang.annotation.Target;
  * </pre>
  *
  * <p>
- * would be a valid status method declaration. If an invalid signature is detected 
- * the implementation of this specification MUST prohibit successful startup of the application
- * (e.g., with a runtime exception).
+ * would be a valid status method declaration. If an invalid signature is detected the implementation of this
+ * specification MUST prohibit successful startup of the application (e.g., with a runtime exception).
  * </p>
  *
  * <p>
- * If the participant has already responded successfully to an invocation
- * of the {@link Compensate} or {@link Complete} method then it may
- * report <code>410 Gone</code> HTTP status code or in case of
- * non-JAX-RS method returning {@link ParticipantStatus} to return <code>null</code>.
+ * If the participant has already responded successfully to an invocation of the {@link Compensate} or {@link Complete}
+ * method then it may report <code>410 Gone</code> HTTP status code or in case of non-JAX-RS method returning
+ * {@link ParticipantStatus} to return <code>null</code>.
  * </p>
  *
  * <p>
- * Since the participant generally needs to know the id of the LRA in order
- * to report its status there is generally no benefit to combining this
- * annotation with the <code>&#64;LRA</code> annotation (though it is not prohibited).
+ * Since the participant generally needs to know the id of the LRA in order to report its status there is generally no
+ * benefit to combining this annotation with the <code>&#64;LRA</code> annotation (though it is not prohibited).
  * </p>
  *
  * <p>
- * If the method is a JAX-RS resource method (or is a non JAX-RS method
- * annotated with <code>&#64;Status</code> with return type
- * {@link Response}) then the following are the only
- * valid response codes:
+ * If the method is a JAX-RS resource method (or is a non JAX-RS method annotated with <code>&#64;Status</code> with
+ * return type {@link Response}) then the following are the only valid response codes:
  * </p>
  *
- * <table border="0" cellpadding="3" cellspacing="0"
- *   summary="Valid JAX-RS response codes for Status methods">
+ * <table border="0" cellpadding="3" cellspacing="0" summary="Valid JAX-RS response codes for Status methods">
  * <caption><span>JAX-RS Response Codes For Status Methods</span><span>&nbsp;</span></caption>
  * <tr>
- *   <th scope="col">Code</th>
- *   <th scope="col">Response Body</th>
- *   <th scope="col">Meaning</th>
+ * <th scope="col">Code</th>
+ * <th scope="col">Response Body</th>
+ * <th scope="col">Meaning</th>
  * </tr>
  * <tr>
- *   <td scope="row">200</td>
- *   <td scope="row">{@link ParticipantStatus} enum value</td>
- *   <td scope="row">The current status of the participant</td>
+ * <td scope="row">200</td>
+ * <td scope="row">{@link ParticipantStatus} enum value</td>
+ * <td scope="row">The current status of the participant</td>
  * </tr>
  * <tr>
- *   <td scope="row">202</td>
- *   <td scope="row">Empty</td>
- *   <td scope="row">The resource is attempting to determine the status and
- *   the caller should retry later</td>
+ * <td scope="row">202</td>
+ * <td scope="row">Empty</td>
+ * <td scope="row">The resource is attempting to determine the status and the caller should retry later</td>
  * </tr>
  * <tr>
- *   <td scope="row">410</td>
- *   <td scope="row">Empty</td>
- *   <td scope="row">The method does not know about the LRA</td>
+ * <td scope="row">410</td>
+ * <td scope="row">Empty</td>
+ * <td scope="row">The method does not know about the LRA</td>
  * </tr>
  * </table>
  *
  * <p>
- * The implementation will handle the return code 410 in the same way
- * as the return code 200. Specifically, when the implementation calls the Status method
- * after it has called the Complete or Compensated method and received a response which indicates
- * that the process is in progress (with a return code 202, for example). The response code 410
- * which is received when calling this Status annotated method, MUST be interpreted by the implementation
- * that the process is successfully completed and the participant already forgot about the LRA.
+ * The implementation will handle the return code 410 in the same way as the return code 200. Specifically, when the
+ * implementation calls the Status method after it has called the Complete or Compensated method and received a response
+ * which indicates that the process is in progress (with a return code 202, for example). The response code 410 which is
+ * received when calling this Status annotated method, MUST be interpreted by the implementation that the process is
+ * successfully completed and the participant already forgot about the LRA.
  * </p>
  */
 @Retention(RetentionPolicy.RUNTIME)

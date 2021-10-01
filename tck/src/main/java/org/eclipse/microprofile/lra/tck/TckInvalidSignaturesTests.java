@@ -19,6 +19,8 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.junit.Assert.assertThrows;
+
 import org.eclipse.microprofile.lra.tck.participant.invalid.LRAResourceWithoutCompensateOrAfteRLRA;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidAfterLRASignatureListener;
 import org.eclipse.microprofile.lra.tck.participant.nonjaxrs.InvalidArgumentTypesParticipant;
@@ -38,16 +40,14 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertThrows;
-
 /**
  * <p>
  * TCK that verifies that invalid non-JAX-RS participant method signatures are reported during deployment
  * </p>
  *
  * <p>
- * Each test deploys an archive containing single invalid participant containing an error in its participant
- * method signature and expects that such deployment is aborted according to the specification.
+ * Each test deploys an archive containing single invalid participant containing an error in its participant method
+ * signature and expects that such deployment is aborted according to the specification.
  * </p>
  */
 @RunWith(Arquillian.class)
@@ -93,9 +93,9 @@ public class TckInvalidSignaturesTests {
     private static WebArchive createArchive(Class<?> resourceClass) {
         String archiveName = resourceClass.getSimpleName();
         return ShrinkWrap
-            .create(WebArchive.class, archiveName + ".war")
-            .addClasses(resourceClass, JaxRsActivator.class)
-            .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+                .create(WebArchive.class, archiveName + ".war")
+                .addClasses(resourceClass, JaxRsActivator.class)
+                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
     }
 
     @After

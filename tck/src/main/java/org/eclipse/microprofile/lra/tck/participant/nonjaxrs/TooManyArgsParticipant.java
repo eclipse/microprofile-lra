@@ -19,21 +19,21 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs;
 
+import java.net.URI;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.TckInvalidSignaturesTests;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-
 /**
- * TCK invalid LRA participant containing too many arguments in the participant method signature
- * used for verification of deployment time invalid signature detection and error report in 
- * {@link TckInvalidSignaturesTests}.
+ * TCK invalid LRA participant containing too many arguments in the participant method signature used for verification
+ * of deployment time invalid signature detection and error report in {@link TckInvalidSignaturesTests}.
  */
 @Path("too-many-args-nonjaxrs")
 public class TooManyArgsParticipant {
@@ -44,7 +44,7 @@ public class TooManyArgsParticipant {
     public Response doInLRA() {
         return Response.ok().build();
     }
-    
+
     @Compensate
     public ParticipantStatus compensate(URI lraId) {
         return ParticipantStatus.Compensated;

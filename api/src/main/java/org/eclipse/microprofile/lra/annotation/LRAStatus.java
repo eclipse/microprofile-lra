@@ -21,30 +21,23 @@
 package org.eclipse.microprofile.lra.annotation;
 
 /**
- * A representation of the status of a Long Running Action according to a
- * LRA state model:
+ * A representation of the status of a Long Running Action according to a LRA state model:
  *
  * The initial state {@link #Active} is entered when an LRA is created.
  *
- * The state {@link #Cancelling} is entered when a request to cancel
- * an LRA is received. The transition to end state {@link #Cancelled}
- * should occur when all the enlisted participants have indicated that
- * they successfully compensated for any actions they performed when the
- * LRA was executing. If any participant could not, and will never be able
- * to, compensate then the final state of {@link #FailedToCancel} is entered.
+ * The state {@link #Cancelling} is entered when a request to cancel an LRA is received. The transition to end state
+ * {@link #Cancelled} should occur when all the enlisted participants have indicated that they successfully compensated
+ * for any actions they performed when the LRA was executing. If any participant could not, and will never be able to,
+ * compensate then the final state of {@link #FailedToCancel} is entered.
  *
- * The state {@link #Closing} is entered when a request to close
- * an LRA is received. The transition to end state {@link #Closed}
- * should occur when all the enlisted participants have indicated that
- * they successfully completed any actions they performed when the
- * LRA was executing. If any participant could not, and will never be able
- * to, complete then the final state of {@link #FailedToClose} is entered.
+ * The state {@link #Closing} is entered when a request to close an LRA is received. The transition to end state
+ * {@link #Closed} should occur when all the enlisted participants have indicated that they successfully completed any
+ * actions they performed when the LRA was executing. If any participant could not, and will never be able to, complete
+ * then the final state of {@link #FailedToClose} is entered.
  *
- * This specification expects that this enum is consumable in JAX-RS implementations
- * passed as an entity parameter. This means that if the JAX-RS implementation does
- * not support enum types as entity parameters then the implementation of this
- * specification should provide a custom message body reader that will handle this
- * parsing.
+ * This specification expects that this enum is consumable in JAX-RS implementations passed as an entity parameter. This
+ * means that if the JAX-RS implementation does not support enum types as entity parameters then the implementation of
+ * this specification should provide a custom message body reader that will handle this parsing.
  */
 public enum LRAStatus {
     /**
@@ -52,18 +45,18 @@ public enum LRAStatus {
      */
     Active,
     /**
-     * The LRA is currently informing participants that they should
-     * compensate for any work they performed when the LRA was active
+     * The LRA is currently informing participants that they should compensate for any work they performed when the LRA
+     * was active
      */
     Cancelling,
     /**
-     * All participants associated with the LRA have successfully
-     * compensated for any work they performed when the LRA was active
+     * All participants associated with the LRA have successfully compensated for any work they performed when the LRA
+     * was active
      */
     Cancelled,
     /**
-     * One or more participants associated with the LRA were not able to
-     * compensate for the work they performed when the LRA was active
+     * One or more participants associated with the LRA were not able to compensate for the work they performed when the
+     * LRA was active
      */
     FailedToCancel,
     /**
@@ -75,8 +68,8 @@ public enum LRAStatus {
      */
     Closed,
     /**
-     * One or more participants associated with the LRA were not able to
-     * complete the work they performed when the LRA was active
+     * One or more participants associated with the LRA were not able to complete the work they performed when the LRA
+     * was active
      */
     FailedToClose,
 }

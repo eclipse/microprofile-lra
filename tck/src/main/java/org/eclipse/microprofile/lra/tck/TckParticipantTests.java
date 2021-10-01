@@ -64,61 +64,60 @@ public class TckParticipantTests extends TckTestBase {
     @Deployment
     public static WebArchive deployValidParticipant() {
         return TckTestBase.deploy(VALID_DEPLOYMENT)
-            .addPackage(ValidLRAParticipant.class.getPackage());
+                .addPackage(ValidLRAParticipant.class.getPackage());
     }
 
     /**
-     * Test verifies that non-JAX-RS @Complete method is invoked according to the
-     * LRA protocol and that if {@link WebApplicationException} is
-     * thrown inside of a non-JAX-RS participant method than {@link Response} it
-     * is carrying is extracted and acted upon according to LRA response handling
+     * Test verifies that non-JAX-RS @Complete method is invoked according to the LRA protocol and that if
+     * {@link WebApplicationException} is thrown inside of a non-JAX-RS participant method than {@link Response} it is
+     * carrying is extracted and acted upon according to LRA response handling
      */
     @Test
     public void validWebApplicationExceptionReturnedTest() {
         WebTarget resourcePath = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
-            .path(ValidLRAParticipant.ENLIST_WITH_COMPLETE);
+                .path(ValidLRAParticipant.ENLIST_WITH_COMPLETE);
 
         Response response = resourcePath.request().get();
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
-        lraMetric.assertCompletedEquals("Non JAX-RS @Complete method throwing WebApplicationException shoud have been called",
-            1, lraId, ValidLRAParticipant.class);
+        lraMetric.assertCompletedEquals(
+                "Non JAX-RS @Complete method throwing WebApplicationException shoud have been called",
+                1, lraId, ValidLRAParticipant.class);
         lraMetric.assertNotCompensated("@Compensate method should not have been called as LRA completed succesfully",
-            lraId, ValidLRAParticipant.class);
+                lraId, ValidLRAParticipant.class);
 
         /*
-         * Validate that a resource can receive notifications of the final outcome of an LRA using
-         * the {@link org.eclipse.microprofile.lra.annotation.AfterLRA} annotation on
-         * a non JAX-RS method
+         * Validate that a resource can receive notifications of the final outcome of an LRA using the {@link
+         * org.eclipse.microprofile.lra.annotation.AfterLRA} annotation on a non JAX-RS method
          */
         lraMetric.assertAfterLRA("@AfterLRA method should have been called", lraId, ValidLRAParticipant.class);
     }
 
     /**
-     * This test verifies chained call of non-JAX-RS participant methods. First
-     * it starts and cancels a new LRA. @Compensate non-JAX-RS method then returns
-     * {@link org.eclipse.microprofile.lra.annotation.ParticipantStatus#Compensating}
-     * (see {@link ValidLRAParticipant}) indicating that non-JAX-RS @Status method should
-     * be invoked. The test then waits for recovery and then verifies that @Status method is
-     * called. This method finishes compensation with return of the {@link Response} object
-     * indicating failure and so the test then verifies that non-JAX-RS @Forget method has
-     * also been called.
+     * This test verifies chained call of non-JAX-RS participant methods. First it starts and cancels a new
+     * LRA. @Compensate non-JAX-RS method then returns
+     * {@link org.eclipse.microprofile.lra.annotation.ParticipantStatus#Compensating} (see {@link ValidLRAParticipant})
+     * indicating that non-JAX-RS @Status method should be invoked. The test then waits for recovery and then verifies
+     * that @Status method is called. This method finishes compensation with return of the {@link Response} object
+     * indicating failure and so the test then verifies that non-JAX-RS @Forget method has also been called.
      *
-     * @throws InterruptedException When Test is interrupted during sleep.
+     * @throws InterruptedException
+     *             When Test is interrupted during sleep.
      */
     @Test
     public void validSignaturesChainTest() throws InterruptedException {
         WebTarget resourcePath = tckSuiteTarget.path(ValidLRAParticipant.RESOURCE_PATH)
-            .path(ValidLRAParticipant.ENLIST_WITH_COMPENSATE);
+                .path(ValidLRAParticipant.ENLIST_WITH_COMPENSATE);
 
         Response response = resourcePath.request().get();
 
-        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
-        
+        URI lraId = URI
+                .create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+
         lraMetric.assertCompensatedEquals("Non JAX-RS @Compensate method should have been called",
-            1, lraId, ValidLRAParticipant.class);
+                1, lraId, ValidLRAParticipant.class);
         lraMetric.assertNotCompleted("@Complete method should not have been called as LRA compensated",
-            lraId, ValidLRAParticipant.class);
+                lraId, ValidLRAParticipant.class);
 
         lraTestService.waitForRecovery(lraId);
 
@@ -127,22 +126,25 @@ public class TckParticipantTests extends TckTestBase {
     }
 
     /**
-     * Test verifies {@link java.util.concurrent.CompletionStage} parametrized with
-     * {@link Void} as valid non-JAX-RS participant method return type
+     * Test verifies {@link java.util.concurrent.CompletionStage} parametrized with {@link Void} as valid non-JAX-RS
+     * participant method return type
      *
-     * @throws InterruptedException when waiting for the finishing the completion is interrupted
+     * @throws InterruptedException
+     *             when waiting for the finishing the completion is interrupted
      */
     @Test
     public void testNonJaxRsCompletionStageVoid() throws InterruptedException {
         WebTarget resourcePath = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-            .path(ValidLRACSParticipant.ENLIST_WITH_COMPENSATE);
+                .path(ValidLRACSParticipant.ENLIST_WITH_COMPENSATE);
 
         Response response = resourcePath.request().get();
 
-        URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
+        URI lraId = URI
+                .create(checkStatusReadAndCloseResponse(Response.Status.INTERNAL_SERVER_ERROR, response, resourcePath));
 
-        lraMetric.assertCompensatedEquals("Non JAX-RS @Compensate method with CompletionStage<Void> should have been called",
-            1, lraId, ValidLRACSParticipant.class);
+        lraMetric.assertCompensatedEquals(
+                "Non JAX-RS @Compensate method with CompletionStage<Void> should have been called",
+                1, lraId, ValidLRACSParticipant.class);
         lraMetric.assertNotCompleted("Non JAX-RS @Complete method should have not been called",
                 lraId, ValidLRACSParticipant.class);
 
@@ -150,31 +152,34 @@ public class TckParticipantTests extends TckTestBase {
     }
 
     /**
-     * Test verifyies {@link java.util.concurrent.CompletionStage} parametrized by
-     * {@link Response} and {@link org.eclipse.microprofile.lra.annotation.ParticipantStatus} as valid
-     * non-JAX-RS participant methods return types
+     * Test verifyies {@link java.util.concurrent.CompletionStage} parametrized by {@link Response} and
+     * {@link org.eclipse.microprofile.lra.annotation.ParticipantStatus} as valid non-JAX-RS participant methods return
+     * types
      *
-     * @throws InterruptedException When Test is interrupted during sleep.
+     * @throws InterruptedException
+     *             When Test is interrupted during sleep.
      */
     @Test
     public void testNonJaxRsCompletionStageResponseAndParticipantStatus() throws InterruptedException {
         WebTarget resourcePath = tckSuiteTarget.path(ValidLRACSParticipant.ROOT_PATH)
-            .path(ValidLRACSParticipant.ENLIST_WITH_COMPLETE);
+                .path(ValidLRACSParticipant.ENLIST_WITH_COMPLETE);
 
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath));
 
-        lraMetric.assertCompletedEquals("Non JAX-RS @Complete method with CompletionStage<Response> should have been called",
-            1, lraId, ValidLRACSParticipant.class);
+        lraMetric.assertCompletedEquals(
+                "Non JAX-RS @Complete method with CompletionStage<Response> should have been called",
+                1, lraId, ValidLRACSParticipant.class);
         lraMetric.assertNotCompensated("Non JAX-RS @Compensate method should have not been called",
-            lraId, ValidLRACSParticipant.class);
+                lraId, ValidLRACSParticipant.class);
 
         lraTestService.waitForRecovery(lraId);
 
-        lraMetric.assertStatus("Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
-            lraId, ValidLRACSParticipant.class);
-        
+        lraMetric.assertStatus(
+                "Non JAX-RS @Status method with CompletionStage<ParticipantStatus> should have been called",
+                lraId, ValidLRACSParticipant.class);
+
         lraTestService.waitForRecovery(lraId);
     }
 
@@ -193,9 +198,9 @@ public class TckParticipantTests extends TckTestBase {
 
         // Make sure that when we cancel the LRA, the participant is waiting in the business method.
         Response syncMethodResponse = tckSuiteTarget.path(LongBusinessMethodParticipant.ROOT_PATH)
-                      .path(LongBusinessMethodParticipant.SYNC_METHOD)
-                      .request()
-                      .put(Entity.text(""));
+                .path(LongBusinessMethodParticipant.SYNC_METHOD)
+                .request()
+                .put(Entity.text(""));
         Assert.assertEquals("Endpoint " + LongBusinessMethodParticipant.SYNC_METHOD + " failed execution",
                 200, syncMethodResponse.getStatus());
         // -1 indicates that the LRAMetricType.Compensated key is not yet present in the metrics Map.
@@ -203,14 +208,14 @@ public class TckParticipantTests extends TckTestBase {
         lraMetric.assertNotCompleted("Business method is in progress and @Complete has not been expected",
                 lraId, LongBusinessMethodParticipant.class);
         lraMetric.assertNotCompensated("Business method is in progress and @Compensate can't be called " +
-                        "as cancelation has not been invoked yet", lraId, LongBusinessMethodParticipant.class);
+                "as cancelation has not been invoked yet", lraId, LongBusinessMethodParticipant.class);
         LOGGER.info(String.format("Cancelled LRA with URI %s", lraId));
         lraOps.cancelLRA(lraId);
         // waiting for the LRA to be finished
         lraTestService.waitForRecovery(lraId);
         // participant has to be compensated
         lraMetric.assertCompensated("@Compensate method should have been called at least once " +
-                        "as cancel was invoked", lraId, LongBusinessMethodParticipant.class);
+                "as cancel was invoked", lraId, LongBusinessMethodParticipant.class);
 
         Response response = lraFuture.get(lraTimeout(), TimeUnit.MILLISECONDS);
         Assert.assertEquals(LongBusinessMethodParticipant.class.getSimpleName() + "'s business method is expected " +

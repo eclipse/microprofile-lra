@@ -19,6 +19,15 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
+import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource.LRA_CANCEL_ON_RESOURCE_PATH;
+
+import java.net.URI;
+
+import javax.inject.Inject;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
 import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
@@ -28,14 +37,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import java.net.URI;
-
-import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource.LRA_CANCEL_ON_RESOURCE_PATH;
-
 @RunWith(Arquillian.class)
 public class TckCancelOnTests extends TckTestBase {
 
@@ -44,7 +45,7 @@ public class TckCancelOnTests extends TckTestBase {
 
     @Inject
     private LRATestService lraTestService;
-    
+
     @Deployment(name = "tcktests-cancelon")
     public static WebArchive deploy() {
         return TckTestBase.deploy(TckCancelOnTests.class.getSimpleName().toLowerCase());
@@ -60,8 +61,8 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void cancelOnFamilyDefault4xx() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_4XX);
-        
+                .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_4XX);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.BAD_REQUEST, response, resourcePath));
@@ -76,8 +77,8 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void cancelOnFamilyDefault5xx() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_5XX);
-        
+                .path(LraCancelOnResource.CANCEL_ON_FAMILY_DEFAULT_5XX);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
@@ -92,15 +93,17 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void cancelOnFamily3xx() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.CANCEL_ON_FAMILY_3XX);
-        
+                .path(LraCancelOnResource.CANCEL_ON_FAMILY_3XX);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.SEE_OTHER, response, resourcePath));
         lraTestService.waitForCallbacks(lraId);
-        lraMetric.assertCompensated("After status code 303 is received, compensate should be invoked as set by attribute cancelOnFamily",
+        lraMetric.assertCompensated(
+                "After status code 303 is received, compensate should be invoked as set by attribute cancelOnFamily",
                 lraId, LraCancelOnResource.class);
-        lraMetric.assertNotCompleted("After status code 303 is received, complete can't be invoked as not defined in annotation @LRA",
+        lraMetric.assertNotCompleted(
+                "After status code 303 is received, complete can't be invoked as not defined in annotation @LRA",
                 lraId, LraCancelOnResource.class);
     }
 
@@ -110,15 +113,17 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void cancelOn301() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.CANCEL_ON_301);
-        
+                .path(LraCancelOnResource.CANCEL_ON_301);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.MOVED_PERMANENTLY, response, resourcePath));
         lraTestService.waitForCallbacks(lraId);
-        lraMetric.assertCompensated("After status code 301 is received, compensate should be invoked as set by attribute cancelOn",
+        lraMetric.assertCompensated(
+                "After status code 301 is received, compensate should be invoked as set by attribute cancelOn",
                 lraId, LraCancelOnResource.class);
-        lraMetric.assertNotCompleted("After status code 301 is received, complete can't be invoked as not defined in annotation @LRA",
+        lraMetric.assertNotCompleted(
+                "After status code 301 is received, complete can't be invoked as not defined in annotation @LRA",
                 lraId, LraCancelOnResource.class);
     }
 
@@ -128,15 +133,17 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void notCancelOnFamily5xx() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.NOT_CANCEL_ON_FAMILY_5XX);
-        
+                .path(LraCancelOnResource.NOT_CANCEL_ON_FAMILY_5XX);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.INTERNAL_SERVER_ERROR, response, resourcePath));
         lraTestService.waitForCallbacks(lraId);
-        lraMetric.assertNotCompensated("After status code 500 is received, compensate can't be invoked as the default behaviour has changed",
+        lraMetric.assertNotCompensated(
+                "After status code 500 is received, compensate can't be invoked as the default behaviour has changed",
                 lraId, LraCancelOnResource.class);
-        lraMetric.assertCompleted("After status code 500 is received, complete has to be called as the default behaviour has changed",
+        lraMetric.assertCompleted(
+                "After status code 500 is received, complete has to be called as the default behaviour has changed",
                 lraId, LraCancelOnResource.class);
     }
 
@@ -146,16 +153,16 @@ public class TckCancelOnTests extends TckTestBase {
     @Test
     public void cancelFromRemoteCall() {
         WebTarget resourcePath = getSuiteTarget().path(LRA_CANCEL_ON_RESOURCE_PATH)
-            .path(LraCancelOnResource.CANCEL_FROM_REMOTE_CALL);
-        
+                .path(LraCancelOnResource.CANCEL_FROM_REMOTE_CALL);
+
         Response response = resourcePath.request().get();
 
         URI lraId = URI.create(checkStatusReadAndCloseResponse(Status.OK, response, resourcePath));
         lraTestService.waitForCallbacks(lraId);
 
         lraMetric.assertCompensated("Status was 200 but compensate should be called as LRA should be cancelled " +
-                        "for remotely called participant as well", lraId, LraCancelOnResource.class);
+                "for remotely called participant as well", lraId, LraCancelOnResource.class);
         lraMetric.assertNotCompleted("Even the 200 status was received the remotely called participant " +
-                        "should cause the LRA being cancelled", lraId, LraCancelOnResource.class);
+                "should cause the LRA being cancelled", lraId, LraCancelOnResource.class);
     }
 }

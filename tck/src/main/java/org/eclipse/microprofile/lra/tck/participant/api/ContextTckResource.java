@@ -19,15 +19,19 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.Compensate;
-import org.eclipse.microprofile.lra.annotation.Complete;
-import org.eclipse.microprofile.lra.annotation.Forget;
-import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
-import org.eclipse.microprofile.lra.annotation.Status;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.SUPPORTS_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import java.net.URI;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -48,19 +52,16 @@ import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_PARENT_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.SUPPORTS_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.NonParticipatingTckResource.TCK_NON_PARTICIPANT_RESOURCE_PATH;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.annotation.ws.rs.Leave;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
 @ApplicationScoped
 @Path(ContextTckResource.TCK_CONTEXT_RESOURCE_PATH)
@@ -80,7 +81,7 @@ public class ContextTckResource {
 
     public static final String LEAVE_PATH = "/leave";
     // resource path for reading and writing the participant status
-    public static final String STATUS_PATH = "/status";    // resource path for reading and writing the participant status
+    public static final String STATUS_PATH = "/status"; // resource path for reading and writing the participant status
     public static final String CLEAR_STATUS_PATH = "/clear-status";
     // resource path for reading stats relating to a participant in the context of a single LRA
     public static final String METRIC_PATH = "/count";
@@ -103,10 +104,8 @@ public class ContextTckResource {
     private LRAMetricService lraMetricService;
 
     /**
-     * An enum which controls the behaviour of participant when the
-     * LRA spec implementation invokes the compensation, completion,
-     * forget and status callbacks. It is used for testing the
-     * implementation is spec compliant.
+     * An enum which controls the behaviour of participant when the LRA spec implementation invokes the compensation,
+     * completion, forget and status callbacks. It is used for testing the implementation is spec compliant.
      */
     public enum EndPhase {
         ACCEPTED, // a participant reports that the complete/compensate is in progress
@@ -129,7 +128,6 @@ public class ContextTckResource {
             endPhaseStatus = Response.Status.fromStatusCode(faultCode);
         }
     }
-
 
     @PostConstruct
     private void postConstruct() {
@@ -164,8 +162,8 @@ public class ContextTckResource {
     @PUT
     @Path(NEW_LRA_PATH)
     public Response newLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                           @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
-                           @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
+            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
+            @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
         // check for a requests to inject particular behaviour
         setEndPhase(tckFaultType, tckFaultCode);
 
@@ -177,8 +175,8 @@ public class ContextTckResource {
     @PUT
     @Path(REQUIRED_LRA_PATH)
     public Response requiredLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
-                                @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
+            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType,
+            @HeaderParam(LRA_TCK_FAULT_CODE_HEADER) int tckFaultCode) {
         setEndPhase(tckFaultType, tckFaultCode);
 
         return Response.ok().entity(lraId.toASCIIString()).build();
@@ -195,7 +193,7 @@ public class ContextTckResource {
     @PUT
     @Path(NESTED_LRA_PATH)
     public Response nestedLRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRA,
-                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
         return Response.ok().entity(nestedLRA.toASCIIString() + "," + parentLRA.toASCIIString()).build();
     }
 
@@ -203,7 +201,7 @@ public class ContextTckResource {
     @PUT
     @Path(NESTED_LRA_PATH_WITH_CLOSE)
     public Response nestedLRAWithClose(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI nestedLRA,
-                              @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
         return Response.ok().entity(nestedLRA.toASCIIString() + "," + parentLRA.toASCIIString()).build();
     }
 
@@ -218,20 +216,24 @@ public class ContextTckResource {
 
         // invoke a remote service which runs in its own context. Do not set the context header
         remote = restPutInvocation(null, REQUIRES_NEW_LRA_PATH, "");
-        assertNotEquals("contextCheck2: the remote service should not have ran with the active context", remote, active);
+        assertNotEquals("contextCheck2: the remote service should not have ran with the active context", remote,
+                active);
 
-
-        assertEquals("contextCheck2: after calling a remote service the active LRAs are different", active, getActiveLRA());
+        assertEquals("contextCheck2: after calling a remote service the active LRAs are different", active,
+                getActiveLRA());
 
         // invoke a remote service which runs in its own context. Do set the context header
         remote = restPutInvocation(active, REQUIRES_NEW_LRA_PATH, "");
-        assertNotEquals("contextCheck3: the remote service should not have ran with the active context", remote, active);
-        assertEquals("contextCheck3: after calling a remote service the active LRAs are different", active, getActiveLRA());
+        assertNotEquals("contextCheck3: the remote service should not have ran with the active context", remote,
+                active);
+        assertEquals("contextCheck3: after calling a remote service the active LRAs are different", active,
+                getActiveLRA());
 
         // invoke a remote service which runs in the callers context, ie do set the context header
         remote = restPutInvocation(active, TCK_NON_PARTICIPANT_RESOURCE_PATH, SUPPORTS_PATH, "");
         assertEquals("contextCheck4: the remote service should have ran with the active context", remote, active);
-        assertEquals("contextCheck4: after calling a remote service the active LRAs is different", active, getActiveLRA());
+        assertEquals("contextCheck4: after calling a remote service the active LRAs is different", active,
+                getActiveLRA());
 
         return Response.ok().entity(lraId.toASCIIString()).build();
     }
@@ -240,14 +242,14 @@ public class ContextTckResource {
     @PUT
     @Path(ASYNC_LRA_PATH1)
     public void async1LRA(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                         final @Suspended AsyncResponse ar) {
+            final @Suspended AsyncResponse ar) {
         excecutorService.submit(() -> {
             // excecute long running business activity and resume when done
             ar.resume(Response.ok().entity(lraId.toASCIIString()).build());
         });
     }
 
-    @LRA(value = LRA.Type.REQUIRED,  // the method must run with an LRA
+    @LRA(value = LRA.Type.REQUIRED, // the method must run with an LRA
             end = true, // the LRA must end when the method completes
             cancelOnFamily = Response.Status.Family.SERVER_ERROR, // cancel LRA on any 5xx code
             cancelOn = NOT_FOUND) // cancel LRA on 404
@@ -263,8 +265,7 @@ public class ContextTckResource {
                         return Response.status(NOT_FOUND).entity(lraId.toASCIIString()).build();
                     }
                 },
-                getExcecutorService()
-        );
+                getExcecutorService());
     }
 
     @LRA(value = LRA.Type.REQUIRED)
@@ -277,7 +278,8 @@ public class ContextTckResource {
             // excecute long running business activity finishing with an error
             // code of NOT_FOUND which causes the LRA to cancel
             response.completeExceptionally(
-                    new WebApplicationException(Response.status(Response.Status.NOT_FOUND).entity(lraId.toASCIIString()).build()));
+                    new WebApplicationException(
+                            Response.status(Response.Status.NOT_FOUND).entity(lraId.toASCIIString()).build()));
         });
 
         return response;
@@ -294,7 +296,7 @@ public class ContextTckResource {
     @Path("/compensate")
     @Compensate
     public Response compensateWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                   @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Compensated, lraId, ContextTckResource.class);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
@@ -307,7 +309,7 @@ public class ContextTckResource {
     @Path("/complete")
     @Complete
     public Response completeWork(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                                 @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Completed, lraId, ContextTckResource.class);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
@@ -320,7 +322,7 @@ public class ContextTckResource {
     @Path(STATUS_PATH)
     @Status
     public Response status(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ContextTckResource.class);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
@@ -333,7 +335,7 @@ public class ContextTckResource {
     @Path("/forget")
     @Forget
     public Response forget(@HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
-                           @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
+            @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parent) {
         lraMetricService.incrementMetric(LRAMetricType.Forget, lraId, ContextTckResource.class);
         if (parent != null) {
             lraMetricService.incrementMetric(LRAMetricType.Nested, parent, ContextTckResource.class);
@@ -346,15 +348,15 @@ public class ContextTckResource {
     @POST
     @Path(CLEAR_STATUS_PATH)
     public Response clearStatus(@HeaderParam(LRA_TCK_HTTP_CONTEXT_HEADER) URI lraId,
-                           @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType) {
+            @HeaderParam(LRA_TCK_FAULT_TYPE_HEADER) String tckFaultType) {
         switch (status) {
-            case Compensating:
+            case Compensating :
                 status = ParticipantStatus.Compensated;
                 break;
-            case Completing:
+            case Completing :
                 status = ParticipantStatus.Completed;
                 break;
-            default:
+            default :
                 break; // do nothing
         }
 
@@ -367,14 +369,14 @@ public class ContextTckResource {
     // modify participant responses based on injected behaviour specified by the test
     private Response getEndPhaseResponse(boolean completing) {
         switch (endPhase) {
-            case ACCEPTED:
+            case ACCEPTED :
                 status = completing ? ParticipantStatus.Completing : ParticipantStatus.Compensating;
                 return Response.status(Response.Status.ACCEPTED).entity(status.name()).build();
-            case FAILED:
+            case FAILED :
                 status = completing ? ParticipantStatus.FailedToComplete : ParticipantStatus.FailedToCompensate;
                 return Response.status(endPhaseStatus).entity(status.name()).build();
-            case SUCCESS: /* FALLTHRU */
-            default:
+            case SUCCESS : /* FALLTHRU */
+            default :
                 status = completing ? ParticipantStatus.Completed : ParticipantStatus.Compensated;
                 return Response.status(Response.Status.OK).entity(status.name()).build();
         }

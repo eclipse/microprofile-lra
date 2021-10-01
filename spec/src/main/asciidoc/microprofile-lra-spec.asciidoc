@@ -33,7 +33,7 @@ endif::[]
 
 // == License
 :sectnums!:
-include::license-efsl.adoc[]
+include::license-efsl.asciidoc[]
 
 [[introduction]]
 == Introduction
@@ -388,7 +388,7 @@ will run in the context of an LRA and controls whether or not:
 - to end an LRA if the method returns particular HTTP status codes.
 - to enlist the class as a participant of the LRA.
 
-If the incoming context has already ended or does not exist the method will 
+If the incoming context has already ended or does not exist the method will
 immediately return 410 Gone HTTP status code.
 
 Similarly, if any of the preconditions listed in the Type element
@@ -629,7 +629,7 @@ public class BusinessResource {
         switch (status) {
             case Closed:
                 // the LRA was successfully closed
-            ...   
+            ...
         }
     }
 }
@@ -676,7 +676,7 @@ the injected `LRA_HTTP_PARENT_CONTEXT_HEADER` header):
                @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId,
                @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
 
-        if (parentLRA != null) 
+        if (parentLRA != null)
             // A nested context is being cancelled.
             //
             // Code which is sensitive to executing with a nested context goes here.
@@ -712,7 +712,7 @@ the injected `LRA_HTTP_PARENT_CONTEXT_HEADER` header):
                @HeaderParam(LRA_HTTP_PARENT_CONTEXT_HEADER) URI parentLRA) {
 
         // business logic for handling the closing LRA (provided by the business developer)
-        if (parentLRA != null) 
+        if (parentLRA != null)
             // A nested context is being closed.
             //
             // Code which is sensitive to executing with a nested context goes here.
@@ -824,7 +824,7 @@ participant state model>>.
 
 But what if the business logic is unable to compensate for a previous action?
 In this case, the participant must remember that it was unable to compensate
-by reporting `FailedToCompensate` either via the compensate method using 
+by reporting `FailedToCompensate` either via the compensate method using
 the `409 Conflict` status code, for example:
 
 [source,java]
@@ -1094,7 +1094,7 @@ on the exception type:
 and then handled as defined in the section
 <<jaxrs-participant-methods, JAX-RS participant methods>>
 * any other exception
-** @Compensate and @Complete - results into `FailedToCompensate` or `FailedToComplete` 
+** @Compensate and @Complete - results into `FailedToCompensate` or `FailedToComplete`
 participant states
 ** @Status and @Forget - as the participant may have already compensated (or completed)
 or may in the process of compensation (completion) the exception in these methods should

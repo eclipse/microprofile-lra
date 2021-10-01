@@ -19,9 +19,10 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
+import java.net.URI;
+
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 
 @Path(LRATypeTckInterfaceResource.TCK_LRA_TYPE_INTERFACE_RESOURCE_PATH)
 public class LRATypeTckInterfaceResource extends ResourceParent implements LRATypeTckInterface {

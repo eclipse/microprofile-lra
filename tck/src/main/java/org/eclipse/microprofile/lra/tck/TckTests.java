@@ -19,32 +19,6 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck;
 
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
-import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
-import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
-import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
-import org.eclipse.microprofile.lra.tck.participant.api.NoLRAResource;
-import org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource;
-import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
-import org.eclipse.microprofile.lra.tck.service.LRATestService;
-import org.hamcrest.Matchers;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.temporal.ChronoUnit;
-import java.util.stream.IntStream;
-
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
@@ -66,6 +40,33 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.temporal.ChronoUnit;
+import java.util.stream.IntStream;
+
+import javax.inject.Inject;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
+
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
+import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
+import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
+import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
+import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
+import org.eclipse.microprofile.lra.tck.participant.api.NoLRAResource;
+import org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource;
+import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
+import org.hamcrest.Matchers;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @RunWith(Arquillian.class)
 public class TckTests extends TckTestBase {
@@ -94,7 +95,7 @@ public class TckTests extends TckTestBase {
     @Test
     public void cancelLRA() throws WebApplicationException {
         try {
-            URI lra = lraClient.startLRA(null,lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+            URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
 
             lraClient.cancelLRA(lra);
 
@@ -144,7 +145,8 @@ public class TckTests extends TckTestBase {
             assertEquals("The nested activity should return the parent LRA id. The call to " + resourcePath.getUri(),
                     parentId, lra.toString());
 
-            URI nestedLraId = URI.create(response.readEntity(String.class)); // We can keep String.class here as it is in TCK
+            URI nestedLraId = URI.create(response.readEntity(String.class)); // We can keep String.class here as it is
+                                                                             // in TCK
 
             // close the LRA
             lraClient.closeLRA(lra);
@@ -155,7 +157,7 @@ public class TckTests extends TckTestBase {
             assertTrue("Nested LRA id '" + lra + "' should be listed in the list of the active LRAs (from call to "
                     + resourcePath.getUri() + ")", lraTestService.isLRAFinished(nestedLraId));
         } finally {
-            if(response != null) {
+            if (response != null) {
                 response.close();
             }
         }
@@ -201,7 +203,7 @@ public class TckTests extends TckTestBase {
 
         // check that implementation no longer knows about lraId
         assertTrue("LRA '" + lra + "' should not be active anymore as it was closed yet but is not marked as finished",
-            lraTestService.isLRAFinished(lra));
+                lraTestService.isLRAFinished(lra));
     }
 
     @Test
@@ -217,10 +219,10 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * TCK test to verify that methods annotated with {@link AfterLRA}
-     * are notified correctly when an LRA terminates
+     * TCK test to verify that methods annotated with {@link AfterLRA} are notified correctly when an LRA terminates
      *
-     * @throws InterruptedException when waiting for the finishing the callbacks is interrupted
+     * @throws InterruptedException
+     *             when waiting for the finishing the callbacks is interrupted
      */
     @Test
     public void testAfterLRAParticipant() throws WebApplicationException, InterruptedException {
@@ -241,8 +243,7 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * TCK test to verify that methods annotated with {@link AfterLRA}
-     * are notified correctly when an LRA terminates
+     * TCK test to verify that methods annotated with {@link AfterLRA} are notified correctly when an LRA terminates
      */
     @Test
     public void testAfterLRAListener() {
@@ -270,7 +271,8 @@ public class TckTests extends TckTestBase {
 
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
 
-        // perform a second request to the same method in the same LRA context to validate that multiple participants are not registered
+        // perform a second request to the same method in the same LRA context to validate that multiple participants
+        // are not registered
         resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path(TRANSACTIONAL_WORK_PATH);
         response = resourcePath.request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
         checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
@@ -292,7 +294,8 @@ public class TckTests extends TckTestBase {
 
     @Test
     public void dependentLRA() throws WebApplicationException {
-        // call a method annotated with NOT_SUPPORTED but one which programmatically starts an LRA and returns it via a header
+        // call a method annotated with NOT_SUPPORTED but one which programmatically starts an LRA and returns it via a
+        // header
         WebTarget resourcePath = tckSuiteTarget.path(LRA_RESOURCE_PATH).path("startViaApi");
         Response response = resourcePath.request().put(Entity.text(""));
         Object lraHeader = response.getHeaders().getFirst(LRA_HTTP_CONTEXT_HEADER);
@@ -326,9 +329,9 @@ public class TckTests extends TckTestBase {
         lraTestService.waitForCallbacks(lraId);
 
         /*
-         * The call to activities/timeLimit should have started an LRA which should have timed out
-         * (because the invoked resource method sleeps for longer than the timeLimit annotation
-         * attribute specifies). Therefore the participant should have compensated:
+         * The call to activities/timeLimit should have started an LRA which should have timed out (because the invoked
+         * resource method sleeps for longer than the timeLimit annotation attribute specifies). Therefore the
+         * participant should have compensated:
          */
         lraMetric.assertNotCompleted("The LRA should have timed out but complete was called instead of compensate. "
                 + "Expecting the number of complete call before test matches the ones after LRA timed out. "
@@ -341,14 +344,12 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * Service A - Timeout 500 ms
-     * Service B - Type.MANDATORY
+     * Service A - Timeout 500 ms Service B - Type.MANDATORY
      *
-     * Service A calls Service B after it has waited 1 sec.
-     * Service A returns http Status from the call to Service B.
+     * Service A calls Service B after it has waited 1 sec. Service A returns http Status from the call to Service B.
      *
-     * test calls A and verifies if return is status 412 (precondition failed)
-     * or 410 (gone) since LRA is not active when Service B endpoint is called.
+     * test calls A and verifies if return is status 412 (precondition failed) or 410 (gone) since LRA is not active
+     * when Service B endpoint is called.
      */
     @Test
     public void timeLimitWithPreConditionFailed() {
@@ -359,7 +360,7 @@ public class TckTests extends TckTestBase {
 
         assertThat("Expected 412 or 410 response", response.getStatus(),
                 Matchers.anyOf(Matchers.is(Response.Status.PRECONDITION_FAILED.getStatusCode()),
-                               Matchers.is(Response.Status.GONE.getStatusCode())));
+                        Matchers.is(Response.Status.GONE.getStatusCode())));
 
         response.close();
     }
@@ -392,14 +393,20 @@ public class TckTests extends TckTestBase {
 
         lraTestService.waitForRecovery(lra);
 
-        if(close) {
-            lraMetric.assertCompletedEquals(String.format("acceptTest with close: participant (%s) was not asked to complete " +
-                    "(expecting only one call)", resourcePath.getUri()), 1, lra, LraResource.class);
-            lraMetric.assertNotCompensated(String.format("acceptTest with close: participant (%s) was asked to compensate",
-                    resourcePath.getUri()), lra, LraResource.class);
+        if (close) {
+            lraMetric.assertCompletedEquals(
+                    String.format("acceptTest with close: participant (%s) was not asked to complete " +
+                            "(expecting only one call)", resourcePath.getUri()),
+                    1, lra, LraResource.class);
+            lraMetric.assertNotCompensated(
+                    String.format("acceptTest with close: participant (%s) was asked to compensate",
+                            resourcePath.getUri()),
+                    lra, LraResource.class);
         } else {
-            lraMetric.assertCompensatedEquals(String.format("acceptTest with cancel: participant (%s) was not asked to compensate " +
-                    "(expecting only one call)", resourcePath.getUri()), 1, lra, LraResource.class);
+            lraMetric.assertCompensatedEquals(
+                    String.format("acceptTest with cancel: participant (%s) was not asked to compensate " +
+                            "(expecting only one call)", resourcePath.getUri()),
+                    1, lra, LraResource.class);
             lraMetric.assertNotCompleted(String.format("acceptTest with cancel: participant (%s) was asked to complete",
                     resourcePath.getUri()), lra, LraResource.class);
         }
@@ -437,9 +444,8 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes the same participant method twice in the same LRA context
-     * cancel the LRA
-     * check that the participant was asked to compensate only once
+     * client invokes the same participant method twice in the same LRA context cancel the LRA check that the
+     * participant was asked to compensate only once
      */
     @Test
     public void joinWithOneResourceSameMethodTwiceWithCancel() throws WebApplicationException {
@@ -448,8 +454,7 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes the same participant twice but using different methods in the same LRA context
-     * cancel the LRA
+     * client invokes the same participant twice but using different methods in the same LRA context cancel the LRA
      * check that the participant was asked to compensate only once
      */
     @Test
@@ -459,9 +464,8 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes the same participant method twice in the same LRA context
-     * close the LRA
-     * check that the participant was asked to complete only once
+     * client invokes the same participant method twice in the same LRA context close the LRA check that the participant
+     * was asked to complete only once
      */
     @Test
     public void joinWithOneResourceSameMethodTwiceWithClose() throws WebApplicationException {
@@ -470,9 +474,8 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes the same participant twice but using different methods in the same LRA context
-     * close the LRA
-     * check that the participant was asked to complete only once
+     * client invokes the same participant twice but using different methods in the same LRA context close the LRA check
+     * that the participant was asked to complete only once
      */
     @Test
     public void joinWithOneResourceDifferentMethodTwiceWithClose() throws WebApplicationException {
@@ -481,9 +484,8 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes different participant in the same LRA context
-     * close the LRA
-     * check that both participants were asked to complete
+     * client invokes different participant in the same LRA context close the LRA check that both participants were
+     * asked to complete
      */
     @Test
     public void joinWithTwoResourcesWithClose() throws WebApplicationException {
@@ -491,9 +493,8 @@ public class TckTests extends TckTestBase {
     }
 
     /**
-     * client invokes different participants in the same LRA context
-     * cancel the LRA
-     * check that both participants were asked to compensate
+     * client invokes different participants in the same LRA context cancel the LRA check that both participants were
+     * asked to compensate
      */
     @Test
     public void joinWithTwoResourcesWithCancel() throws WebApplicationException {
@@ -518,14 +519,16 @@ public class TckTests extends TckTestBase {
             lraClient.closeLRA(lra);
             lraTestService.waitForCallbacks(lra);
 
-            lraMetric.assertCompleted(methodName + ": resource should have completed", lra, ParticipatingTckResource.class);
+            lraMetric.assertCompleted(methodName + ": resource should have completed", lra,
+                    ParticipatingTckResource.class);
             lraMetric.assertNotCompensated(methodName + ": resource should have completed with no compensations",
                     lra, ParticipatingTckResource.class);
         } else {
             lraClient.cancelLRA(lra);
             lraTestService.waitForCallbacks(lra);
 
-            lraMetric.assertCompensated(methodName + ": resource should have compensated", lra, ParticipatingTckResource.class);
+            lraMetric.assertCompensated(methodName + ": resource should have compensated", lra,
+                    ParticipatingTckResource.class);
             lraMetric.assertNotCompleted(methodName + ": resource should have compensated with no completions",
                     lra, ParticipatingTckResource.class);
         }
@@ -558,7 +561,8 @@ public class TckTests extends TckTestBase {
 
             lraMetric.assertCompensatedEquals("joinWithTwoResourcesWithClose: LRAResource should have compensated once",
                     1, lra, LraResource.class);
-            lraMetric.assertCompensated("joinWithTwoResourcesWithClose: ParticipatingTckResource should have compensated",
+            lraMetric.assertCompensated(
+                    "joinWithTwoResourcesWithClose: ParticipatingTckResource should have compensated",
                     lra, ParticipatingTckResource.class);
         }
     }
@@ -581,7 +585,8 @@ public class TckTests extends TckTestBase {
 
         String lraStr = checkStatusReadAndCloseResponse(Response.Status.OK, response, resourcePath);
         assertNotNull("expecting a LRA string returned from " + resourcePath.getUri(), lraStr);
-        String[] lraArray = lraStr.split(","); // We keep here type String (and not URI) because of the easy String.split
+        String[] lraArray = lraStr.split(","); // We keep here type String (and not URI) because of the easy
+                                               // String.split
         URI[] uris = new URI[lraArray.length];
 
         IntStream.range(0, uris.length).forEach(i -> {
@@ -600,19 +605,21 @@ public class TckTests extends TckTestBase {
                 lraId, lraArray[0]);
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
-        assertFalse("multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
+        assertFalse(
+                "multiLevelNestedActivity: top level LRA should be active (path called " + resourcePath.getUri() + ")",
                 lraTestService.isLRAFinished(URI.create(lraArray[0])));
 
-        // starting at index 1 as LRAResource#multiLevelNestedActivity returns the top-level LRA as the first argument which was not finished yet
+        // starting at index 1 as LRAResource#multiLevelNestedActivity returns the top-level LRA as the first argument
+        // which was not finished yet
         IntStream.range(1, uris.length).parallel().forEach(i -> {
             lraTestService.waitForCallbacks(uris[i]);
         });
 
         // check that all nested activities were told to complete
         lraMetric.assertCompletedAllEquals("multiLevelNestedActivity: step 3 (called test path " +
-                        resourcePath.getUri() + ")", nestedCnt);
+                resourcePath.getUri() + ")", nestedCnt);
         lraMetric.assertCompensatedAllEquals("multiLevelNestedActivity: step 4 (called test path " +
-                        resourcePath.getUri() + ")", 0);
+                resourcePath.getUri() + ")", 0);
 
         // close the LRA
         if (how == CompletionType.compensate) {
@@ -621,28 +628,26 @@ public class TckTests extends TckTestBase {
             lraClient.closeLRA(lra);
         } else {
             /*
-             * The test is calling for a mixed outcome (a top level LRA L1 and nestedCnt nested LRAs (L2, L3, ...)::
-             * L1 the mandatory call (PUT "lraresource/multiLevelNestedActivity") registers participant C1
-             * the resource makes nestedCnt calls to "lraresource/nestedActivity" each of which create nested LRAs
-             * L2, L3, ... each of which enlists a participant (C2, C3, ...) which are completed when the call returns
-             * L2 is cancelled which causes C2 to compensate
-             * L1 is closed which triggers the completion of C1
+             * The test is calling for a mixed outcome (a top level LRA L1 and nestedCnt nested LRAs (L2, L3, ...):: L1
+             * the mandatory call (PUT "lraresource/multiLevelNestedActivity") registers participant C1 the resource
+             * makes nestedCnt calls to "lraresource/nestedActivity" each of which create nested LRAs L2, L3, ... each
+             * of which enlists a participant (C2, C3, ...) which are completed when the call returns L2 is cancelled
+             * which causes C2 to compensate L1 is closed which triggers the completion of C1
              *
              * To summarise:
              *
-             * - C1 is completed
-             * - C2 is completed and then compensated
-             * - C3, ... are completed
+             * - C1 is completed - C2 is completed and then compensated - C3, ... are completed
              */
 
             // compensate the first nested LRA in the enlisted resource
             tckSuiteTarget
-                .path(LRA_RESOURCE_PATH).path(CANCEL_PATH)
-                .request()
-                .header(LRA_HTTP_CONTEXT_HEADER, uris[1])
-                .put(Entity.text(""));
+                    .path(LRA_RESOURCE_PATH).path(CANCEL_PATH)
+                    .request()
+                    .header(LRA_HTTP_CONTEXT_HEADER, uris[1])
+                    .put(Entity.text(""));
 
-            lraClient.closeLRA(lra); // should not complete any nested LRAs (since they have already completed via the interceptor)
+            lraClient.closeLRA(lra); // should not complete any nested LRAs (since they have already completed via the
+                                     // interceptor)
         }
 
         // validate that the top level and nested LRAs are gone
@@ -656,41 +661,41 @@ public class TckTests extends TckTestBase {
         if (how == CompletionType.complete) {
             // make sure that all nested activities were not told to complete or cancel a second time
             lraMetric.assertCompletedAllEquals("multiLevelNestedActivity: step 5 (called test path " +
-                            resourcePath.getUri() + ")", 2 * nestedCnt);
+                    resourcePath.getUri() + ")", 2 * nestedCnt);
             // and that neither were still not told to compensate
             lraMetric.assertCompensatedAllEquals("multiLevelNestedActivity: step 6 (called test path " +
-                            resourcePath.getUri() + ")", 0);
+                    resourcePath.getUri() + ")", 0);
 
         } else if (how == CompletionType.compensate) {
             /*
              * the test starts LRA1 calls a @Mandatory method multiLevelNestedActivity which enlists in LRA1
              * multiLevelNestedActivity then calls an @Nested method which starts L2 and enlists another participant
-             *   when the method returns the nested participant is completed (ie completed count is incremented)
-             * Canceling L1 should then compensate the L1 enlistment (ie compensate count is incremented)
-             * which will then tell L2 to compensate (ie the compensate count is incremented again)
+             * when the method returns the nested participant is completed (ie completed count is incremented) Canceling
+             * L1 should then compensate the L1 enlistment (ie compensate count is incremented) which will then tell L2
+             * to compensate (ie the compensate count is incremented again)
              */
             // each nested participant should have completed (the +nestedCnt)
             lraMetric.assertCompletedAllEquals("multiLevelNestedActivity: step 7 (called test path " +
                     resourcePath.getUri() + ")", nestedCnt);
-            // each nested participant should have compensated. The top level enlistment should have compensated (the +1)
+            // each nested participant should have compensated. The top level enlistment should have compensated (the
+            // +1)
             lraMetric.assertCompensatedAllEquals("multiLevelNestedActivity: step 8 (called test path " +
-                            resourcePath.getUri() + ")", nestedCnt + 1);
+                    resourcePath.getUri() + ")", nestedCnt + 1);
         } else {
             /*
-             * Expect nestedCnt + 1 completions, 1 for the top level and one for each nested LRA
-             * (NB the first nested LRA is completed and compensated)
-             * Note that the top level complete should not call complete again on the nested LRA
+             * Expect nestedCnt + 1 completions, 1 for the top level and one for each nested LRA (NB the first nested
+             * LRA is completed and compensated) Note that the top level complete should not call complete again on the
+             * nested LRA
              */
             lraMetric.assertCompletedAllEquals("multiLevelNestedActivity: step 10 (called test path " +
                     resourcePath.getUri() + ")", nestedCnt + 1);
             /*
-             * The test is calling for a mixed outcome:
-             * - the top level LRA was closed
-             * - one of the nested LRAs was compensated the rest should have been completed
+             * The test is calling for a mixed outcome: - the top level LRA was closed - one of the nested LRAs was
+             * compensated the rest should have been completed
              */
             // there should be just 1 compensation (the first nested LRA)
             lraMetric.assertCompensatedAllEquals("multiLevelNestedActivity: step 9 (called test path " +
-                            resourcePath.getUri() + ")",1);
+                    resourcePath.getUri() + ")", 1);
         }
     }
 }

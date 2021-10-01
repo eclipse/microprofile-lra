@@ -19,7 +19,8 @@
  ******************************************************************************/
 
 /**
- * <p>Microprofile LRA Support.
+ * <p>
+ * Microprofile LRA Support.
  */
 
 @org.osgi.annotation.versioning.Version("1.0")

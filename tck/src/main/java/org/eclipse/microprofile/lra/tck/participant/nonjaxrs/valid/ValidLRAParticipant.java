@@ -19,6 +19,23 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.nonjaxrs.valid;
 
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
+
+import java.net.URI;
+import java.util.logging.Logger;
+
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
@@ -31,22 +48,6 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-import java.net.URI;
-import java.util.logging.Logger;
-
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.ACCEPT_PATH;
-import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource.RECOVERY_PARAM;
-
 /**
  * TCK valid LRA participant containing a combination of valid participant method signatures
  */
@@ -54,10 +55,10 @@ import static org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckR
 @Path(ValidLRAParticipant.RESOURCE_PATH)
 public class ValidLRAParticipant {
     private static final Logger LOGGER = Logger.getLogger(ValidLRAParticipant.class.getName());
-    
+
     public static final String RESOURCE_PATH = "valid-nonjaxrs";
     public static final String ENLIST_WITH_COMPLETE = "nonjaxrs-enlist-complete";
-    
+
     private int recoveryPasses;
 
     @Inject
@@ -115,7 +116,8 @@ public class ValidLRAParticipant {
 
         lraMetricService.incrementMetric(LRAMetricType.Status, lraId, ValidLRAParticipant.class);
 
-        LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called", lraId.toASCIIString()));
+        LOGGER.fine(String.format("LRA id '%s' status called, return FailedToCompensate to get @Forget called",
+                lraId.toASCIIString()));
         return Response.ok(ParticipantStatus.FailedToCompensate).build();
     }
 

@@ -19,10 +19,11 @@
  *******************************************************************************/
 package org.eclipse.microprofile.lra.tck.participant.api;
 
-import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.annotation.AfterLRA;
-import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
-import org.eclipse.microprofile.lra.tck.service.LRATestService;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
+
+import java.net.URI;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -30,16 +31,14 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_ENDED_CONTEXT_HEADER;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
+import org.eclipse.microprofile.lra.annotation.AfterLRA;
+import org.eclipse.microprofile.lra.annotation.LRAStatus;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+import org.eclipse.microprofile.lra.tck.service.LRATestService;
 
 /**
- * resource for testing that methods annotated with
- * {@link AfterLRA}
- * are notified correctly when an LRA terminates
+ * resource for testing that methods annotated with {@link AfterLRA} are notified correctly when an LRA terminates
  */
 @ApplicationScoped
 @Path(AfterLRAListener.AFTER_LRA_LISTENER_PATH)
@@ -56,7 +55,7 @@ public class AfterLRAListener extends ResourceParent {
     @Path(AFTER_LRA_LISTENER_WORK)
     @LRA(value = LRA.Type.REQUIRED, end = false)
     public Response activityWithLRA(@HeaderParam(LRA_HTTP_RECOVERY_HEADER) URI recoveryId,
-                                    @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) URI lraId) {
         return Response.ok().build();
     }
 
@@ -65,6 +64,6 @@ public class AfterLRAListener extends ResourceParent {
     @AfterLRA // this method will be called when the LRA associated with the method activityWithLRA finishes
     public Response afterLRA(@HeaderParam(LRA_HTTP_ENDED_CONTEXT_HEADER) URI lraId, LRAStatus status) {
         return lraTestService.processAfterLRAInfo(lraId, status, AfterLRAListener.class,
-            AFTER_LRA_LISTENER_PATH + AFTER_LRA);
+                AFTER_LRA_LISTENER_PATH + AFTER_LRA);
     }
 }

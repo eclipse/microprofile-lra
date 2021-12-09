@@ -43,10 +43,10 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
  * </p>
  *
  * <p>
- * If the annotation is applied to a JAX-RS resource method then the request method MUST be {@link javax.ws.rs.PUT}. The
- * LRA context of the currently running LRA can be obtained by inspecting the incoming JAX-RS headers. If this LRA is
- * nested then the parent LRA MUST be present in the header with the name {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER} and
- * the header value will be of type {@link java.net.URI}.
+ * If the annotation is applied to a JAX-RS resource method then the request method MUST be {@link jakarta.ws.rs.PUT}.
+ * The LRA context of the currently running LRA can be obtained by inspecting the incoming JAX-RS headers. If this LRA
+ * is nested then the parent LRA MUST be present in the header with the name {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER}
+ * and the header value will be of type {@link java.net.URI}.
  * </p>
  *
  * <p>
@@ -86,7 +86,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
  *
  * <p>
  * If the method is a JAX-RS resource method (or is a non JAX-RS method annotated with <code>&#64;Compensate</code> with
- * return type <code>javax.ws.rs.core.Response</code>) then the following are the only valid response codes:
+ * return type <code>jakarta.ws.rs.core.Response</code>) then the following are the only valid response codes:
  * </p>
  *
  * <table border="0" cellpadding="3" cellspacing="0" summary="Valid JAX-RS compensation response codes">

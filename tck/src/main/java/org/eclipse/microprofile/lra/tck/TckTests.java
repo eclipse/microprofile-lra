@@ -46,12 +46,6 @@ import java.net.URISyntaxException;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.IntStream;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
@@ -67,6 +61,12 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
 public class TckTests extends TckTestBase {

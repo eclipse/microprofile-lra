@@ -43,12 +43,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.net.URI;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.annotation.ParticipantStatus;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.ContextTckResource;
@@ -64,6 +58,12 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 /**
  * test that Compensate, Complete, Status, Forget and Leave annotations work without an LRA annotation test that

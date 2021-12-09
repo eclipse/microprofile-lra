@@ -27,15 +27,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.time.temporal.ChronoUnit;
 
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
 import org.eclipse.microprofile.lra.annotation.Forget;
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
 import org.eclipse.microprofile.lra.annotation.Status;
+
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.core.Response;
 
 /**
  * <p>
@@ -363,7 +363,7 @@ public @interface LRA {
      * via a JAX-RS exception mappper.
      * </p>
      *
-     * @return the {@link javax.ws.rs.core.Response.Status.Family} status families that will cause cancellation of the
+     * @return the {@link jakarta.ws.rs.core.Response.Status.Family} status families that will cause cancellation of the
      *         LRA
      */
     Response.Status.Family[] cancelOnFamily() default {
@@ -384,7 +384,7 @@ public @interface LRA {
      * or via a JAX-RS exception mappper.
      * </p>
      *
-     * @return the {@link javax.ws.rs.core.Response.Status} HTTP status codes that will cause cancellation of the LRA
+     * @return the {@link jakarta.ws.rs.core.Response.Status} HTTP status codes that will cause cancellation of the LRA
      */
     Response.Status[] cancelOn() default {};
 }

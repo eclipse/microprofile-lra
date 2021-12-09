@@ -44,7 +44,7 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
  * </p>
  *
  * <p>
- * If the <code>AfterLRA</code> method is also a JAX-RS resource method then it MUST use the {@link javax.ws.rs.PUT}
+ * If the <code>AfterLRA</code> method is also a JAX-RS resource method then it MUST use the {@link jakarta.ws.rs.PUT}
  * request method. In this case, the LRA context is made available to the annotated method via an HTTP header with the
  * name {@link LRA#LRA_HTTP_ENDED_CONTEXT_HEADER} and the final status is passed to the method as plain text
  * corresponding to one of the {@link LRAStatus} enum values. If this LRA was nested then the parent LRA MUST be present

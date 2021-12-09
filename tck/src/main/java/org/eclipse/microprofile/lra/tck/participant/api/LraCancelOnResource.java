@@ -24,20 +24,6 @@ import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT
 import java.net.URI;
 import java.util.logging.Logger;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Response.Status.Family;
-import javax.ws.rs.core.UriInfo;
-
 import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.annotation.Compensate;
 import org.eclipse.microprofile.lra.annotation.Complete;
@@ -45,6 +31,20 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA.Type;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricService;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricType;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response.Status.Family;
+import jakarta.ws.rs.core.UriInfo;
 
 @ApplicationScoped
 @Path(LraCancelOnResource.LRA_CANCEL_ON_RESOURCE_PATH)
@@ -140,7 +140,7 @@ public class LraCancelOnResource {
      * <p>
      * The remote REST call invokes the same resource class {@link LraCancelOnResource} That assumes the call to the
      * representative of the same LRA participant as it's already enlisted by the method
-     * {@link #cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)} invoked by the test. Because the
+     * {@link #cancelFromRemoteCall(java.net.URI, jakarta.ws.rs.core.UriInfo)} invoked by the test. Because the
      * specification mandates that the same participant can be enlisted only once per LRA instance then the
      * {@link Compensate} method {@link #compensateWork(URI)} will be called only once for the test invocation.
      * </p>

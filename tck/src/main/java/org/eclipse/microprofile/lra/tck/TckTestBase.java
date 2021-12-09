@@ -24,10 +24,6 @@ import static org.junit.Assert.assertEquals;
 import java.net.URL;
 import java.util.logging.Logger;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.LRAResponse;
 import org.eclipse.microprofile.lra.tck.participant.activity.Activity;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
@@ -42,6 +38,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Base testsuite class for in-container tests. It provides {@link Before} and @{@link After} junit hooks to clean the

@@ -20,11 +20,12 @@
 
 package org.eclipse.microprofile.lra;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 /**
- * The utility class that will create the correct {@link Response} or {@link javax.ws.rs.core.Response.ResponseBuilder}
- * for the response that should be returned from the LRA JAX-RS methods.
+ * The utility class that will create the correct {@link Response} or
+ * {@link jakarta.ws.rs.core.Response.ResponseBuilder} for the response that should be returned from the LRA JAX-RS
+ * methods.
  */
 public final class LRAResponse {
 

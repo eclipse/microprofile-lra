@@ -1041,7 +1041,7 @@ MUST adhere to these predefined signatures:
  error execution is handled by <<non-jax-rs-exceptions, exceptions>> thrown in the participant method
 *** not applicable for `@Status` participant methods
 ** <<source-ParticipantStatus,ParticipantStatus>>
-** `javax.ws.rs.core.Response`: handled similarly as for
+** `jakarta.ws.rs.core.Response`: handled similarly as for
 <<jaxrs-participant-methods, JAX-RS participant methods>>
 ** `java.util.concurrent.CompletionStage`: with the parameter of any of the previously
 defined types
@@ -1131,7 +1131,7 @@ immediately the `@Compensate` method MUST report that the activity
 is still in progress using one of the following options:
 
 - Return a `CompletionStage` or mark the method as asynchronous
-  (using the `javax.ws.rs.container.Suspended` annotation). The future must
+  (using the `jakarta.ws.rs.container.Suspended` annotation). The future must
   report the final status when the stage completes (if it delivers an
   intermediate state then the implementation MUST use the `@Status` method if
   it exists, and if there is no such method it will reinvoke the `@Compensate`

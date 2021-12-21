@@ -25,10 +25,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.net.URI;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-
 import org.hamcrest.Matchers;
+
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 
 /**
  * Assertion methods usable with metrics.

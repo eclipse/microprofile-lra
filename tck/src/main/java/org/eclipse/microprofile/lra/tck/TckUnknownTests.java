@@ -23,12 +23,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 import java.net.URI;
 
-import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.tck.participant.api.LRAUnknownResource;
 import org.eclipse.microprofile.lra.tck.participant.api.Scenario;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
@@ -42,6 +36,12 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
 
 /**
  * TCK Tests related to the 410 status code handling. Version without a Status method.

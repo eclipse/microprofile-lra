@@ -25,9 +25,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.ws.rs.core.Response;
-
 import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
+
+import jakarta.ws.rs.core.Response;
 
 /**
  * <p>
@@ -41,10 +41,10 @@ import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
  * </p>
  *
  * <p>
- * If the annotation is applied to a JAX-RS resource method then the request method MUST be {@link javax.ws.rs.GET}. The
- * context of the currently running LRA can be obtained by inspecting the incoming JAX-RS headers. If this LRA is nested
- * then the parent LRA MUST be present in the header with the name {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER} and value
- * is of type {@link java.net.URI}.
+ * If the annotation is applied to a JAX-RS resource method then the request method MUST be {@link jakarta.ws.rs.GET}.
+ * The context of the currently running LRA can be obtained by inspecting the incoming JAX-RS headers. If this LRA is
+ * nested then the parent LRA MUST be present in the header with the name {@link LRA#LRA_HTTP_PARENT_CONTEXT_HEADER} and
+ * value is of type {@link java.net.URI}.
  * </p>
  *
  * <p>

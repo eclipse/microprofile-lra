@@ -23,11 +23,6 @@ import static org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResour
 
 import java.net.URI;
 
-import javax.inject.Inject;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.eclipse.microprofile.lra.tck.participant.api.LraCancelOnResource;
 import org.eclipse.microprofile.lra.tck.service.LRAMetricAssertions;
 import org.eclipse.microprofile.lra.tck.service.LRATestService;
@@ -36,6 +31,11 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 
 @RunWith(Arquillian.class)
 public class TckCancelOnTests extends TckTestBase {
@@ -148,7 +148,7 @@ public class TckCancelOnTests extends TckTestBase {
     }
 
     /**
-     * See {@link LraCancelOnResource#cancelFromRemoteCall(java.net.URI, javax.ws.rs.core.UriInfo)}
+     * See {@link LraCancelOnResource#cancelFromRemoteCall(java.net.URI, jakarta.ws.rs.core.UriInfo)}
      */
     @Test
     public void cancelFromRemoteCall() {

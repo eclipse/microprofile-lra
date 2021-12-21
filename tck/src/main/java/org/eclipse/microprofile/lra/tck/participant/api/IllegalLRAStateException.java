@@ -21,7 +21,7 @@ package org.eclipse.microprofile.lra.tck.participant.api;
 
 import java.net.URI;
 
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 public class IllegalLRAStateException extends WebApplicationException {
     private final URI lraId;

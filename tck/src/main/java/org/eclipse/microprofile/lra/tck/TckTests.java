@@ -24,6 +24,10 @@ import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener.AFTER_LRA_LISTENER_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant.AFTER_LRA_PARTICIPANT_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant.AFTER_LRA_PARTICIPANT_WORK;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipant.LRA_PARTICIPANT_PATH;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipant.LRA_PARTICIPANT_WORK;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipantCompensate.LRA_PARTICIPANT_PATH_COMPENSATE;
+import static org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipantCompensate.LRA_PARTICIPANT_START;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.ACCEPT_WORK;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.CANCEL_PATH;
 import static org.eclipse.microprofile.lra.tck.participant.api.LraResource.LRA_RESOURCE_PATH;
@@ -47,9 +51,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.stream.IntStream;
 
 import org.eclipse.microprofile.lra.annotation.AfterLRA;
+import org.eclipse.microprofile.lra.annotation.ws.rs.LRA;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAListener;
 import org.eclipse.microprofile.lra.tck.participant.api.AfterLRAParticipant;
 import org.eclipse.microprofile.lra.tck.participant.api.GenericLRAException;
+import org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipant;
+import org.eclipse.microprofile.lra.tck.participant.api.LRAOnClassParticipantCompensate;
 import org.eclipse.microprofile.lra.tck.participant.api.LraResource;
 import org.eclipse.microprofile.lra.tck.participant.api.NoLRAResource;
 import org.eclipse.microprofile.lra.tck.participant.api.ParticipatingTckResource;
@@ -697,5 +704,60 @@ public class TckTests extends TckTestBase {
             lraMetric.assertCompensatedAllEquals("multiLevelNestedActivity: step 9 (called test path " +
                     resourcePath.getUri() + ")", 1);
         }
+    }
+
+    /**
+     * TCK test to verify that classes annotated with {@link LRA} are notified correctly the participant has afterLRA
+     * method
+     *
+     * @throws InterruptedException
+     *             when waiting for the finishing the callbacks is interrupted
+     */
+    @Test
+    public void testLRAParticipantAnnotationOnClass() throws WebApplicationException, InterruptedException {
+        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        WebTarget resourcePath = tckSuiteTarget.path(LRA_PARTICIPANT_PATH).path(LRA_PARTICIPANT_WORK);
+        Response response = resourcePath
+                .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
+        lraClient.closeLRA(lra);
+        lraTestService.waitForCallbacks(lra);
+
+        // verify that the LRA is now in one of the terminal states
+        lraMetric.assertFinished("testLRAParticipantAnnotationOnClass: LRA did not finish", lra,
+                LRAOnClassParticipant.class);
+
+        // verify that the resource was notified of the final state of the LRA
+        lraMetric.assertClosed("testLRAParticipantAnnotationOnClass: end synchronization was not invoked on resource " +
+                resourcePath.getUri(), lra, LRAOnClassParticipant.class);
+    }
+
+    /**
+     * TCK test to verify that classes annotated with {@link LRA} are notified correctly the participant has afterLRA
+     * and compensate methods
+     *
+     * @throws InterruptedException
+     *             when waiting for the finishing the callbacks is interrupted
+     */
+    @Test
+    public void testLRAParticipantAnnotationOnClassWithCompensate()
+            throws WebApplicationException, InterruptedException {
+        URI lra = lraClient.startLRA(null, lraClientId(), lraTimeout(), ChronoUnit.MILLIS);
+        WebTarget resourcePath = tckSuiteTarget.path(LRA_PARTICIPANT_PATH_COMPENSATE).path(LRA_PARTICIPANT_START);
+        Response response = resourcePath
+                .request().header(LRA_HTTP_CONTEXT_HEADER, lra).put(Entity.text(""));
+        checkStatusAndCloseResponse(Response.Status.OK, response, resourcePath);
+        lraClient.closeLRA(lra);
+        lraTestService.waitForCallbacks(lra);
+
+        // verify that the LRA is now in one of the terminal states
+        lraMetric.assertFinished("testLRAParticipantAnnotationOnClassWithCompensate: LRA did not finish", lra,
+                LRAOnClassParticipantCompensate.class);
+
+        // verify that the resource was notified of the final state of the LRA
+        lraMetric.assertClosed(
+                "testLRAParticipantAnnotationOnClassWithCompensate: end synchronization was not invoked on resource " +
+                        resourcePath.getUri(),
+                lra, LRAOnClassParticipantCompensate.class);
     }
 }
